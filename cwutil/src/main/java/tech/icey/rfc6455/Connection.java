@@ -1,9 +1,9 @@
 package tech.icey.rfc6455;
 
-import tech.icey.cwutil.Either;
-import tech.icey.cwutil.NotNull;
-import tech.icey.cwutil.Nullable;
-import tech.icey.cwutil.Tuple3;
+import tech.icey.util.Either;
+import tech.icey.util.NotNull;
+import tech.icey.util.Nullable;
+import tech.icey.util.Tuple3;
 
 import java.io.IOException;
 import java.io.InputStream;

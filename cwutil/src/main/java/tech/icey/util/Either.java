@@ -1,4 +1,4 @@
-package tech.icey.cwutil;
+package tech.icey.util;
 
 public abstract sealed class Either<L, R> {
     public static <L, R> Either<L, R> left(L value) {

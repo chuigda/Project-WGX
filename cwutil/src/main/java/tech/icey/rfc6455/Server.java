@@ -1,6 +1,6 @@
 package tech.icey.rfc6455;
 
-import tech.icey.cwutil.IOUtil;
+import tech.icey.util.IOUtil;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,4 +1,4 @@
-package tech.icey.cwutil;
+package tech.icey.util;
 
 import java.io.IOException;
 import java.io.InputStream;

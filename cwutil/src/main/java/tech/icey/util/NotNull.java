@@ -1,3 +1,3 @@
-package tech.icey.cwutil;
+package tech.icey.util;
 
 public @interface NotNull {}

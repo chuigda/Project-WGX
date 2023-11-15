@@ -11,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 
-import tech.icey.cwutil.IOUtil;
+import tech.icey.util.IOUtil;
 import static tech.icey.rfc6455.Connection.RFC6455_GUID;
 
 public class Client {
