@@ -39,7 +39,7 @@ public final class Connection implements AutoCloseable {
 
         byte[] maskingKeyBytes = null;
         if (bytes != null && bytes.length != 0 && hasMask) {
-            int maskingKey = (int)(Math.random() * 0xFFFFFFFF);
+            int maskingKey = (int)(Math.random() * 0x7FFFFFFF);
             maskingKeyBytes = new byte[] {
                     (byte)((maskingKey >> 24) & 0xFF),
                     (byte)((maskingKey >> 16) & 0xFF),
