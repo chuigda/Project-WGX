@@ -11,9 +11,137 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public final class Connection implements AutoCloseable {
+    // RFC6455 5.2 - Opcode
+    //   %x0 denotes a continuation frame
+    //   %x1 denotes a text frame
+    //   %x2 denotes a binary frame
+    //   %x3-7 are reserved for further non-control frames
+    //   %x8 denotes a connection close
+    //   %x9 denotes a ping
+    //   %xA denotes a pong
+    //   %xB-F are reserved for further control frames
+
+    public enum OpCode {
+        CONTINUATION(0x0),
+        TEXT(0x1),
+        BINARY(0x2),
+        CLOSE(0x8),
+        PING(0x9),
+        PONG(0xA);
+
+        private final int code;
+
+        OpCode(int code) {
+            this.code = code;
+        }
+
+        public int getCode() {
+            return code;
+        }
+    }
+
+    public static final String RFC6455_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+
+    public @NotNull String uri() {
+        return uri;
+    }
+
+    public void write(@NotNull byte[] bytes) throws IOException {
+        byte[] copied = new byte[bytes.length];
+        System.arraycopy(bytes, 0, copied, 0, bytes.length);
+        impWrite(OpCode.BINARY, copied);
+    }
+
+    public void write(@NotNull String string) throws IOException {
+        byte[] utf8Bytes = string.getBytes(StandardCharsets.UTF_8);
+        impWrite(OpCode.TEXT, utf8Bytes);
+    }
+
+    public @Nullable Either<byte[], String> read() throws IOException {
+        while (true) {
+            var fragmentResult = readFragment();
+            OpCode opCode = fragmentResult.first;
+            byte[] payload = fragmentResult.second;
+            boolean fin = fragmentResult.third;
+
+            ByteBuffer buffer = payload != null ? ByteBuffer.wrap(payload) : null;
+            switch (opCode) {
+                case PING -> impWrite(OpCode.PONG, payload);
+                case PONG -> {}
+                case CLOSE -> {
+                    // RFC6455 7.1.2
+                    //   Once an endpoint has both sent and received a Close control frame, that endpoint SHOULD _Close the
+                    //   WebSocket Connection_ as defined in Section 7.1.1.
+                    // RFC6455 7.1.4
+                    //   If the TCP connection was closed after the WebSocket closing handshake was completed, the WebSocket
+                    //   connection is said to have been closed _cleanly_.
+
+                    try {
+                        impWrite(OpCode.CLOSE, payload);
+                    } catch (IOException ignored) {
+                        // ignore any exception when we're already going to close
+                    }
+                    return null;
+                }
+                case TEXT, BINARY -> {
+                    while (!fin) {
+                        // RFC6455 5.4
+                        //   - An unfragmented message consists of a single frame with the FIN bit set (Section 5.2) and an
+                        //     opcode other than 0.
+                        //   - A fragmented message consists of a single frame with the FIN bit clear and an opcode other
+                        //     than 0, followed by zero or more frames with the FIN bit clear and the opcode set to 0,
+                        //     and terminated by a single frame with the FIN bit set and an opcode of 0.
+
+                        fragmentResult = readFragment();
+                        OpCode contOpCode = fragmentResult.first;
+                        payload = fragmentResult.second;
+                        fin = fragmentResult.third;
+
+                        if (contOpCode != OpCode.CONTINUATION) {
+                            throw new IOException("Invalid RFC6455 frame: continuation expected");
+                        }
+
+                        if (buffer == null) {
+                            buffer = ByteBuffer.wrap(payload);
+                        } else {
+                            buffer.put(payload);
+                        }
+                    }
+                    if (opCode == OpCode.TEXT) {
+                        if (buffer == null) {
+                            return Either.right("");
+                        } else {
+                            return Either.right(StandardCharsets.UTF_8.decode(buffer).toString());
+                        }
+                    } else {
+                        if (buffer == null) {
+                            return Either.left(new byte[0]);
+                        } else {
+                            byte[] bytes = new byte[buffer.position()];
+                            buffer.flip();
+                            buffer.get(bytes);
+                            return Either.left(bytes);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void close() throws Exception {
+        try {
+            // RFC6455 5.5.1
+            //   The Close frame contains an opcode of 0x8.
+            impWrite(OpCode.CLOSE, new byte[0]);
+        } catch (IOException ignored) {
+            // ignore any exception when we're already going to close
+        }
+        socket.close();
+    }
+
     private final String uri;
     private final Socket socket;
     private final InputStream rx;
@@ -99,6 +227,9 @@ public final class Connection implements AutoCloseable {
             throw new IOException("Invalid RFC6455 frame: reserved bits set");
         }
 
+        // RFC6455 5.2 - Opcode
+        //   RSV1, RSV2, RSV3: 1 bit each
+        //     MUST be 0 unless an extension is negotiated that defines meanings for non-zero values.
         boolean fin = (controlByte & 0x80) != 0;
         byte opCodeByte = (byte)(controlByte & 0x0F);
         if (opCodeByte != 0x0 &&
@@ -110,9 +241,28 @@ public final class Connection implements AutoCloseable {
             throw new IOException("Invalid RFC6455 frame: reserved op code");
         }
 
+        // RFC6455 5.1
+        //   In the WebSocket Protocol, data is transmitted using a sequence of frames. To avoid confusing network
+        //   intermediaries (such as intercepting proxies) and for security reasons that are further discussed in
+        //   Section 10.3, a client MUST mask all frames that it sends to the server (see Section 5.3 for further details).
+        //   (Note that masking is done whether or not the WebSocket Protocol is running over TLS.) The server MUST close
+        //   the connection upon receiving a frame that is not masked. In this case, a server MAY send a Close frame with
+        //   a status code of 1002 (protocol error) as defined in Section 7.4.1. A server MUST NOT mask any frames that
+        //   it sends to the client.  A client MUST close a connection if it detects a masked frame. In this case, it MAY
+        //   use the status code 1002 (protocol error) as defined in Section 7.4.1.
         boolean hasMask = (header[1] & 0x80) != 0;
-        int payloadLength = header[1] & 0x7F;
+        if ((/*this*/ isClient && hasMask) || (!/*this*/ isClient && !hasMask)) {
+            throw new IOException("Invalid RFC6455 frame: invalid mask bit");
+        }
 
+        // RFC6455 5.2
+        //   Payload length: 7 bits, 7+16 bits, or 7+64 bits
+        //     The length of the "Payload data", in bytes: if 0-125, that is the payload length.
+        //     If 126, the following 2 bytes interpreted as a 16-bit unsigned integer are the
+        //     payload length.  If 127, the following 8 bytes interpreted as a 64-bit unsigned integer
+        //     (the most significant bit MUST be 0) are the payload length. Multibyte length quantities
+        //     are expressed in network byte order.
+        int payloadLength = header[1] & 0x7F;
         if (payloadLength == 126) {
             byte[] lengthBytes = new byte[2];
             if (rx.read(lengthBytes) < 2) {
@@ -128,6 +278,11 @@ public final class Connection implements AutoCloseable {
             payloadLength = payloadLengthFrom8Bytes(lengthBytes);
         }
 
+        // RFC6455 5.2
+        //   Masking-key: 0 or 4 bytes
+        //     All frames sent from the client to the server are masked by a 32-bit value that is
+        //     contained within the frame. This field is present if the mask bit is set to 1 and is
+        //     absent if the mask bit is set to 0.
         byte[] maskingKeyBytes = null;
         if (hasMask) {
             maskingKeyBytes = new byte[4];
@@ -142,6 +297,14 @@ public final class Connection implements AutoCloseable {
         }
 
         if (hasMask) {
+            // RFC6455 5.3
+            //   Octet i of the transformed data ("transformed-octet-i") is the XOR of
+            //   octet i of the original data ("original-octet-i") with octet at index
+            //   i modulo 4 of the masking key ("masking-key-octet-j"):
+            //
+            //     j                   = i MOD 4
+            //     transformed-octet-i = original-octet-i XOR masking-key-octet-j
+            //
             for (int i = 0; i < payloadLength; i++) {
                 payload[i] ^= maskingKeyBytes[i % 4];
             }
@@ -164,106 +327,5 @@ public final class Connection implements AutoCloseable {
             throw new IOException("Payload length too large");
         }
         return (int)payloadLengthLong;
-    }
-
-    public enum OpCode {
-        CONTINUATION(0x0),
-        TEXT(0x1),
-        BINARY(0x2),
-        CLOSE(0x8),
-        PING(0x9),
-        PONG(0xA);
-
-        private final int code;
-
-        OpCode(int code) {
-            this.code = code;
-        }
-
-        public int getCode() {
-            return code;
-        }
-    }
-
-    public @NotNull String uri() {
-        return uri;
-    }
-
-    public void write(@NotNull byte[] bytes) throws IOException {
-        byte[] copied = new byte[bytes.length];
-        System.arraycopy(bytes, 0, copied, 0, bytes.length);
-        impWrite(OpCode.BINARY, copied);
-    }
-
-    public void write(@NotNull String string) throws IOException {
-        byte[] utf8Bytes = string.getBytes(StandardCharsets.UTF_8);
-        impWrite(OpCode.TEXT, utf8Bytes);
-    }
-
-    public @Nullable Either<byte[], String> read() throws IOException {
-        while (true) {
-            var fragmentResult = readFragment();
-            OpCode opCode = fragmentResult.first;
-            byte[] payload = fragmentResult.second;
-            boolean fin = fragmentResult.third;
-
-            ByteBuffer buffer = payload != null ? ByteBuffer.wrap(payload) : null;
-            switch (opCode) {
-                case PING -> impWrite(OpCode.PONG, payload);
-                case PONG -> {}
-                case CLOSE -> {
-                    try {
-                        impWrite(OpCode.CLOSE, null);
-                    } catch (IOException ignored) {
-                        // ignore any exception when we're already going to close
-                    }
-                    return null;
-                }
-                case TEXT, BINARY -> {
-                    while (!fin) {
-                        fragmentResult = readFragment();
-                        OpCode contOpCode = fragmentResult.first;
-                        payload = fragmentResult.second;
-                        fin = fragmentResult.third;
-
-                        if (contOpCode != OpCode.CONTINUATION) {
-                            throw new IOException("Invalid RFC6455 frame: continuation expected");
-                        }
-
-                        if (buffer == null) {
-                            buffer = ByteBuffer.wrap(payload);
-                        } else {
-                            buffer.put(payload);
-                        }
-                    }
-                    if (opCode == OpCode.TEXT) {
-                        if (buffer == null) {
-                            return Either.right("");
-                        } else {
-                            return Either.right(StandardCharsets.UTF_8.decode(buffer).toString());
-                        }
-                    } else {
-                        if (buffer == null) {
-                            return Either.left(new byte[0]);
-                        } else {
-                            byte[] bytes = new byte[buffer.position()];
-                            buffer.flip();
-                            buffer.get(bytes);
-                            return Either.left(bytes);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @Override
-    public void close() throws Exception {
-        try {
-            impWrite(OpCode.CLOSE, new byte[0]);
-        } catch (IOException ignored) {
-            // ignore any exception when we're already going to close
-        }
-        socket.close();
     }
 }
