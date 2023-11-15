@@ -26,4 +26,8 @@
     <properties>
         <assembly.skipAssembly>true</assembly.skipAssembly>
     </properties>
+
+    <build>
+        <finalName>Project-WGX</finalName>
+    </build>
 </project>

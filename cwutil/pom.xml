@@ -17,4 +17,8 @@
     <properties>
         <assembly.skipAssembly>true</assembly.skipAssembly>
     </properties>
+
+    <build>
+        <finalName>cwutil</finalName>
+    </build>
 </project>
