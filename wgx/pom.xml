@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>tech.icey.wgx</groupId>
-    <artifactId>Project-WGX</artifactId>
+    <artifactId>wgx</artifactId>
     <version>${revision}</version>
     <packaging>jar</packaging>
 
