@@ -100,7 +100,7 @@ public class R77Window implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         glfwDestroyWindow(windowHandle);
     }
 
