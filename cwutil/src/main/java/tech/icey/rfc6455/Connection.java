@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public final class Connection implements AutoCloseable {
     private final String uri;
@@ -36,15 +37,15 @@ public final class Connection implements AutoCloseable {
         int maskBit = hasMask ? 0x80 : 0x00;
         byte controlByte = (byte)(0x80 | opCode.getCode());
 
+        byte[] maskingKeyBytes = null;
         if (bytes != null && bytes.length != 0 && hasMask) {
             int maskingKey = (int)(Math.random() * 0xFFFFFFFF);
-            byte[] maskingKeyBytes = new byte[] {
+            maskingKeyBytes = new byte[] {
                     (byte)((maskingKey >> 24) & 0xFF),
                     (byte)((maskingKey >> 16) & 0xFF),
                     (byte)((maskingKey >> 8) & 0xFF),
                     (byte)(maskingKey & 0xFF)
             };
-            tx.write(maskingKeyBytes);
 
             for (int i = 0; i < bytes.length; i++) {
                 bytes[i] ^= maskingKeyBytes[i % 4];
@@ -55,7 +56,7 @@ public final class Connection implements AutoCloseable {
 
         synchronized (tx) {
             if (payloadLength <= 125) {
-                    tx.write(new byte[]{controlByte, (byte) (payloadLength | maskBit)});
+                tx.write(new byte[] { controlByte, (byte)(payloadLength | maskBit) });
             } else if (payloadLength <= 0xFFFF) {
                 tx.write(new byte[] {
                         controlByte,
@@ -73,6 +74,10 @@ public final class Connection implements AutoCloseable {
                         (byte)((payloadLength >> 8) & 0xFF),
                         (byte)(payloadLength & 0xFF)
                 });
+            }
+
+            if (maskingKeyBytes != null) {
+                tx.write(maskingKeyBytes);
             }
 
             if (bytes == null || bytes.length == 0) {

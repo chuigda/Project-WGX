@@ -8,6 +8,22 @@ public abstract sealed class Either<L, R> {
     public static <L, R> Either<L, R> right(R value) {
         return new Right<>(value);
     }
+
+    public L left() {
+        return ((Left<L, R>)this).value;
+    }
+
+    public R right() {
+        return ((Right<L, R>) this).value;
+    }
+
+    public boolean isLeft() {
+        return this instanceof Left;
+    }
+
+    public boolean isRight() {
+        return this instanceof Right;
+    }
 }
 
 final class Left<L, R> extends Either<L, R> {
