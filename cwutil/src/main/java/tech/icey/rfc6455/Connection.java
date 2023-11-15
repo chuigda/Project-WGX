@@ -244,7 +244,11 @@ public final class Connection implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        impWrite(OpCode.CLOSE, new byte[0]);
+        try {
+            impWrite(OpCode.CLOSE, new byte[0]);
+        } catch (IOException ignored) {
+            // ignore any exception when we're already going to close
+        }
         socket.close();
     }
 }
