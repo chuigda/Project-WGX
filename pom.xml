@@ -19,5 +19,6 @@
     <modules>
         <module>cwutil</module>
         <module>Project-WGX</module>
+        <module>r77</module>
     </modules>
 </project>
