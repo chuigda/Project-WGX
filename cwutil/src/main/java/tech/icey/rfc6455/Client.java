@@ -31,7 +31,8 @@ public class Client {
 
     public static Connection connect(String host, int port, String uri) throws IOException {
         InetSocketAddress addr = new InetSocketAddress(host, port);
-        try (Socket socket = new Socket()) {
+        Socket socket = new Socket();
+        try {
             socket.connect(addr);
 
             InputStream rx = socket.getInputStream();
@@ -82,6 +83,9 @@ public class Client {
             }
 
             return new Connection(uri, socket, rx, tx, true);
+        } catch (Exception e) {
+            socket.close();
+            throw e;
         }
     }
 
