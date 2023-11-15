@@ -13,15 +13,18 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public final class Connection implements AutoCloseable {
+    private final String uri;
     private final Socket socket;
     private final InputStream rx;
     private final OutputStream tx;
     private final boolean isClient;
 
-    Connection(@NotNull Socket socket,
+    Connection(@NotNull String uri,
+               @NotNull Socket socket,
                @NotNull InputStream rx,
                @NotNull OutputStream tx,
                boolean isClient) {
+        this.uri = uri;
         this.socket = socket;
         this.rx = rx;
         this.tx = tx;
@@ -175,6 +178,10 @@ public final class Connection implements AutoCloseable {
         public int getCode() {
             return code;
         }
+    }
+
+    public @NotNull String uri() {
+        return uri;
     }
 
     public void write(@NotNull byte[] bytes) throws IOException {
