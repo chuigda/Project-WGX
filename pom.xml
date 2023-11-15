@@ -18,7 +18,8 @@
 
     <modules>
         <module>cwutil</module>
-        <module>wgx</module>
         <module>r77</module>
+        <module>wgx</module>
+        <module>lwjgl-common</module>
     </modules>
 </project>

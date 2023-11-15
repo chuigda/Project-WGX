@@ -25,6 +25,18 @@
             <version>${revision}</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>tech.icey.r77</groupId>
+            <artifactId>r77</artifactId>
+            <version>0.0.1-PREALPHA</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>tech.icey.common</groupId>
+            <artifactId>lwjgl-common</artifactId>
+            <version>${revision}</version>
+            <type>pom</type>
+        </dependency>
     </dependencies>
 
     <build>
