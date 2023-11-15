@@ -236,18 +236,21 @@ public final class Connection implements AutoCloseable {
                             buffer.put(payload);
                         }
                     }
-
-                    if (buffer == null) {
-                        return null;
-                    }
-
                     if (opCode == OpCode.TEXT) {
-                        return Either.right(StandardCharsets.UTF_8.decode(buffer).toString());
+                        if (buffer == null) {
+                            return Either.right("");
+                        } else {
+                            return Either.right(StandardCharsets.UTF_8.decode(buffer).toString());
+                        }
                     } else {
-                        byte[] bytes = new byte[buffer.position()];
-                        buffer.flip();
-                        buffer.get(bytes);
-                        return Either.left(bytes);
+                        if (buffer == null) {
+                            return Either.left(new byte[0]);
+                        } else {
+                            byte[] bytes = new byte[buffer.position()];
+                            buffer.flip();
+                            buffer.get(bytes);
+                            return Either.left(bytes);
+                        }
                     }
                 }
             }
