@@ -7,12 +7,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public final class Connection implements AutoCloseable {
-    private Socket socket;
-    private InputStream rx;
-    private OutputStream tx;
-    private boolean isClient;
+    private final Socket socket;
+    private final InputStream rx;
+    private final OutputStream tx;
+    private final boolean isClient;
 
     Connection(@NotNull Socket socket,
                @NotNull InputStream rx,
@@ -100,7 +101,8 @@ public final class Connection implements AutoCloseable {
     }
 
     public void write(@NotNull String string) throws IOException {
-        impWrite(OpCode.TEXT, string.getBytes());
+        byte[] utf8Bytes = string.getBytes(StandardCharsets.UTF_8);
+        impWrite(OpCode.TEXT, utf8Bytes);
     }
 
     public @NotNull Either<byte[], String> read() throws IOException {
@@ -111,5 +113,6 @@ public final class Connection implements AutoCloseable {
     @Override
     public void close() throws Exception {
         impWrite(OpCode.CLOSE, new byte[0]);
+        socket.close();
     }
 }
