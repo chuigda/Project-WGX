@@ -20,18 +20,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service</artifactId>
-            <version>1.1.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.testing.compile</groupId>
-            <artifactId>compile-testing</artifactId>
-            <version>0.21.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>tech.icey.common</groupId>
             <artifactId>lwjgl-common</artifactId>
             <version>${revision}</version>
