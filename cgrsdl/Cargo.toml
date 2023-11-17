@@ -1,0 +1,8 @@
+[package]
+name = "cgrsdl"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+rsdl = { git = "https://github.com/chuigda/rsdl.git", rev="1e19879f4e28d0015c2fb049bfc35d558a107c55" }
