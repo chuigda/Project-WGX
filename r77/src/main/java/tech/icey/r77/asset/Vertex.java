@@ -1,5 +1,5 @@
 package tech.icey.r77.asset;
 
-public interface VertexBuffer {
+public interface Vertex {
     VertexAttribute[] attributes();
 }
