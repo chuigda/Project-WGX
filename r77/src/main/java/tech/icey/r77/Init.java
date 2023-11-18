@@ -1,8 +1,8 @@
-package tech.icey.r77.window;
+package tech.icey.r77;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class Initialiser {
+public class Init {
     private static boolean initialised = false;
 
     public synchronized static void initialise() {
