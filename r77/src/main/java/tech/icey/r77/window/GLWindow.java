@@ -10,6 +10,9 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public abstract class GLWindow implements AutoCloseable {
     public GLWindow(@NotNull String title, int width, int height, boolean vsync) {
         glfwDefaultWindowHints();
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
         windowHandle = glfwCreateWindow(width, height, title, 0, 0);
         if (windowHandle == NULL) {
             throw new RuntimeException("Failed to create GLFW window!");

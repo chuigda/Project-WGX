@@ -11,7 +11,7 @@ final class MyWindow extends GLWindow {
 
     @Override
     public void initialiseGL() {
-        GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     @Override
@@ -39,7 +39,9 @@ final class MyWindow extends GLWindow {
     }
 
     @Override
-    public void resizeGL(int width, int height) {}
+    public void resizeGL(int width, int height) {
+        GL11.glViewport(0, 0, width, height);
+    }
 
     private float rotation = 0;
 }
