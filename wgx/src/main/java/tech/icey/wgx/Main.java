@@ -49,7 +49,7 @@ final class MyWindow extends GLWindow {
 public class Main {
     public static void main(String[] args) {
         Init.initialise();
-        try (var window = new MyWindow("Hello World", 800, 600)) {
+        try (var window = new MyWindow("Hello World", 600, 600)) {
             while (window.poll()) {}
         }
     }
