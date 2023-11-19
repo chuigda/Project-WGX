@@ -4,6 +4,8 @@ import org.lwjgl.opengl.GL11;
 import tech.icey.r77.window.GLWindow;
 import tech.icey.r77.Init;
 
+import javax.swing.*;
+
 final class MyWindow extends GLWindow {
     public MyWindow(String title, int width, int height) {
         super(title, width, height);
@@ -48,11 +50,18 @@ final class MyWindow extends GLWindow {
 
 public class Main {
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("发生了一个错误，观感设置将不可用，回退到默认观感");
+        }
         new ControlWindow().setVisible(true);
 
         Init.initialise();
         try (var window = new MyWindow("Hello World", 600, 600)) {
             while (window.poll()) {}
+            window.closeWindow();
         }
     }
 }

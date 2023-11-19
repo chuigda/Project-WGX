@@ -49,6 +49,10 @@ public abstract class GLWindow implements AutoCloseable {
     public abstract void paintGL();
     public abstract void resizeGL(int width, int height);
 
+    public final void closeWindow() {
+        glfwDestroyWindow(windowHandle);
+    }
+
     public final int getWidth() {
         int[] width = new int[1];
         glfwGetWindowSize(windowHandle, width, null);
