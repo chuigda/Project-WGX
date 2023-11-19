@@ -21,5 +21,6 @@
         <module>cwutil</module>
         <module>r77</module>
         <module>wgx</module>
+        <module>drill</module>
     </modules>
 </project>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>tech.icey</groupId>
+        <artifactId>root</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <groupId>tech.icey.drill</groupId>
+    <artifactId>drill</artifactId>
+    <version>${revision}</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <assembly.skipAssembly>true</assembly.skipAssembly>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>tech.icey.cwutil</groupId>
+            <artifactId>cwutil</artifactId>
+            <version>${revision}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>tech.icey.r77</groupId>
+            <artifactId>r77</artifactId>
+            <version>0.0.1-PREALPHA</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>tech.icey.common</groupId>
+            <artifactId>lwjgl-common</artifactId>
+            <version>${revision}</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>drill</finalName>
+    </build>
+</project>
