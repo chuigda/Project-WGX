@@ -52,9 +52,13 @@ public class Main {
     public static void main(String[] args) {
         JFrame frame = new JFrame("Zdravstvuyte, mir!");
         frame.setSize(600, 600);
+        JButton button = new JButton("Click to show thread id");
+        button.addActionListener(e -> System.err.println("The \"swing event handling\" thred id is: " + Thread.currentThread().getId()));
+        frame.getContentPane().add(button);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        System.err.println("The \"main\" thread id is: " + Thread.currentThread().getId());
         Init.initialise();
         try (var window = new MyWindow("Hello World", 600, 600)) {
             while (window.poll()) {}
