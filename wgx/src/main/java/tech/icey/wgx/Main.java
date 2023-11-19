@@ -7,8 +7,8 @@ import tech.icey.r77.Init;
 import javax.swing.*;
 
 final class MyWindow extends GLWindow {
-    public MyWindow(String title, int width, int height) {
-        super(title, width, height);
+    public MyWindow(int width, int height) {
+        super("Project-WGX 绘图输出窗口", width, height);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class Main {
         new ControlWindow().setVisible(true);
 
         Init.initialise();
-        try (var window = new MyWindow("Hello World", 600, 600)) {
+        try (var window = new MyWindow(600, 600)) {
             while (window.poll()) {}
             window.closeWindow();
         }
