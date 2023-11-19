@@ -1,4 +1,4 @@
-package tech.icey.r77.window;
+package tech.icey.r77.gl;
 
 import org.lwjgl.opengl.GL;
 import tech.icey.r77.Init;

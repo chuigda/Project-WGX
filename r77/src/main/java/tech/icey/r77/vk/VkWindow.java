@@ -1,4 +1,4 @@
-package tech.icey.r77.window;
+package tech.icey.r77.vk;
 
 import tech.icey.r77.Init;
 import tech.icey.util.NotNull;

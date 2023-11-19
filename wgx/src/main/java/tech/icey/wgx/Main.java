@@ -2,7 +2,7 @@ package tech.icey.wgx;
 
 import tech.icey.r77.Init;
 import tech.icey.r77.vk.Instance;
-import tech.icey.r77.window.VkWindow;
+import tech.icey.r77.vk.VkWindow;
 import tech.icey.util.Logger;
 
 import javax.swing.*;
