@@ -11,6 +11,8 @@ use rsdl::{
     min_resolv::ResolveContext
 };
 
+use crate::layout::LayoutMode;
+
 pub struct JavaGen();
 
 impl JavaGen {
@@ -38,6 +40,38 @@ impl JavaGen {
             RSDLType::List(_) => Err("CG data structure generator does not support lists".into()),
             RSDLType::Record(_) => Err("CG data structure generator does not support records".into()),
         }
+    }
+
+    fn layout_mode(attr_list: &[AttrItem]) -> Result<LayoutMode, Box<dyn Error>> {
+        for attr in attr_list {
+            if let AttrItem::Identifier(ident) = attr {
+                match ident.as_str() {
+                    "vertex" => return Ok(LayoutMode::VertexBuffer),
+                    "push_constant" => return Ok(LayoutMode::PushConstant),
+                    _ => {}
+                }
+            }
+            else if let AttrItem::CallAlike(fn_alike, args) = attr {
+                if fn_alike == "uniform" {
+                    if args.len() == 1 {
+                        let AttrItem::Identifier(ident) = &args[0] else {
+                            return Err("Invalid uniform layout attribute".into());
+                        };
+
+                        match ident.as_str() {
+                            "std140" => return Ok(LayoutMode::UniformSTD140),
+                            "std430" => return Ok(LayoutMode::UniformSTD430),
+                            "vulkan" => return Ok(LayoutMode::UniformVulkan),
+                            _ => {}
+                        }
+                    } else {
+                        return Err("Invalid uniform layout attribute".into());
+                    }
+                }
+            }
+        }
+
+        Err("No valid layout mode specified".into())
     }
 }
 

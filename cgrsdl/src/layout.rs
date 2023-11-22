@@ -1,7 +1,7 @@
 #[derive(Clone, Copy, Debug)]
 pub enum LayoutMode {
     VertexBuffer,
-    UniformVulkanNative,
+    UniformVulkan,
     UniformSTD140,
     UniformSTD430,
     PushConstant
@@ -38,14 +38,14 @@ impl CGType {
                     16
                 }
             }
-            LayoutMode::UniformVulkanNative |
+            LayoutMode::UniformVulkan |
             LayoutMode::UniformSTD430 |
             LayoutMode::PushConstant => self.size()
         }
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Field {
     pub name: String,
     pub ty: CGType,
