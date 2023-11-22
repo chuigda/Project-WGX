@@ -5,7 +5,7 @@ use rsdl::{
         RSDLType,
         AttrItem,
         TypeConstructor,
-        SumType, extract_doc_strings, check_ident_attr
+        SumType, extract_doc_strings, check_ident_attr, TypeDefInner, TypeDef
     },
     min_resolv::ResolveContext
 };
@@ -214,8 +214,9 @@ impl CodeGenerator for JavaGen {
                 continue;
             }
 
-            output.push_string(format!("import tech.icey.r77.math.{};", ty.to_string()));
+            output.push_string(format!("import tech.icey.r77.math.{};", ty));
         }
+        output.push_str("import java.nio.ByteBuffer");
         if !used_types.is_empty() {
             output.push_empty_line();
         }
@@ -230,7 +231,7 @@ impl CodeGenerator for JavaGen {
         for field in &layout {
             fields_doc.push_string(format!(
                 "private {} {};",
-                field.ty.to_string(),
+                field.ty,
                 field.name
             ));
         }
@@ -238,7 +239,7 @@ impl CodeGenerator for JavaGen {
         for field in &layout {
             fields_doc.push_string(format!(
                 "public {} get{}() {{ return {}; }}",
-                field.ty.to_string(),
+                field.ty,
                 first_char_to_uppercase(&field.name),
                 field.name
             ));
@@ -246,7 +247,7 @@ impl CodeGenerator for JavaGen {
             fields_doc.push_string(format!(
                 "public void set{}({} {}) {{ this.{} = {}; }}",
                 first_char_to_uppercase(&field.name),
-                field.ty.to_string(),
+                field.ty,
                 field.name,
                 field.name,
                 field.name
@@ -254,17 +255,40 @@ impl CodeGenerator for JavaGen {
             fields_doc.push_empty_line();
         }
 
-        fields_doc.push_string(format!("public {}(", type_ctor.name));
-        let mut ctor_param_doc = Box::new(Doc::new(8));
-        for field in &layout {
-            ctor_param_doc.push_string(format!(
-                "{} {},",
-                field.ty.to_string(),
-                field.name
+        if layout.len() == 1 {
+            fields_doc.push_string(format!(
+                "public {}({} {}) {{",
+                type_ctor.name,
+                layout[0].ty,
+                layout[0].name
             ));
         }
-        fields_doc.push_doc(ctor_param_doc);
-        fields_doc.push_str(") {");
+        else {
+            fields_doc.push_string(format!(
+                "public {}({} {},",
+                type_ctor.name,
+                layout[0].ty,
+                layout[0].name
+            ));
+            let mut ctor_param_doc = Box::new(Doc::new(
+                ("public".len() + 1 + type_ctor.name.len() + "(".len()) as u32
+            ));
+            for idx in 1..layout.len()-1 {
+                let field = &layout[idx];
+                ctor_param_doc.push_string(format!(
+                    "{} {},",
+                    field.ty,
+                    field.name
+                ));
+            }
+            let field = &layout[layout.len()-1];
+            ctor_param_doc.push_string(format!(
+                "{} {}) {{",
+                field.ty,
+                field.name
+            ));
+            fields_doc.push_doc(ctor_param_doc);
+        }
         let mut ctor_body_doc = Box::new(Doc::new(4));
         for field in &layout {
             ctor_body_doc.push_string(format!(
@@ -274,6 +298,39 @@ impl CodeGenerator for JavaGen {
             ));
         }
         fields_doc.push_doc(ctor_body_doc);
+        fields_doc.push_str("}");
+        fields_doc.push_empty_line();
+
+        fields_doc.push_str("@Override");
+        fields_doc.push_str("void writeToByteBuffer(ByteBuffer buffer) {");
+        let mut write_to_buffer_doc = Box::new(Doc::new(4));
+        let mut current_offset = 0;
+        for field in &layout {
+            if current_offset < field.offset {
+                let pad_needed = field.offset - current_offset;
+                assert_eq!(pad_needed % 4, 0);
+                write_to_buffer_doc.push_string(format!(
+                    "for (int i = 0; i < {}; ++i) {{ buffer.putInt(0); }}",
+                    field.offset - current_offset / 4
+                ));
+            }
+
+            if field.ty == CGType::Float {
+                write_to_buffer_doc.push_string(format!(
+                    "buffer.putFloat({});",
+                    field.name
+                ));
+            }
+            else {
+                write_to_buffer_doc.push_string(format!(
+                    "{}.writeToByteBuffer(buffer);",
+                    field.name
+                ));
+            }
+
+            current_offset = field.offset + field.ty.size();
+        }
+        fields_doc.push_doc(write_to_buffer_doc);
         fields_doc.push_str("}");
 
         output.push_doc(fields_doc);
@@ -341,6 +398,29 @@ impl CodeGenerator for JavaGen {
         }
 
         Ok(())
+    }
+
+    fn visit_all_typedefs(
+        &mut self,
+        _ctx: &ResolveContext,
+        typedefs: &[TypeDef],
+        _output: &mut Doc
+    ) -> Result<(), Box<dyn Error>> {
+        let simple_type_count = typedefs.iter()
+            .filter(|typedef| {
+                if let TypeDefInner::SimpleType(_) = &typedef.inner {
+                    true
+                } else {
+                    false
+                }
+            })
+            .count();
+
+        if simple_type_count != 1 {
+            Err("CGRSDL requires exactly 1 type definition in a file".into())
+        } else {
+            Ok(())
+        }
     }
 }
 
