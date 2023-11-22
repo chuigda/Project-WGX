@@ -7,7 +7,11 @@ public interface IntoBytes {
     default byte[] intoBytes() {
         ByteBuffer buffer = ByteBuffer.allocate(0).order(ByteOrder.nativeOrder());
         writeToByteBuffer(buffer);
-        return buffer.array();
+
+        buffer.rewind();
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        return bytes;
     }
 
     void writeToByteBuffer(ByteBuffer buffer);

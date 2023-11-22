@@ -1,5 +1,3 @@
 package tech.icey.r77.asset;
 
-public interface Vertex {
-    VertexAttribute[] attributes();
-}
+public interface Vertex extends Layout {}
