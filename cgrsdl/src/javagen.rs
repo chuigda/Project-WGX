@@ -211,8 +211,9 @@ impl CodeGenerator for JavaGen {
 
         output.push_string(format!(
             "public final class {} implements {}, IntoBytes {{",
-            implement_inteface,
-            type_ctor.name
+            type_ctor.name,
+            implement_inteface
+
         ));
         let mut fields_doc = Box::new(Doc::new(4));
         for field in &layout {
