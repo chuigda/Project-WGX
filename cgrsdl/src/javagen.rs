@@ -64,6 +64,14 @@ impl JavaGen {
     }
 }
 
+fn first_char_to_uppercase(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(c) => c.to_uppercase().collect::<String>() + chars.as_str()
+    }
+}
+
 impl CodeGenerator for JavaGen {
     fn generator_name(&self) -> &'static str {
         "Java CG data structure generator"
@@ -194,6 +202,9 @@ impl CodeGenerator for JavaGen {
             layout_builder.add_field(name, cg_type);
         }
         let layout = layout_builder.build();
+        if layout.is_empty() {
+            return Err("CGRSDL does not support empty data structure".into());
+        }
 
         let used_types = layout.iter()
             .map(|field| field.ty)
@@ -223,6 +234,48 @@ impl CodeGenerator for JavaGen {
                 field.name
             ));
         }
+        fields_doc.push_empty_line();
+        for field in &layout {
+            fields_doc.push_string(format!(
+                "public {} get{}() {{ return {}; }}",
+                field.ty.to_string(),
+                first_char_to_uppercase(&field.name),
+                field.name
+            ));
+            fields_doc.push_empty_line();
+            fields_doc.push_string(format!(
+                "public void set{}({} {}) {{ this.{} = {}; }}",
+                first_char_to_uppercase(&field.name),
+                field.ty.to_string(),
+                field.name,
+                field.name,
+                field.name
+            ));
+            fields_doc.push_empty_line();
+        }
+
+        fields_doc.push_string(format!("public {}(", type_ctor.name));
+        let mut ctor_param_doc = Box::new(Doc::new(8));
+        for field in &layout {
+            ctor_param_doc.push_string(format!(
+                "{} {},",
+                field.ty.to_string(),
+                field.name
+            ));
+        }
+        fields_doc.push_doc(ctor_param_doc);
+        fields_doc.push_str(") {");
+        let mut ctor_body_doc = Box::new(Doc::new(4));
+        for field in &layout {
+            ctor_body_doc.push_string(format!(
+                "this.{} = {};",
+                field.name,
+                field.name
+            ));
+        }
+        fields_doc.push_doc(ctor_body_doc);
+        fields_doc.push_str("}");
+
         output.push_doc(fields_doc);
         output.push_str("}");
 
