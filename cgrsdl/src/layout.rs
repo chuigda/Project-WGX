@@ -7,13 +7,25 @@ pub enum LayoutMode {
     PushConstant
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum CGType {
     Float,
     Vector2,
     Vector3,
     Vector4,
     Matrix4x4
+}
+
+impl ToString for CGType {
+    fn to_string(&self) -> String {
+        match self {
+            CGType::Float => "float".to_owned(),
+            CGType::Vector2 => "Vector2".to_owned(),
+            CGType::Vector3 => "Vector3".to_owned(),
+            CGType::Vector4 => "Vector4".to_owned(),
+            CGType::Matrix4x4 => "Matrix4x4".to_owned()
+        }
+    }
 }
 
 impl CGType {

@@ -1,44 +1,33 @@
-use std::error::Error;
+use std::{error::Error, collections::BTreeSet};
 use rsdl::{
     codegen::{CodeGenerator, Doc, CodeGeneratorFactory},
     parser::hir::{
-        check_inline,
         RSDLType,
         AttrItem,
         TypeConstructor,
-        SumType, extract_doc_strings
+        SumType, extract_doc_strings, check_ident_attr
     },
     min_resolv::ResolveContext
 };
 
-use crate::layout::LayoutMode;
+use crate::layout::{LayoutMode, CGType, LayoutBuilder};
 
 pub struct JavaGen();
 
 impl JavaGen {
-    fn type_to_string(&self, ctx: &ResolveContext, ty: &RSDLType) -> Result<String, Box<dyn Error>> {
+    fn cg_type(&self, ty: &RSDLType) -> Result<CGType, Box<dyn Error>> {
         match ty {
             RSDLType::Identifier(ident) => {
-                if let Some((_, rsdl_type, is_inline)) = ctx.known_types.get(ident) {
-                    if *is_inline {
-                        let Some(rsdl_type) = rsdl_type else {
-                            return Err(format!("Unknown type: {}", ident).into());
-                        };
-                        self.type_to_string(ctx, rsdl_type)
-                    } else {
-                        Ok(ident.to_string())
-                    }
-                } else {
-                    return Err(format!("Unknown type: {}", ident).into());
+                match ident.as_str() {
+                    "float" => Ok(CGType::Float),
+                    "vec2" => Ok(CGType::Vector2),
+                    "vec3" => Ok(CGType::Vector3),
+                    "vec4" => Ok(CGType::Vector4),
+                    "mat4" => Ok(CGType::Matrix4x4),
+                    _ => Err(format!("Type {} is not a CGRSDL type", ident).into())
                 }
             },
-            RSDLType::Native(native) => if let Some(java_name) = native.get("typescript") {
-                Ok(java_name.to_string())
-            } else {
-                Err(format!("Unknown native type: {:?}", native).into())
-            },
-            RSDLType::List(_) => Err("CG data structure generator does not support lists".into()),
-            RSDLType::Record(_) => Err("CG data structure generator does not support records".into()),
+            _ => Err("Invalid type specification. Only very limited types are supported by CGRSDL yet".into())
         }
     }
 
@@ -164,7 +153,7 @@ impl CodeGenerator for JavaGen {
         _target_type: &RSDLType,
         _output: &mut Doc
     ) -> Result<(), Box<dyn Error>> {
-        if !check_inline(attr) {
+        if !check_ident_attr(attr, "builtin") {
             return Err("Java does not support type aliasing".into());
         }
         Ok(())
@@ -183,7 +172,7 @@ impl CodeGenerator for JavaGen {
             LayoutMode::UniformVulkan |
             LayoutMode::UniformSTD140 |
             LayoutMode::UniformSTD430 => "Uniform",
-            LayoutMode::PushConstant => "PushConstant",
+            LayoutMode::PushConstant => "PushConstant"
         };
 
         let java_doc = extract_doc_strings(attr, "java_doc")?;
@@ -195,11 +184,45 @@ impl CodeGenerator for JavaGen {
             output.push_str(" */");
         }
 
+        let mut layout_builder = LayoutBuilder::new(layout_mode);
+        for (_, nullable, ty, name) in &type_ctor.fields {
+            if *nullable {
+                return Err("CGRSDL does not support nullable fields".into());
+            }
+
+            let cg_type = self.cg_type(ty)?;
+            layout_builder.add_field(name, cg_type);
+        }
+        let layout = layout_builder.build();
+
+        let used_types = layout.iter()
+            .map(|field| field.ty)
+            .collect::<BTreeSet<_>>();
+        for ty in &used_types {
+            if *ty == CGType::Float {
+                continue;
+            }
+
+            output.push_string(format!("import tech.icey.r77.math.{};", ty.to_string()));
+        }
+        if !used_types.is_empty() {
+            output.push_empty_line();
+        }
+
         output.push_string(format!(
-            "public class {} implements {}, IntoBytes {{",
+            "public final class {} implements {}, IntoBytes {{",
             implement_inteface,
             type_ctor.name
         ));
+        let mut fields_doc = Box::new(Doc::new(4));
+        for field in &layout {
+            fields_doc.push_string(format!(
+                "private {} {};",
+                field.ty.to_string(),
+                field.name
+            ));
+        }
+        output.push_doc(fields_doc);
         output.push_str("}");
 
         Ok(())
@@ -212,7 +235,7 @@ impl CodeGenerator for JavaGen {
         _sum_type: &SumType,
         _output: &mut Doc
     ) -> Result<(), Box<dyn Error>> {
-        Err("Java does not support type aliasing".into())
+        Err("CGRSDL does not support sum type anyway".into())
     }
 
     fn visit_sum_type_ctor(
