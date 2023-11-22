@@ -177,6 +177,15 @@ impl CodeGenerator for JavaGen {
         type_ctor: &TypeConstructor,
         output: &mut Doc
     ) -> Result<(), Box<dyn Error>> {
+        let layout_mode = Self::layout_mode(attr)?;
+        let implement_inteface = match layout_mode {
+            LayoutMode::VertexBuffer => "Vertex",
+            LayoutMode::UniformVulkan |
+            LayoutMode::UniformSTD140 |
+            LayoutMode::UniformSTD430 => "Uniform",
+            LayoutMode::PushConstant => "PushConstant",
+        };
+
         let java_doc = extract_doc_strings(attr, "java_doc")?;
         if !java_doc.is_empty() {
             output.push_str("/**");
@@ -186,7 +195,11 @@ impl CodeGenerator for JavaGen {
             output.push_str(" */");
         }
 
-        output.push_string(format!("public class {} implements Vertex, IntoBytes {{", type_ctor.name));
+        output.push_string(format!(
+            "public class {} implements {}, IntoBytes {{",
+            implement_inteface,
+            type_ctor.name
+        ));
         output.push_str("}");
 
         Ok(())
