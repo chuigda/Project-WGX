@@ -3,3 +3,4 @@
 [inline] vec2 = native(java => "Vector2")
 [inline] vec3 = native(java => "Vector3")
 [inline] vec4 = native(java => "Vector4")
+[inline] mat4 = native(java => "Matrix4x4")

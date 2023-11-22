@@ -1,5 +1,6 @@
-[[package_name = "tech.icey.example"]]
+[[package = "tech.icey.example"]]
 
+[vertex]
 MyVertex(
     position: vec2,
     color: vec3
