@@ -50,8 +50,7 @@ impl JavaGen {
                         match ident.as_str() {
                             "std140" => return Ok(LayoutMode::UniformSTD140),
                             "std430" => return Ok(LayoutMode::UniformSTD430),
-                            "vulkan" => return Ok(LayoutMode::UniformVulkan),
-                            _ => {}
+                            _ => return Err("Invalid uniform layout attribute".into())
                         }
                     } else {
                         return Err("Invalid uniform layout attribute".into());
@@ -177,7 +176,6 @@ impl CodeGenerator for JavaGen {
         let layout_mode = Self::layout_mode(attr)?;
         let implement_inteface = match layout_mode {
             LayoutMode::VertexBuffer => "Vertex",
-            LayoutMode::UniformVulkan |
             LayoutMode::UniformSTD140 |
             LayoutMode::UniformSTD430 => "Uniform",
             LayoutMode::PushConstant => "PushConstant"
@@ -206,6 +204,16 @@ impl CodeGenerator for JavaGen {
             return Err("CGRSDL does not support empty data structure".into());
         }
 
+        output.push_str("import java.nio.ByteBuffer;");
+        output.push_str("import tech.icey.r77.asset.IntoBytes;");
+        output.push_str("import tech.icey.r77.asset.LayoutField;");
+        match layout_mode {
+            LayoutMode::VertexBuffer => output.push_str("import tech.icey.r77.asset.Vertex;"),
+            LayoutMode::UniformSTD140 |
+            LayoutMode::UniformSTD430 => output.push_str("import tech.icey.r77.asset.Uniform;"),
+            LayoutMode::PushConstant => output.push_str("import tech.icey.r77.asset.PushConstant;")
+        };
+
         let used_types = layout.iter()
             .map(|field| field.ty)
             .collect::<BTreeSet<_>>();
@@ -216,7 +224,6 @@ impl CodeGenerator for JavaGen {
 
             output.push_string(format!("import tech.icey.r77.math.{};", ty));
         }
-        output.push_str("import java.nio.ByteBuffer");
         if !used_types.is_empty() {
             output.push_empty_line();
         }
@@ -225,7 +232,6 @@ impl CodeGenerator for JavaGen {
             "public final class {} implements {}, IntoBytes {{",
             type_ctor.name,
             implement_inteface
-
         ));
         let mut fields_doc = Box::new(Doc::new(4));
         for field in &layout {
@@ -302,7 +308,26 @@ impl CodeGenerator for JavaGen {
         fields_doc.push_empty_line();
 
         fields_doc.push_str("@Override");
-        fields_doc.push_str("void writeToByteBuffer(ByteBuffer buffer) {");
+        fields_doc.push_str("public LayoutField[] layout() {");
+        let mut layout_doc = Box::new(Doc::new(4));
+        layout_doc.push_str("return new LayoutField[] {");
+        let mut array_elements_doc = Box::new(Doc::new(8));
+        for field in &layout {
+            array_elements_doc.push_string(format!(
+                "new LayoutField(\"{}\", LayoutField.Type.{}, {}),",
+                field.name,
+                field.ty.java_type_enum(),
+                field.offset
+            ));
+        }
+        layout_doc.push_doc(array_elements_doc);
+        layout_doc.push_str("};");
+        fields_doc.push_doc(layout_doc);
+        fields_doc.push_str("}");
+        fields_doc.push_empty_line();
+
+        fields_doc.push_str("@Override");
+        fields_doc.push_str("public void writeToByteBuffer(ByteBuffer buffer) {");
         let mut write_to_buffer_doc = Box::new(Doc::new(4));
         let mut current_offset = 0;
         for field in &layout {
@@ -390,7 +415,7 @@ impl CodeGenerator for JavaGen {
                     }
 
                     has_package_name = true;
-                    output.push_string(format!("package {package_name}"));
+                    output.push_string(format!("package {package_name};"));
                     output.push_empty_line();
                 }
                 _ => {}

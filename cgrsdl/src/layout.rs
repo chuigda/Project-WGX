@@ -3,7 +3,6 @@ use std::fmt::Display;
 #[derive(Clone, Copy, Debug)]
 pub enum LayoutMode {
     VertexBuffer,
-    UniformVulkan,
     UniformSTD140,
     UniformSTD430,
     PushConstant
@@ -16,6 +15,18 @@ pub enum CGType {
     Vector3,
     Vector4,
     Matrix4x4
+}
+
+impl CGType {
+    pub fn java_type_enum(&self) -> &'static str {
+        match self {
+            CGType::Float => "Float",
+            CGType::Vector2 => "Vector2",
+            CGType::Vector3 => "Vector3",
+            CGType::Vector4 => "Vector4",
+            CGType::Matrix4x4 => "Matrix4x4"
+        }
+    }
 }
 
 impl Display for CGType {
@@ -52,7 +63,6 @@ impl CGType {
                     16
                 }
             }
-            LayoutMode::UniformVulkan |
             LayoutMode::UniformSTD430 |
             LayoutMode::PushConstant => self.size()
         }
