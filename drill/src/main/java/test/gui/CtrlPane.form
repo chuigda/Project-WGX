@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="test.gui.CtrlPane">
+  <grid id="27dc6" binding="basePanel" layout-manager="GridLayoutManager" row-count="3" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="5" left="5" bottom="5" right="5"/>
+    <constraints>
+      <xy x="20" y="20" width="581" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <vspacer id="7e3d">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="bba5a" class="javax.swing.JButton" binding="addOnsButton" default-binding="true">
+        <constraints>
+          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.addon"/>
+        </properties>
+      </component>
+      <component id="cdb1f" class="javax.swing.JButton" binding="screenButton" default-binding="true">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.screen"/>
+        </properties>
+      </component>
+      <component id="5cbac" class="javax.swing.JButton" binding="sndAnalButton" default-binding="true">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.sndAnalysis"/>
+        </properties>
+      </component>
+      <component id="db0c8" class="javax.swing.JButton" binding="addOptsButton" default-binding="true">
+        <constraints>
+          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.additionOpt"/>
+        </properties>
+      </component>
+      <component id="2ed75" class="javax.swing.JButton" binding="helpButton" default-binding="true">
+        <constraints>
+          <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.help"/>
+        </properties>
+      </component>
+      <component id="5c242" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.label.adsHere"/>
+        </properties>
+      </component>
+      <component id="84a96" class="javax.swing.JToggleButton" binding="openGLToggleButton" default-binding="true">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.opengl"/>
+        </properties>
+      </component>
+      <component id="3961a" class="javax.swing.JToggleButton" binding="objPosToggleButton" default-binding="true">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.objpos"/>
+        </properties>
+      </component>
+      <component id="b44f" class="javax.swing.JToggleButton" binding="attiCtrlToggleButton" default-binding="true">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.attCtrl"/>
+        </properties>
+      </component>
+      <component id="1a29e" class="javax.swing.JToggleButton" binding="jointAnimToggleButton" default-binding="true">
+        <constraints>
+          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="ctrlpane.btn.jointAnim"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

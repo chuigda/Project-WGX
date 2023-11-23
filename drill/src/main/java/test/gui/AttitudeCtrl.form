@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="test.gui.AttitudeCtrl">
+  <grid id="27dc6" binding="basePanel" layout-manager="GridLayoutManager" row-count="3" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="20" left="20" bottom="20" right="20"/>
+    <constraints>
+      <xy x="20" y="20" width="500" height="400"/>
+    </constraints>
+    <properties>
+      <minimumSize width="300" height="55"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <component id="9ebed" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="attictrlpane.label.modeSelection"/>
+        </properties>
+      </component>
+      <vspacer id="b9e00">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="5667c" class="javax.swing.JRadioButton" binding="manualRadioButton" default-binding="true">
+        <constraints>
+          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="testgui" key="attictrlpane.radio.manual"/>
+        </properties>
+      </component>
+      <hspacer id="b544d">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+            <minimum-size width="100" height="-1"/>
+          </grid>
+        </constraints>
+      </hspacer>
+      <component id="90a3" class="javax.swing.JRadioButton" binding="osfRadioButton">
+        <constraints>
+          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="OSF"/>
+        </properties>
+      </component>
+      <component id="56b0c" class="javax.swing.JRadioButton" binding="vtsRadioButton">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="VTS"/>
+        </properties>
+      </component>
+      <grid id="7d672" binding="helpMessagePanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="d5011" class="javax.swing.JLabel">
+            <constraints/>
+            <properties>
+              <text resource-bundle="testgui" key="attictrlpane.btn.helpMessage.vts.start"/>
+            </properties>
+          </component>
+          <component id="1060c" class="javax.swing.JLabel" binding="helpMessageLinkLabel">
+            <constraints/>
+            <properties>
+              <text value="Label"/>
+              <verticalAlignment value="0"/>
+            </properties>
+          </component>
+          <component id="9433e" class="javax.swing.JLabel">
+            <constraints/>
+            <properties>
+              <text resource-bundle="testgui" key="attictrlpane.btn.helpMessage.vts.end"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>
