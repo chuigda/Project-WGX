@@ -1,8 +1,9 @@
 package test.gui;
 
-import test.gui.utils.JFrameHelper;
-
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 
 public class CtrlPane {
     private AttitudeCtrlForm attitudeCtrlForm;
@@ -24,8 +25,8 @@ public class CtrlPane {
         attitudeCtrlForm = AttitudeCtrlForm.initialize(basePanel, () -> attiCtrlToggleButton.setSelected(false));
         jointAnimationForm = JointAnimationForm.initialize(basePanel, () -> jointAnimToggleButton.setSelected(false));
 
-        JFrameHelper.addWGXTglBtnListener(attiCtrlToggleButton, attitudeCtrlForm);
-        JFrameHelper.addWGXTglBtnListener(jointAnimToggleButton, jointAnimationForm);
+        addTglBtnListener(attiCtrlToggleButton, attitudeCtrlForm);
+        addTglBtnListener(jointAnimToggleButton, jointAnimationForm);
     }
 
     public static void show() {
@@ -35,5 +36,17 @@ public class CtrlPane {
         frame.pack();
         frame.setLocationRelativeTo(null); // center window
         frame.setVisible(true);
+    }
+
+    private static void addTglBtnListener(JToggleButton btn, WGXBaseForm form) {
+        btn.addActionListener((ActionEvent e) -> {
+            EventQueue.invokeLater(() -> {
+                if (!btn.isSelected()) {
+                    form.dispatchEvent(new WindowEvent(form, WindowEvent.WINDOW_CLOSING));
+                } else {
+                    form.setVisible(true);
+                }
+            });
+        });
     }
 }

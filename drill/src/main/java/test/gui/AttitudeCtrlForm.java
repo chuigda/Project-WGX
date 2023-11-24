@@ -1,5 +1,6 @@
 package test.gui;
 
+import tech.icey.util.Unreachable;
 import test.gui.utils.JFrameHelper;
 import test.gui.utils.LinkRunner;
 import test.gui.utils.SysInfo;
@@ -44,7 +45,7 @@ public class AttitudeCtrlForm extends WGXBaseForm {
         try {
             uri = new URI(link);
         } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+            throw new Unreachable("?");
         }
         helpMessageLinkLabel.setText("<html><a href=\"%s\">%s</a></html>".formatted(
                 link,
