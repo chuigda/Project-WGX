@@ -1,6 +1,6 @@
 package test.gui;
 
-import tech.icey.util.Pair;
+import test.gui.utils.JFrameHelper;
 import test.gui.utils.LinkRunner;
 import test.gui.utils.SysInfo;
 
@@ -8,14 +8,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class AttitudeCtrl {
-    private static JFrame frame = null;
-
+public class AttitudeCtrlForm extends WGXBaseForm {
     private JPanel basePanel;
     private JRadioButton manualRadioButton;
     private JRadioButton osfRadioButton;
@@ -23,7 +19,8 @@ public class AttitudeCtrl {
     private JLabel helpMessageLinkLabel;
     private JPanel helpMessagePanel;
 
-    public AttitudeCtrl() {
+    public AttitudeCtrlForm() {
+        super(I18n.tr("attictrlform.title"));
         ButtonGroup modeRadioGroup = new ButtonGroup();
         modeRadioGroup.add(manualRadioButton);
         modeRadioGroup.add(osfRadioButton);
@@ -51,7 +48,7 @@ public class AttitudeCtrl {
         }
         helpMessageLinkLabel.setText("<html><a href=\"%s\">%s</a></html>".formatted(
                 link,
-                I18n.tr("attictrlpane.btn.helpMessage.vts.linkText")
+                I18n.tr("attictrlform.btn.helpMessage.vts.linkText")
         ));
         helpMessageLinkLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         helpMessageLinkLabel.addMouseListener(new MouseAdapter() {
@@ -62,19 +59,14 @@ public class AttitudeCtrl {
         });
     }
 
-    public static Pair<JFrame, AttitudeCtrl> initialize(Component parent, Runnable onFinish) {
-        JFrame frame = new JFrame(I18n.tr("attictrlpane.title"));
-        AttitudeCtrl ac = new AttitudeCtrl();
-        frame.setContentPane(ac.basePanel);
-        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        frame.pack();
-        frame.setLocationRelativeTo(parent);
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                onFinish.run();
-            }
-        });
-        return new Pair<>(frame, ac);
+    public static AttitudeCtrlForm initialize(Component parent, Runnable onFinish) {
+        AttitudeCtrlForm ac = new AttitudeCtrlForm();
+        JFrameHelper.initializeForm(ac, parent, onFinish);
+        return ac;
+    }
+
+    @Override
+    public JPanel getBasePanel() {
+        return basePanel;
     }
 }
