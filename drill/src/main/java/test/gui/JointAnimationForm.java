@@ -23,6 +23,8 @@ public class JointAnimationForm extends WGXBaseForm {
         super(I18n.tr("jointanimform.title"));
         var numBtns = 50;
         var layout = new GridLayout();
+        layout.setHgap(5);
+        layout.setVgap(5);
         layout.setColumns(ANIM_LIST_NUM_BTNS_PER_ROW);
         layout.setRows(numBtns / ANIM_LIST_NUM_BTNS_PER_ROW);
         animListBtnPanel.setLayout(layout);
