@@ -3,6 +3,10 @@ package test.gui;
 import javax.swing.*;
 
 public abstract class WGXBaseForm extends JFrame {
+    protected WGXBaseForm() {
+        super();
+    }
+
     protected WGXBaseForm(String title) {
         super(title);
     }
