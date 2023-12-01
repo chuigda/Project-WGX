@@ -8,7 +8,10 @@ public class DrillNashorn {
         ScriptEngine engine = factory.getEngineByName("nashorn");
 
         try {
-            engine.eval("print('Zdravstvuyte, mir')");
+            engine.eval("""
+var System = java.lang.System;
+System.out.println("Hello, World!");
+""");
         } catch (ScriptException e) {
             e.printStackTrace();
         }
