@@ -7,19 +7,19 @@ public class RuntimeError {
         }
     }
 
-    public static void unreachable() {
+    public static <T> T unreachable() {
         throw new Unreachable("Unreachable code executed");
     }
 
-    public static void unreachable(String reason) {
+    public static <T> T unreachable(String reason) {
         throw new Unreachable(reason);
     }
 
-    public static void runtimeError(String message) {
+    public static <T> T runtimeError(String message) {
         throw new RuntimeException(message);
     }
 
-    public static void runtimeError(String fmt, Object... args) {
+    public static <T> T runtimeError(String fmt, Object... args) {
         throw new RuntimeException(String.format(fmt, args));
     }
 }

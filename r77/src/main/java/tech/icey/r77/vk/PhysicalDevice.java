@@ -2,21 +2,23 @@ package tech.icey.r77.vk;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkExtensionProperties;
-import org.lwjgl.vulkan.VkInstance;
-import org.lwjgl.vulkan.VkPhysicalDevice;
-import org.lwjgl.vulkan.VkPhysicalDeviceProperties;
+import org.lwjgl.vulkan.*;
 import tech.icey.util.Logger;
+import tech.icey.util.NotNull;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.lwjgl.vulkan.VK10.*;
 import static tech.icey.util.RuntimeError.*;
 
 public class PhysicalDevice {
-    public static List<PhysicalDeviceProperties> listPhysicalDevices(Instance instance) {
+    public static List<PhysicalDeviceProperties> listPhysicalDevices(
+            @NotNull Instance instance,
+            long targetSurface
+    ) {
         VkInstance vkInstance = instance.getVkInstance();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -51,25 +53,79 @@ public class PhysicalDevice {
                     long driverVersion = Integer.toUnsignedLong(vkPhysicalDeviceProperties.driverVersion());
                     long vendorId = Integer.toUnsignedLong(vkPhysicalDeviceProperties.vendorID());
 
-                    IntBuffer numExtensionsBuf = stack1.mallocInt(1);
-                    ret = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, (String) null, numExtensionsBuf, null);
+                    IntBuffer numDeviceExtensionsBuf = stack1.mallocInt(1);
+                    ret = vkEnumerateDeviceExtensionProperties(
+                            vkPhysicalDevice,
+                            (String) null,
+                            numDeviceExtensionsBuf,
+                            null
+                    );
                     if (ret != VK_SUCCESS) {
                         runtimeError("枚举物理设备扩展失败: %d", ret);
                     }
 
-                    int numExtensions = numDevicesBuf.get(0);
-                    VkExtensionProperties.Buffer extensionsBuf = VkExtensionProperties.calloc(numExtensions, stack1);
-                    ret = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, (String) null, numExtensionsBuf, extensionsBuf);
+                    int numDeviceExtensions = numDeviceExtensionsBuf.get(0);
+                    VkExtensionProperties.Buffer extensionsBuf = VkExtensionProperties.calloc(numDeviceExtensions, stack1);
+                    ret = vkEnumerateDeviceExtensionProperties(
+                            vkPhysicalDevice,
+                            (String) null,
+                            numDeviceExtensionsBuf,
+                            extensionsBuf
+                    );
                     if (ret != VK_SUCCESS) {
                         runtimeError("枚举物理设备扩展失败: %d", ret);
                     }
 
-                    List<String> supportedExtensions = new ArrayList<>();
-                    for (int j = 0; j < numExtensions; j++) {
-                        supportedExtensions.add(extensionsBuf.get(j).extensionNameString());
+                    List<String> deviceExtensions = new ArrayList<>();
+                    for (int j = 0; j < numDeviceExtensions; j++) {
+                        deviceExtensions.add(extensionsBuf.get(j).extensionNameString());
                     }
+
+                    IntBuffer numQueueFamilyPropertiesBuf = stack1.mallocInt(1);
+                    vkGetPhysicalDeviceQueueFamilyProperties(
+                            vkPhysicalDevice,
+                            numQueueFamilyPropertiesBuf,
+                            null
+                    );
+                    int numQueueFamilyProperties = numQueueFamilyPropertiesBuf.get(0);
+
+                    VkQueueFamilyProperties.Buffer queueFamilyPropertiesBuf =
+                            VkQueueFamilyProperties.calloc(numQueueFamilyProperties, stack1);
+                    vkGetPhysicalDeviceQueueFamilyProperties(
+                            vkPhysicalDevice,
+                            numQueueFamilyPropertiesBuf,
+                            queueFamilyPropertiesBuf
+                    );
+
+                    Optional<Long> graphicsQueueFamilyIndex = Optional.empty();
+                    for (int j = 0; j < numQueueFamilyProperties; j++) {
+                        VkQueueFamilyProperties queueFamilyProperties = queueFamilyPropertiesBuf.get(j);
+                        if ((queueFamilyProperties.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
+                            graphicsQueueFamilyIndex = Optional.of((long) j);
+                        }
+                    }
+
+                    devices.add(new PhysicalDeviceProperties(
+                            deviceId,
+                            deviceName,
+                            driverVersion,
+                            vendorId,
+                            switch (vkPhysicalDeviceProperties.deviceType()) {
+                                case VK_PHYSICAL_DEVICE_TYPE_OTHER -> PhysicalDeviceProperties.PhysicalDeviceType.OTHER;
+                                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU -> PhysicalDeviceProperties.PhysicalDeviceType.INTEGRATED_GPU;
+                                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU -> PhysicalDeviceProperties.PhysicalDeviceType.DISCRETE_GPU;
+                                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU -> PhysicalDeviceProperties.PhysicalDeviceType.VIRTUAL_GPU;
+                                case VK_PHYSICAL_DEVICE_TYPE_CPU -> PhysicalDeviceProperties.PhysicalDeviceType.CPU;
+                                default -> unreachable();
+                            },
+                            deviceExtensions,
+                            graphicsQueueFamilyIndex,
+                            Optional.empty()
+                    ));
                 }
             }
+
+            return devices;
         }
     }
 

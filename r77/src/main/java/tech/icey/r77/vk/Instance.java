@@ -179,6 +179,7 @@ public class Instance implements AutoCloseable {
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
     private static VkDebugUtilsMessengerCreateInfoEXT createDebugCallback() {
+        Logger validationLayerLogger = new Logger("validation-layer");
         int messageSeverityBitmask = calculateMessageSeverityBitmask();
         //noinspection resource
         return VkDebugUtilsMessengerCreateInfoEXT.calloc()
@@ -196,7 +197,7 @@ public class Instance implements AutoCloseable {
                         default -> Logger.Level.FATAL;
                     };
 
-                    logger.log(level, callbackData.pMessageString());
+                    validationLayerLogger.log(level, callbackData.pMessageString());
                     return VK_FALSE;
                 });
     }
