@@ -13,7 +13,7 @@ public class VkWindow implements AutoCloseable {
         if (!Init.isInitialised()) {
             unreachable("尚未初始化 GLFW");
         }
-        
+
         if (!Init.isVulkanSupported()) {
             runtimeError("你所在的平台不支持 Vulkan");
         }

@@ -15,8 +15,6 @@ public class Main {
         controlWindow.setVisible(true);
 
         Logger.setLevel(Logger.Level.WARN);
-        Init.initialise();
-
         Logger.installHook((time, level, message) -> {
             var timeString = String.format("%tFT%<tT.%<tL%<tz", time);
             SwingUtilities.invokeLater(() -> controlWindow.addLogText(
@@ -25,10 +23,8 @@ public class Main {
             return null;
         });
 
-        try (var window = new VkWindow("你好", 600, 600)) {
-            var instance = new Instance("Project-WGX", true);
-
-            while (window.poll()) { runtimeError("测试异常处理器"); }
+        try {
+            renderMain();
         } catch (Exception e) {
             var errorMessageBuilder = new StringBuilder();
             errorMessageBuilder
@@ -41,6 +37,15 @@ public class Main {
             errorMessageBuilder.append("\thttps://github.com/chuigda/Project-WGX/issues");
 
             logger.log(Logger.Level.FATAL, errorMessageBuilder.toString());
+        }
+    }
+
+    private static void renderMain() {
+        Init.initialise();
+
+        try (var window = new VkWindow("你好", 600, 600);
+             var instance = new Instance("Project-WGX", true)) {
+            while (window.poll()) {}
         }
     }
 
