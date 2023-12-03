@@ -20,8 +20,6 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK13.*;
 
 public class Instance implements AutoCloseable {
-    private static final Logger logger = new Logger(Instance.class.getName());
-
     public Instance(String appName, boolean validation) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             ByteBuffer appNameBuf = stack.UTF8(appName);
@@ -221,6 +219,8 @@ public class Instance implements AutoCloseable {
     private final long debugHandle;
     private final VkDebugUtilsMessengerCreateInfoEXT debugUtils;
     private final boolean validation;
+
+    private static final Logger logger = new Logger(Instance.class.getName());
 
     @Override
     public void close() {
