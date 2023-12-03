@@ -50,9 +50,17 @@ public record IniParser() {
     public static <T> T deserialise(Class<T> clazz, HashMap<String, HashMap<String, String>> ini) {
         T instance;
         try {
-            instance = clazz.getConstructor().newInstance();
+            var ctor = clazz.getConstructor();
+            instance = ctor.newInstance();
         } catch (Exception e) {
-            return runtimeError("无法构造类型 %s 的实例，请检查该类型是否有合适的无参构造器", clazz.getName());
+            e.printStackTrace();
+
+            return runtimeError(
+                    "无法构造类型 %s 的实例: %s: %s",
+                    clazz.getName(),
+                    e.getClass().getName(),
+                    e.getMessage()
+            );
         }
 
         for (var field : clazz.getDeclaredFields()) {
