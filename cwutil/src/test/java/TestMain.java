@@ -9,10 +9,12 @@ booleanValue = true
 """;
         var parseResult = IniParser.parse(ini);
         var iniContent = parseResult.first();
-        var parseErrors = parseResult.second();
-        assert parseErrors.isEmpty();
+        assert parseResult.second().isEmpty();
 
-        var config = IniParser.deserialise(MyConfig.class, iniContent);
+        var deserialiseResult = IniParser.deserialise(MyConfig.class, iniContent);
+        assert deserialiseResult.second().isEmpty();
+
+        var config = deserialiseResult.first();
         assert config.getIntValue() == 1;
         assert config.getStringValue().equals("hello");
         assert config.getBooleanValue();

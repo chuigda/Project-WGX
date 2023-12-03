@@ -12,14 +12,31 @@ public final class ControlWindow extends JFrame {
         ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/icon-v2.png")));
         this.setIconImage(icon.getImage());
 
-        this.menuBar = new JMenuBar();
+        JMenuBar menuBar = new JMenuBar();
         this.setJMenuBar(menuBar);
 
-        this.systemMenu = new JMenu("System");
-        this.menuBar.add(this.systemMenu);
+        JMenu systemMenu = new JMenu("系统");
+        menuBar.add(systemMenu);
 
-        this.exitMenuItem = new JMenuItem("Exit");
-        this.systemMenu.add(this.exitMenuItem);
+        JMenu logLevelSubMenu = new JMenu("日志级别");
+        systemMenu.add(logLevelSubMenu);
+
+        JMenuItem logLevelDebugMenuItem = new JMenuItem("调试");
+        logLevelSubMenu.add(logLevelDebugMenuItem);
+        JMenuItem logLevelInfoMenuItem = new JMenuItem("信息");
+        logLevelSubMenu.add(logLevelInfoMenuItem);
+        JMenuItem logLevelWarnMenuItem = new JMenuItem("警告");
+        logLevelSubMenu.add(logLevelWarnMenuItem);
+        JMenuItem logLevelErrorMenuItem = new JMenuItem("错误");
+        logLevelSubMenu.add(logLevelErrorMenuItem);
+
+        JMenuItem exitMenuItem = new JMenuItem("退出") {
+            @Override
+            public void doClick(int pressTime) {
+                System.exit(0);
+            }
+        };
+        systemMenu.add(exitMenuItem);
 
         this.textArea = new JTextArea();
         Font font = new Font("SimSun", Font.PLAIN, 10);
@@ -30,8 +47,8 @@ public final class ControlWindow extends JFrame {
         this.textArea.setLineWrap(true);
         this.textArea.setEditable(false);
 
-        this.scrollPane = new JScrollPane(this.textArea);
-        this.add(this.scrollPane);
+        JScrollPane scrollPane = new JScrollPane(this.textArea);
+        this.add(scrollPane);
 
         this.setSize(480, 360);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -50,10 +67,5 @@ public final class ControlWindow extends JFrame {
         this.textArea.setCaretPosition(this.textArea.getDocument().getLength());
     }
 
-    private final JMenuBar menuBar;
-    private final JMenu systemMenu;
-    private final JMenuItem exitMenuItem;
-
     private final JTextArea textArea;
-    private final JScrollPane scrollPane;
 }
