@@ -28,6 +28,7 @@ public class VkWindow implements AutoCloseable {
         }
 
         glfwSetFramebufferSizeCallback(windowHandle, (window, w, h) -> resizeEvent(w, h));
+        glfwSetWindowCloseCallback(windowHandle, window -> glfwSetWindowShouldClose(window, false));
         glfwShowWindow(windowHandle);
     }
 

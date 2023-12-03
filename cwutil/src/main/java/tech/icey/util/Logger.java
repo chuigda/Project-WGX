@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public record Logger() {
+public record Logger(String className) {
     public enum Level {
         DEBUG(0),
         INFO(1),
@@ -37,7 +37,7 @@ public record Logger() {
         hooks.add(hook);
     }
 
-    public static synchronized void log(Level level, String message) {
+    public static synchronized void log_s(Level level, String message) {
         if (level.value < Logger.level.value) {
             return;
         }
@@ -51,5 +51,9 @@ public record Logger() {
             String time = String.format("%tFT%<tT.%<tL%<tz", now);
             System.err.printf("%s %s %s\n", time, level.name(), message);
         }
+    }
+
+    public void log(Level level, String message, Object... args) {
+        log_s(level, className + ": " + String.format(message, args));
     }
 }

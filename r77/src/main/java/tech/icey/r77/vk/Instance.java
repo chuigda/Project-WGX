@@ -20,6 +20,8 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK13.*;
 
 public class Instance implements AutoCloseable {
+    private static final Logger logger = new Logger(Instance.class.getName());
+
     public Instance(String appName, boolean validation) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             ByteBuffer appNameBuf = stack.UTF8(appName);
@@ -34,110 +36,165 @@ public class Instance implements AutoCloseable {
 
             Set<String> validationLayers = getSupportedValidationLayers();
             if (validation && validationLayers.isEmpty()) {
-                Logger.log(Logger.Level.WARN, "Vulkan 校验被要求启用，但当前平台不支持任何 Vulkan 校验层");
+                logger.log(Logger.Level.WARN, "Vulkan 校验被要求启用，但当前平台不支持任何 Vulkan 校验层");
+                validation = false;
             }
 
             List<String> validationLayersUsed = new ArrayList<>();
             if (validationLayers.contains("VK_LAYER_KHRONOS_validation")) {
+                logger.log(Logger.Level.INFO, "使用标准的 VK_LAYER_KHRONOS_validation 校验层");
                 validationLayersUsed.add("VK_LAYER_KHRONOS_validation");
-                Logger.log(Logger.Level.INFO, "使用 VK_LAYER_KHRONOS_validation 校验层");
             } else if (validationLayers.contains("VK_LAYER_LUNARG_standard_validation")) {
+                logger.log(Logger.Level.INFO, "使用 VK_LAYER_LUNARG_standard_validation 校验层（旧）");
                 validationLayersUsed.add("VK_LAYER_LUNARG_standard_validation");
-                Logger.log(Logger.Level.INFO, "使用 VK_LAYER_LUNARG_standard_validation 校验层（旧）");
             } else {
-                Logger.log(Logger.Level.WARN, "Vulkan 校验被要求启用，但当前平台不支持任何 Vulkan 校验层");
+                logger.log(Logger.Level.WARN, "Vulkan 校验被要求启用，但当前平台不支持任何 R77 已知的 Vulkan 校验层");
+                validation = false;
             }
 
-            PointerBuffer requiredLayers = null;
-            if (!validationLayersUsed.isEmpty()) {
-                requiredLayers = stack.mallocPointer(validationLayersUsed.size());
-                for (String layer : validationLayersUsed) {
-                    requiredLayers.put(stack.ASCII(layer));
+            PointerBuffer requiredLayersBuf = null;
+            if (validation) {
+                requiredLayersBuf = stack.mallocPointer(validationLayersUsed.size());
+                for (int i = 0; i < validationLayersUsed.size(); i++) {
+                    requiredLayersBuf.put(i, stack.ASCII(validationLayersUsed.get(i)));
                 }
-                requiredLayers.rewind();
             }
 
-            PointerBuffer requiredExtensions = GLFWVulkan.glfwGetRequiredInstanceExtensions();
-            long debugMessengerCreateInfo = MemoryUtil.NULL;
-            if (requiredExtensions == null) {
+            PointerBuffer glfwExtensionsBuf = GLFWVulkan.glfwGetRequiredInstanceExtensions();
+            if (glfwExtensionsBuf == null) {
                 throw new RuntimeException("无法获取 GLFW 所需的 Vulkan 实例扩展");
             }
-            requiredExtensions.rewind();
 
-            if (requiredLayers != null) {
-                requiredExtensions.put(stack.ASCII(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
-                this.messengerCreateInfo = createMessengerCreateInfo();
-                debugMessengerCreateInfo = messengerCreateInfo.address();
-            } else {
-                this.messengerCreateInfo = null;
+            Set<String> instanceExtensions = getInstanceExtensions();
+            while (glfwExtensionsBuf.hasRemaining()) {
+                String extension = glfwExtensionsBuf.getStringASCII();
+                if (!instanceExtensions.contains(extension)) {
+                    throw new RuntimeException(String.format("GLFW 所需的 Vulkan 实例扩展 %s 未被支持", extension));
+                }
+            }
+            glfwExtensionsBuf.rewind();
+
+            if (validation && !instanceExtensions.contains(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+                logger.log(Logger.Level.WARN, "Vulkan 校验被要求启用，但当前平台不支持 VK_EXT_DEBUG_UTILS_EXTENSION_NAME 扩展");
+                validation = false;
             }
 
-            VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.calloc(stack)
+            PointerBuffer requiredExtensionsBuf;
+            if (validation) {
+                requiredExtensionsBuf = stack.mallocPointer(glfwExtensionsBuf.remaining() + 1);
+                requiredExtensionsBuf.put(glfwExtensionsBuf);
+                requiredExtensionsBuf.put(stack.ASCII(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+                requiredExtensionsBuf.rewind();
+            } else {
+                requiredExtensionsBuf = glfwExtensionsBuf;
+            }
+
+            VkDebugUtilsMessengerCreateInfoEXT debugUtils = null;
+            long pExtensions = MemoryUtil.NULL;
+            if (validation) {
+                debugUtils = createDebugCallback();
+                pExtensions = debugUtils.address();
+            }
+            this.debugUtils = debugUtils;
+
+            VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.calloc(stack)
                     .sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
-                    .pNext(debugMessengerCreateInfo)
+                    .pNext(pExtensions)
                     .pApplicationInfo(appInfo)
-                    .ppEnabledLayerNames(requiredLayers)
-                    .ppEnabledExtensionNames(requiredExtensions);
+                    .ppEnabledLayerNames(requiredLayersBuf)
+                    .ppEnabledExtensionNames(requiredExtensionsBuf);
 
-            PointerBuffer instance = stack.mallocPointer(1);
-            int result = vkCreateInstance(instanceCreateInfo, null, instance);
-            if (result != VK_SUCCESS) {
-                throw new RuntimeException("创建 Vulkan 实例失败，错误码：" + result);
+            PointerBuffer instanceBuf = stack.mallocPointer(1);
+            int err = vkCreateInstance(createInfo, null, instanceBuf);
+            if (err != VK_SUCCESS) {
+                throw new RuntimeException(String.format("创建 Vulkan 实例失败，错误码：%d", err));
             }
+            this.instance = new VkInstance(instanceBuf.get(0), createInfo);
 
-            this.instance = new VkInstance(instance.get(0), instanceCreateInfo);
-
-            if (messengerCreateInfo != null) {
-                LongBuffer debugMessenger = stack.longs(VK_NULL_HANDLE);
-                System.err.println(debugMessenger.remaining());
-                try {
-                    result = vkCreateDebugUtilsMessengerEXT(this.instance, messengerCreateInfo, null, debugMessenger);
-                } catch (Exception e) {
-                    e.printStackTrace();
+            long debugHandle = VK_NULL_HANDLE;
+            if (validation) {
+                LongBuffer debugHandleBuf = stack.mallocLong(1);
+                err = vkCreateDebugUtilsMessengerEXT(this.instance, debugUtils, null, debugHandleBuf);
+                if (err != VK_SUCCESS) {
+                    throw new RuntimeException(String.format("创建 Vulkan 调试回调失败，错误码：%d", err));
                 }
-                if (result != VK_SUCCESS) {
-                    Logger.log(Logger.Level.WARN, "创建 Vulkan 调试信使失败，错误码：" + result + "，调试功能可能会不可用");
-                }
-
-                this.debugHandle = debugMessenger.get(0);
-            } else {
-                this.debugHandle = 0;
+                debugHandle = debugHandleBuf.get(0);
             }
+            this.validation = validation;
+            this.debugHandle = debugHandle;
         }
     }
 
-    private VkDebugUtilsMessengerCreateInfoEXT createMessengerCreateInfo() {
+    public boolean hasValidation() {
+        return validation;
+    }
+
+    private Set<String> getSupportedValidationLayers() {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer numLayersBuf = stack.callocInt(1);
+            vkEnumerateInstanceLayerProperties(numLayersBuf, null);
+
+            int numLayers = numLayersBuf.get(0);
+            logger.log(Logger.Level.DEBUG, "实例支持 %d 个校验层", numLayers);
+
+            VkLayerProperties.Buffer layerPropertiesBuf = VkLayerProperties.calloc(numLayers, stack);
+            vkEnumerateInstanceLayerProperties(numLayersBuf, layerPropertiesBuf);
+
+            Set<String> supportedValidationLayers = layerPropertiesBuf.stream()
+                    .map(VkLayerProperties::layerNameString)
+                    .collect(Collectors.toSet());
+            for (String layer : supportedValidationLayers) {
+                logger.log(Logger.Level.DEBUG, "实例支持校验层: %s", layer);
+            }
+            return supportedValidationLayers;
+        }
+    }
+
+    private Set<String> getInstanceExtensions() {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer numExtensionsBuf = stack.callocInt(1);
+            vkEnumerateInstanceExtensionProperties((String) null, numExtensionsBuf, null);
+
+            int numExtensions = numExtensionsBuf.get(0);
+            logger.log(Logger.Level.DEBUG, "实例支持 %d 个扩展", numExtensions);
+
+            VkExtensionProperties.Buffer extensionPropertiesBuf = VkExtensionProperties.calloc(numExtensions, stack);
+            vkEnumerateInstanceExtensionProperties((String) null, numExtensionsBuf, extensionPropertiesBuf);
+
+            Set<String> instanceExtensions = extensionPropertiesBuf.stream()
+                    .map(VkExtensionProperties::extensionNameString)
+                    .collect(Collectors.toSet());
+            for (String extension : instanceExtensions) {
+                logger.log(Logger.Level.DEBUG, "实例支持扩展: %s", extension);
+            }
+            return instanceExtensions;
+        }
+    }
+
+    private static final int MESSAGE_TYPE_BITMASK = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+
+    private static VkDebugUtilsMessengerCreateInfoEXT createDebugCallback() {
         int messageSeverityBitmask = calculateMessageSeverityBitmask();
-
-        int messageTypeMask = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-                | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-                | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-
-        return VkDebugUtilsMessengerCreateInfoEXT
-                .calloc()
+        //noinspection resource
+        return VkDebugUtilsMessengerCreateInfoEXT.calloc()
                 .sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
                 .messageSeverity(messageSeverityBitmask)
-                .messageType(messageTypeMask)
-                .pfnUserCallback((messageSeverity, messageType, pCallbackData, pUserData) -> {
-                    try (var callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData)) {
-                        String message = callbackData.pMessageString();
-                        switch (messageSeverity) {
-                            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-                                Logger.log(Logger.Level.DEBUG, message);
-                                break;
-                            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-                                Logger.log(Logger.Level.INFO, message);
-                                break;
-                            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-                                Logger.log(Logger.Level.ERROR, message);
-                                break;
-                            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-                            default:
-                                Logger.log(Logger.Level.WARN, message);
-                                break;
-                        }
-                        return VK_FALSE;
-                    }
+                .messageType(MESSAGE_TYPE_BITMASK)
+                .pfnUserCallback((severity, messageTypes, pCallbackData, pUserData) -> {
+                    VkDebugUtilsMessengerCallbackDataEXT callbackData =
+                            VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
+                    Logger.Level level = switch (severity) {
+                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT -> Logger.Level.DEBUG;
+                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT -> Logger.Level.INFO;
+                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT -> Logger.Level.WARN;
+                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT -> Logger.Level.ERROR;
+                        default -> Logger.Level.FATAL;
+                    };
+
+                    logger.log(level, callbackData.pMessageString());
+                    return VK_FALSE;
                 });
     }
 
@@ -160,46 +217,23 @@ public class Instance implements AutoCloseable {
         return messageSeverityBitmask;
     }
 
-    private Set<String> getSupportedValidationLayers() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            IntBuffer numLayers = stack.callocInt(1);
-            vkEnumerateInstanceLayerProperties(numLayers, null);
-
-            VkLayerProperties.Buffer properties = VkLayerProperties.calloc(numLayers.get(0), stack);
-            vkEnumerateInstanceLayerProperties(numLayers, properties);
-
-            return properties.stream()
-                    .map(VkLayerProperties::layerNameString)
-                    .collect(Collectors.toSet());
-        }
-    }
-
-    private Set<String> getInstanceExtensions() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            IntBuffer numExtensions = stack.callocInt(1);
-            vkEnumerateInstanceExtensionProperties((String) null, numExtensions, null);
-
-            VkExtensionProperties.Buffer properties = VkExtensionProperties.calloc(numExtensions.get(0), stack);
-            vkEnumerateInstanceExtensionProperties((String) null, numExtensions, properties);
-
-            return properties.stream()
-                    .map(VkExtensionProperties::extensionNameString)
-                    .collect(Collectors.toSet());
-        }
-    }
-
     private final VkInstance instance;
     private final long debugHandle;
-    private final VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo;
+    private final VkDebugUtilsMessengerCreateInfoEXT debugUtils;
+    private final boolean validation;
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (debugHandle != 0) {
             vkDestroyDebugUtilsMessengerEXT(instance, debugHandle, null);
         }
-        if (messengerCreateInfo != null) {
-            messengerCreateInfo.free();
+
+        if (debugUtils != null) {
+            debugUtils.pfnUserCallback().free();
+            debugUtils.free();
         }
+
         vkDestroyInstance(instance, null);
+        logger.log(Logger.Level.INFO, "成功销毁了 Vulkan 实例");
     }
 }
