@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK13.*;
+import static tech.icey.util.RuntimeError.*;
 
 public class Instance implements AutoCloseable {
     public Instance(String appName, boolean validation) {
@@ -60,14 +61,14 @@ public class Instance implements AutoCloseable {
 
             PointerBuffer glfwExtensionsBuf = GLFWVulkan.glfwGetRequiredInstanceExtensions();
             if (glfwExtensionsBuf == null) {
-                throw new RuntimeException("无法获取 GLFW 所需的 Vulkan 实例扩展");
+                runtimeError("无法获取 GLFW 所需的 Vulkan 实例扩展");
             }
 
             Set<String> instanceExtensions = getInstanceExtensions();
             while (glfwExtensionsBuf.hasRemaining()) {
                 String extension = glfwExtensionsBuf.getStringASCII();
                 if (!instanceExtensions.contains(extension)) {
-                    throw new RuntimeException(String.format("GLFW 所需的 Vulkan 实例扩展 %s 未被支持", extension));
+                    runtimeError("GLFW 所需的 Vulkan 实例扩展 %s 未被支持", extension);
                 }
             }
             glfwExtensionsBuf.rewind();
@@ -105,7 +106,7 @@ public class Instance implements AutoCloseable {
             PointerBuffer instanceBuf = stack.mallocPointer(1);
             int err = vkCreateInstance(createInfo, null, instanceBuf);
             if (err != VK_SUCCESS) {
-                throw new RuntimeException(String.format("创建 Vulkan 实例失败，错误码：%d", err));
+                runtimeError("创建 Vulkan 实例失败，错误码：%d", err);
             }
             this.instance = new VkInstance(instanceBuf.get(0), createInfo);
 
@@ -114,7 +115,7 @@ public class Instance implements AutoCloseable {
                 LongBuffer debugHandleBuf = stack.mallocLong(1);
                 err = vkCreateDebugUtilsMessengerEXT(this.instance, debugUtils, null, debugHandleBuf);
                 if (err != VK_SUCCESS) {
-                    throw new RuntimeException(String.format("创建 Vulkan 调试回调失败，错误码：%d", err));
+                    runtimeError("创建 Vulkan 调试回调失败，错误码：%d", err);
                 }
                 debugHandle = debugHandleBuf.get(0);
             }
@@ -125,6 +126,10 @@ public class Instance implements AutoCloseable {
 
     public boolean hasValidation() {
         return validation;
+    }
+
+    /* internal */ VkInstance getVkInstance() {
+        return instance;
     }
 
     private Set<String> getSupportedValidationLayers() {
