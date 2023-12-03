@@ -108,5 +108,5 @@ public class Main {
         }
     }
 
-    private static Logger logger = new Logger(Main.class.getName());
+    private static final Logger logger = new Logger(Main.class.getName());
 }

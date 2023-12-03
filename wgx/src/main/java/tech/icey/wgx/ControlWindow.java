@@ -38,6 +38,14 @@ public final class ControlWindow extends JFrame {
         };
         systemMenu.add(exitMenuItem);
 
+        JMenu helpMenu = new JMenu("帮助");
+        menuBar.add(helpMenu);
+
+        JMenuItem helpMenuItem = new JMenuItem("帮助主题");
+        helpMenu.add(helpMenuItem);
+        JMenuItem aboutItem = new JMenuItem("关于");
+        helpMenu.add(aboutItem);
+
         this.textArea = new JTextArea();
         Font font = new Font("SimSun", Font.PLAIN, 10);
         if (!font.canDisplay('中')) {
