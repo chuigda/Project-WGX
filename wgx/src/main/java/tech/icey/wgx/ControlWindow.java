@@ -56,10 +56,7 @@ public final class ControlWindow extends JFrame {
         helpMenu.add(aboutItem);
 
         this.textArea = new JTextArea();
-        Font font = new Font("SimSun", Font.PLAIN, 10);
-        if (!font.canDisplay('中')) {
-            font = new Font(Font.MONOSPACED, Font.PLAIN, 10);
-        }
+        Font font = FontDatabase.defaultMonospaceFont.deriveFont(10.0f);
         this.textArea.setFont(font);
         this.textArea.setLineWrap(true);
         this.textArea.setEditable(false);
