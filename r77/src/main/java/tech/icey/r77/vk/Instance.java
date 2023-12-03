@@ -74,7 +74,11 @@ public class Instance implements AutoCloseable {
             glfwExtensionsBuf.rewind();
 
             if (validation && !instanceExtensions.contains(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
-                logger.log(Logger.Level.WARN, "Vulkan 校验被要求启用，但当前平台不支持 VK_EXT_DEBUG_UTILS_EXTENSION_NAME 扩展");
+                logger.log(
+                        Logger.Level.WARN,
+                        "Vulkan 校验被要求启用，但当前平台不支持扩展 %s",
+                        VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+                );
                 validation = false;
             }
 
