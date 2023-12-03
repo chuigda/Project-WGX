@@ -22,7 +22,7 @@ public class Main {
 
         Date startTime = new Date();
         SwingUtilities.invokeLater(() -> controlWindow.addLogText(String.format(
-                "T=    +0.000 (%s) PROGRAM STARTUP\n",
+                "T=+0.000 (%s) PROGRAM STARTUP\n",
                 String.format("%tFT%<tT.%<tL%<tz", startTime)
         )));
 
@@ -31,7 +31,7 @@ public class Main {
             int milliSecondsElapsed = (int) (time.getTime() - startTime.getTime());
             float secondsElapsed = milliSecondsElapsed / 1000f;
             SwingUtilities.invokeLater(() -> controlWindow.addLogText(
-                    String.format("T=%+10.3f %s %s\n", secondsElapsed, level.name(), message)
+                    String.format("T=%+.3f %s %s\n", secondsElapsed, level.name(), message)
             ));
             return null;
         });
