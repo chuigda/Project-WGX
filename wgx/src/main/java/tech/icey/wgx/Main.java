@@ -18,7 +18,7 @@ public class Main {
         Init.initialise();
 
         Logger.installHook((time, level, message) -> {
-            String timeString = String.format("%tFT%<tT.%<tL%<tz", time);
+            var timeString = String.format("%tFT%<tT.%<tL%<tz", time);
             SwingUtilities.invokeLater(() -> controlWindow.addLogText(
                     String.format("%s %s %s\n", timeString, level.name(), message)
             ));
@@ -26,17 +26,21 @@ public class Main {
         });
 
         try (var window = new VkWindow("你好", 600, 600)) {
-            Instance instance = new Instance("Project-WGX", true);
+            var instance = new Instance("Project-WGX", true);
 
             while (window.poll()) { runtimeError("测试异常处理器"); }
         } catch (Exception e) {
-            logger.log(Logger.Level.FATAL, "发生了一个无法恢复的异常: %s，程序必须中止", e.getMessage());
-            logger.log(Logger.Level.FATAL, "堆栈跟踪: ");
+            var errorMessageBuilder = new StringBuilder();
+            errorMessageBuilder
+                    .append("发生了一个无法恢复的异常: ").append(e.getMessage()).append("\n")
+                    .append("堆栈跟踪: \n");
             for (StackTraceElement element : e.getStackTrace()) {
-                logger.log(Logger.Level.FATAL, "\t - %s", element.toString());
+                errorMessageBuilder.append("\t").append(element.toString()).append("\n");
             }
-            logger.log(Logger.Level.FATAL, "如果你确信这是一个程序 bug，可向 Project-WGX 的开发者报告:");
-            logger.log(Logger.Level.FATAL, "\thttps://github.com/chuigda/Project-WGX/issues");
+            errorMessageBuilder.append("如果你确信这是一个程序 bug，可向 Project-WGX 的开发者报告:");
+            errorMessageBuilder.append("\thttps://github.com/chuigda/Project-WGX/issues");
+
+            logger.log(Logger.Level.FATAL, errorMessageBuilder.toString());
         }
     }
 
