@@ -26,7 +26,7 @@ public class DeviceInfoWindow extends JFrame {
         detailTextArea.setLineWrap(true);
         detailTextArea.setWrapStyleWord(true);
         detailTextArea.setFont(FontDatabase.defaultMonospaceFont);
-        detailTextArea.setText("hihihi I am here");
+        detailTextArea.setText("hihihi I am here 我阐释你的梦");
         detailTextArea.setBorder(BorderFactory.createLineBorder(UIManager.getColor("MenuBar.borderColor"), 1));
 
         JButton cancelButton = new JButton("取消");
