@@ -6,15 +6,16 @@ import tech.icey.util.Pair;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static tech.icey.util.RuntimeError.*;
 
 public class VkWindow implements AutoCloseable {
     public VkWindow(String title, int width, int height) {
         if (!Init.isInitialised()) {
-            throw new RuntimeException("尚未初始化 GLFW");
+            unreachable("尚未初始化 GLFW");
         }
         
         if (!Init.isVulkanSupported()) {
-            throw new RuntimeException("你所在的平台不支持 Vulkan");
+            runtimeError("你所在的平台不支持 Vulkan");
         }
 
         glfwDefaultWindowHints();
@@ -24,7 +25,7 @@ public class VkWindow implements AutoCloseable {
 
         windowHandle = glfwCreateWindow(width, height, title, 0, 0);
         if (windowHandle == NULL) {
-            throw new RuntimeException("创建 GLFW 窗口失败");
+            runtimeError("创建 GLFW 窗口失败");
         }
 
         glfwSetFramebufferSizeCallback(windowHandle, (window, w, h) -> resizeEvent(w, h));

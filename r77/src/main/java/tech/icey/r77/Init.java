@@ -2,6 +2,7 @@ package tech.icey.r77;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
+import static tech.icey.util.RuntimeError.*;
 
 public class Init {
     private static boolean initialised = false;
@@ -9,11 +10,11 @@ public class Init {
 
     public synchronized static void initialise() {
         if (initialised) {
-            throw new RuntimeException("GLFW 已经被初始化过了!");
+            unreachable("GLFW 已经被初始化过了!");
         }
 
         if (!glfwInit()) {
-            throw new RuntimeException("GLFW 初始化失败!");
+            runtimeError("GLFW 初始化失败!");
         }
 
         vulkanSupported = glfwVulkanSupported();

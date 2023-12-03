@@ -14,7 +14,7 @@ public class Main {
         var controlWindow = new ControlWindow();
         controlWindow.setVisible(true);
 
-        Logger.setLevel(Logger.Level.DEBUG);
+        Logger.setLevel(Logger.Level.WARN);
         Init.initialise();
 
         Logger.installHook((time, level, message) -> {

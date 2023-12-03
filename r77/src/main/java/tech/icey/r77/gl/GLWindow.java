@@ -6,11 +6,12 @@ import tech.icey.util.NotNull;
 import tech.icey.util.Pair;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static tech.icey.util.RuntimeError.*;
 
 public abstract class GLWindow implements AutoCloseable {
     public GLWindow(@NotNull String title, int width, int height, boolean vsync) {
         if (!Init.isInitialised()) {
-            throw new RuntimeException("尚未初始化 GLFW");
+            unreachable("尚未初始化 GLFW");
         }
 
         glfwDefaultWindowHints();
@@ -20,7 +21,7 @@ public abstract class GLWindow implements AutoCloseable {
 
         windowHandle = glfwCreateWindow(width, height, title, 0, 0);
         if (windowHandle == NULL) {
-            throw new RuntimeException("你所在的平台不支持 Vulkan");
+            runtimeError("你所在的平台不支持 OpenGL");
         }
 
         if (vsync) {

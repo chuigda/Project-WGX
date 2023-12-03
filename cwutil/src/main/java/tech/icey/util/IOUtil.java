@@ -10,7 +10,7 @@ public final class IOUtil {
         while (true) {
             int read = stream.read();
             if (read == -1) {
-                throw new RuntimeException("EOF");
+                throw new IOException("Unexpected end of file");
             }
             buffer.put((byte) read);
             if (read == b) {
