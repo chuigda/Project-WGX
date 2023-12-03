@@ -30,6 +30,15 @@ public final class ControlWindow extends JFrame {
         JMenuItem logLevelErrorMenuItem = new JMenuItem("错误");
         logLevelSubMenu.add(logLevelErrorMenuItem);
 
+        JMenuItem pauseOrResumeMenuItem = new JMenuItem("暂停日志") {
+            @Override
+            public void doClick(int pressTime) {
+                logPaused = !logPaused;
+                this.setText(logPaused ? "恢复日志" : "暂停日志");
+            }
+        };
+        systemMenu.add(pauseOrResumeMenuItem);
+
         JMenuItem exitMenuItem = new JMenuItem("退出") {
             @Override
             public void doClick(int pressTime) {
@@ -63,6 +72,10 @@ public final class ControlWindow extends JFrame {
     }
 
     public void addLogText(@NotNull String logText) {
+        if (this.logPaused) {
+            return;
+        }
+
         if (this.textArea.getLineCount() > 3000) {
             try {
                 int start = this.textArea.getLineStartOffset(0);
@@ -76,4 +89,5 @@ public final class ControlWindow extends JFrame {
     }
 
     private final JTextArea textArea;
+    private boolean logPaused = false;
 }

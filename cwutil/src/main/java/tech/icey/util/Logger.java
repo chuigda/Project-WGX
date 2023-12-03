@@ -34,6 +34,8 @@ public record Logger(String className) {
 
     private static Level level = Level.WARN;
 
+    private static boolean logStderrAlways = false;
+
     private static final List<Function3<Date, Level, String, Void>> hooks = new ArrayList<>();
 
     public static synchronized Level getLevel() {
@@ -42,6 +44,10 @@ public record Logger(String className) {
 
     public static synchronized void setLevel(Level level) {
         Logger.level = level;
+    }
+
+    public static synchronized void setLogStderrAlways(boolean logStderrAlways) {
+        Logger.logStderrAlways = logStderrAlways;
     }
 
     public static synchronized void installHook(Function3<Date, Level, String, Void> hook) {
@@ -58,7 +64,7 @@ public record Logger(String className) {
             hook.apply(now, level, message);
         }
 
-        if (hooks.isEmpty() || getLevel() == Level.DEBUG) {
+        if (hooks.isEmpty() || logStderrAlways) {
             String time = String.format("%tFT%<tT.%<tL%<tz", now);
             System.err.printf("%s %s %s\n", time, level.name(), message);
         }

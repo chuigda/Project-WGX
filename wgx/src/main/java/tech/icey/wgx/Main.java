@@ -22,7 +22,7 @@ public class Main {
 
         Date startTime = new Date();
         SwingUtilities.invokeLater(() -> controlWindow.addLogText(String.format(
-                "T=+0.000 (%s) PROGRAM STARTUP\n",
+                "T=+0.000 (%s) IGNITION\n",
                 String.format("%tFT%<tT.%<tL%<tz", startTime)
         )));
 
@@ -38,6 +38,7 @@ public class Main {
 
         try {
             Config config = readConfig();
+            Logger.setLogStderrAlways(config.logStderrAlways);
             Logger.Level dedicatedLevel = Logger.Level.fromString(config.logLevel);
             if (dedicatedLevel == null) {
                 logger.log(Logger.Level.WARN, "配置文件中的日志级别无效, 将会回退为默认值 (WARN)");
