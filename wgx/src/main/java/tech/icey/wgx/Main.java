@@ -7,8 +7,6 @@ import tech.icey.util.Logger;
 
 import javax.swing.*;
 
-import static tech.icey.util.RuntimeError.runtimeError;
-
 public class Main {
     public static void main(String[] args) {
         var controlWindow = new ControlWindow();
@@ -28,7 +26,8 @@ public class Main {
         } catch (Exception e) {
             var errorMessageBuilder = new StringBuilder();
             errorMessageBuilder
-                    .append("发生了一个无法恢复的异常: ").append(e.getMessage()).append("\n")
+                    .append("发生了一个无法恢复的异常: \n")
+                    .append(e.getClass().getName()).append(": ").append(e.getMessage()).append("\n")
                     .append("堆栈跟踪: \n");
             for (StackTraceElement element : e.getStackTrace()) {
                 errorMessageBuilder.append("\t").append(element.toString()).append("\n");
