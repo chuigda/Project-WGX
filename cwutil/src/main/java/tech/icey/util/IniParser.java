@@ -79,6 +79,14 @@ public record IniParser() {
             try {
                 field.setAccessible(true);
                 if (field.getType() == String.class) {
+                    if (value.startsWith("\"") && value.endsWith("\"")) {
+                        value = value.substring(1, value.length() - 1)
+                                .replace("\\\"", "\"")
+                                .replace("\\\\", "\\")
+                                .replace("\\n", "\n")
+                                .replace("\\r", "\r")
+                                .replace("\\t", "\t");
+                    }
                     field.set(instance, value);
                 } else if (field.getType() == int.class) {
                     field.set(instance, Integer.parseInt(value));
