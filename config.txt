@@ -1,0 +1,11 @@
+log = debug
+
+[vulkan]
+validation = true
+device-uuid = 00000000280000000000000000000000
+
+[test]
+test = this-is-not-a-number, and we will see what it would do!
+
+[incorrectly-ended-section
+key-without-value

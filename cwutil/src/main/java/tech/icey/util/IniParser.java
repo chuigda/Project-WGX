@@ -47,8 +47,10 @@ public record IniParser() {
         return new Pair<>(result, parsingErrors);
     }
 
-    public static <T> T deserialise(Class<T> clazz, HashMap<String, HashMap<String, String>> ini) {
+    public static <T> Pair<T, List<String>> deserialise(Class<T> clazz, HashMap<String, HashMap<String, String>> ini) {
         T instance;
+        List<String> parseErrors = new ArrayList<>();
+
         try {
             var ctor = clazz.getConstructor();
             instance = ctor.newInstance();
@@ -98,6 +100,8 @@ public record IniParser() {
                     field.set(instance, value);
                 } else if (field.getType() == int.class) {
                     field.set(instance, Integer.parseInt(value));
+                } else if (field.getType() == long.class) {
+                    field.set(instance, Long.parseLong(value));
                 } else if (field.getType() == float.class) {
                     field.set(instance, Float.parseFloat(value));
                 } else if (field.getType() == double.class) {
@@ -113,13 +117,13 @@ public record IniParser() {
                     );
                 }
             } catch (NumberFormatException e) {
-                runtimeError(
-                        "无法解析类型 %s 的字段 %s（具有类型 %s）: %s",
-                        clazz.getName(),
-                        field.getName(),
+                parseErrors.add(String.format(
+                        "无法将节 %s 中 %s 的值解析为类型 %s: %s",
+                        iniField.section(),
+                        key,
                         field.getType().getName(),
                         e.getMessage()
-                );
+                ));
             } catch (Exception e) {
                 runtimeError(
                         "发生了以下异常，无法解析并设置类型 %s 的字段 %s: %s: %s",
@@ -131,6 +135,6 @@ public record IniParser() {
             }
         }
 
-        return instance;
+        return new Pair<>(instance, parseErrors);
     }
 }

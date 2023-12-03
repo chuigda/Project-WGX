@@ -18,6 +18,17 @@ public record Logger(String className) {
             return value;
         }
 
+        public static @Nullable Level fromString(@NotNull String str) {
+            return switch (str.toLowerCase()) {
+                case "debug" -> DEBUG;
+                case "info" -> INFO;
+                case "warn" -> WARN;
+                case "error" -> ERROR;
+                case "fatal" -> FATAL;
+                default -> null;
+            };
+        }
+
         private final int value;
     }
 
@@ -47,7 +58,7 @@ public record Logger(String className) {
             hook.apply(now, level, message);
         }
 
-        if (hooks.isEmpty()) {
+        if (hooks.isEmpty() || getLevel() == Level.DEBUG) {
             String time = String.format("%tFT%<tT.%<tL%<tz", now);
             System.err.printf("%s %s %s\n", time, level.name(), message);
         }
