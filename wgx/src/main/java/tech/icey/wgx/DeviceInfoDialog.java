@@ -18,11 +18,11 @@ public class DeviceInfoDialog extends JDialog {
         innerPane.setLayout(layout);
 
         JLabel deviceLabel = new JLabel("选择设备:");
-        JComboBox<String> comboBox = new JComboBox<>(new String[]{
-                "DEVICE_A",
-                "DEVICE_B",
-                "DEVICE_C"
-        });
+        JComboBox<String> comboBox = new JComboBox<>(
+                physicalDeviceProperties.stream()
+                        .map(PhysicalDeviceProperties::deviceName)
+                        .toArray(String[]::new)
+        );
 
         JTextArea detailTextArea = new JTextArea();
         detailTextArea.setEditable(false);
