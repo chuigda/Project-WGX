@@ -1,6 +1,9 @@
 log = info
 log-stderr-always = true
 
+[render]
+mode = vulkan
+
 [vulkan]
 validation = true
-device-uuid = "00000000280000000000000000000000"
+device = 17958
