@@ -1,4 +1,4 @@
-log = warn
+log = info
 log-stderr-always = true
 
 [vulkan]
