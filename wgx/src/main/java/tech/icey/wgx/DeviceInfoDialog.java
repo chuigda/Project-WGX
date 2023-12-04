@@ -6,9 +6,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class DeviceInfoWindow extends JFrame {
-    public DeviceInfoWindow(List<PhysicalDeviceProperties> physicalDeviceProperties) {
-        super("选择设备");
+public class DeviceInfoDialog extends JDialog {
+    public DeviceInfoDialog(
+            List<PhysicalDeviceProperties> physicalDeviceProperties,
+            JFrame owner
+    ) {
+        super(owner, "选择设备", true);
 
         JPanel innerPane = new JPanel();
         GridBagLayout layout = new GridBagLayout();
