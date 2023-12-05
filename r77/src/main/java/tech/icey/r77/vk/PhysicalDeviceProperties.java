@@ -15,7 +15,7 @@ public record PhysicalDeviceProperties(
         Optional<Long> graphicsQueueFamilyIndex,
         Optional<Long> presentationQueueFamilyIndex
 ) {
-    enum PhysicalDeviceType {
+    public enum PhysicalDeviceType {
         OTHER,
         INTEGRATED_GPU,
         DISCRETE_GPU,

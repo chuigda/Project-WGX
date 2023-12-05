@@ -5,6 +5,7 @@ import tech.icey.r77.vk.PhysicalDeviceProperties;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class DeviceInfoDialog extends JDialog {
     public DeviceInfoDialog(
@@ -18,22 +19,57 @@ public class DeviceInfoDialog extends JDialog {
         innerPane.setLayout(layout);
 
         JLabel deviceLabel = new JLabel("选择设备:");
-        JComboBox<String> comboBox = new JComboBox<>(
-                physicalDeviceProperties.stream()
+        String[] deviceNameArray = Stream.concat(
+                Stream.of("请选择"),
+                physicalDeviceProperties
+                        .stream()
                         .map(PhysicalDeviceProperties::deviceName)
-                        .toArray(String[]::new)
-        );
+        ).toArray(String[]::new);
+        JComboBox<String> comboBox = new JComboBox<>(deviceNameArray);
 
         JTextArea detailTextArea = new JTextArea();
         detailTextArea.setEditable(false);
         detailTextArea.setLineWrap(true);
         detailTextArea.setWrapStyleWord(true);
         detailTextArea.setFont(FontDatabase.defaultMonospaceFont);
-        detailTextArea.setText("hihihi I am here 我阐释你的梦");
+        detailTextArea.setText("选择一个设备，然后这里会显示其具体细节");
         detailTextArea.setBorder(BorderFactory.createLineBorder(UIManager.getColor("MenuBar.borderColor"), 1));
+
+        JScrollPane detailScrollPane = new JScrollPane(detailTextArea);
 
         JButton cancelButton = new JButton("取消");
         JButton okButton = new JButton("确定");
+        okButton.setEnabled(false);
+
+        comboBox.addActionListener(e -> {
+            int selectedIndex = comboBox.getSelectedIndex();
+            if (selectedIndex == 0) {
+                detailTextArea.setText("选择一个设备，然后这里会显示其具体细节");
+                okButton.setEnabled(false);
+            } else {
+                PhysicalDeviceProperties selectedDevice = physicalDeviceProperties.get(selectedIndex - 1);
+                detailTextArea.setText(
+                        String.format(
+                                """
+                                        设备名称: %s
+                                        设备类型: %s
+                                        设备 ID: %d
+                                        驱动版本: %d
+                                        厂商 ID: %d
+                                        设备扩展: %s
+                                        """,
+                                selectedDevice.deviceName(),
+                                selectedDevice.deviceType().descriptiveName(),
+                                selectedDevice.deviceId(),
+                                selectedDevice.driverVersion(),
+                                selectedDevice.vendorId(),
+                                String.join(" ", selectedDevice.deviceExtensions())
+                        )
+                );
+                okButton.setEnabled(true);
+                detailTextArea.setCaretPosition(0);
+            }
+        });
 
         {
             GridBagConstraints deviceLabelConstraints = new GridBagConstraints();
@@ -68,7 +104,7 @@ public class DeviceInfoDialog extends JDialog {
             detailTextAreaConstraints.fill = GridBagConstraints.BOTH;
             detailTextAreaConstraints.anchor = GridBagConstraints.WEST;
             detailTextAreaConstraints.insets = new Insets(4, 0, 4, 0);
-            innerPane.add(detailTextArea, detailTextAreaConstraints);
+            innerPane.add(detailScrollPane, detailTextAreaConstraints);
         }
 
         {
