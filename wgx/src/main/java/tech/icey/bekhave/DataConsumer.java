@@ -1,6 +1,6 @@
 package tech.icey.bekhave;
 
-public interface DataPublisher<T> {
+public interface DataConsumer<T> {
     default Class getDataType() {
         return getClass().getGenericInterfaces()[0].getClass();
     }
@@ -9,7 +9,5 @@ public interface DataPublisher<T> {
 
     String dataName();
 
-    T publishInitialData();
-
-    boolean updateData();
+    void consumeData(T data);
 }
