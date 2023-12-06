@@ -1,17 +1,10 @@
 package tech.icey.babel;
 
-import tech.icey.util.Pair;
+import tech.icey.util.Tuple3;
 
 import javax.swing.*;
 import java.util.List;
 
 public interface UIProvider {
-    enum DisplayPosition {
-        PluginMenu,
-        Puppetering,
-        ScreenAnimation,
-        BodyAnimation
-    }
-
-    List<Pair<JPanel, DisplayPosition>> provide();
+    List<Tuple3<String, UIEntryPoint, JPanel>> provide();
 }
