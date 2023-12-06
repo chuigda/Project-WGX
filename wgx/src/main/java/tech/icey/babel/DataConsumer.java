@@ -1,13 +1,6 @@
 package tech.icey.babel;
 
-public interface DataConsumer<T> {
-    default Class getDataType() {
-        return getClass().getGenericInterfaces()[0].getClass();
-    }
-
-    int priority();
-
-    String dataName();
-
-    void consumeData(T data);
+public interface DataConsumer {
+    void initialise(Bible bible);
+    void consume(Bible bible);
 }

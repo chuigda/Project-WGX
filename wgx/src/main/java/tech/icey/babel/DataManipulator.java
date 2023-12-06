@@ -1,13 +1,9 @@
 package tech.icey.babel;
 
-public interface DataManipulator<T> {
-    default Class getDataType() {
-        return getClass().getGenericInterfaces()[0].getClass();
-    }
-
+public interface DataManipulator {
     int priority();
 
-    String dataName();
+    void initialise(Bible bible);
 
-    boolean manipulateData(T data);
+    void manipulate(Bible bible);
 }
