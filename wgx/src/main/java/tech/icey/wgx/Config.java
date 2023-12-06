@@ -1,21 +1,23 @@
 package tech.icey.wgx;
 
 import tech.icey.util.IniField;
-import tech.icey.util.NotNull;
-import tech.icey.util.Nullable;
 
+import java.util.Optional;
+
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public final class Config {
     @IniField(key = "log")
-    @NotNull public String logLevel = "warn";
+    public String logLevel = "warn";
 
     @IniField(key = "log-file")
-    @Nullable public String logFile = null;
+    public Optional<String> logFile = Optional.empty();
 
     @IniField(key = "log-stderr-always")
     public boolean logStderrAlways = false;
 
     @IniField(section = "vulkan", key = "validation")
     public boolean vulkanValidation = false;
-    @IniField(section = "vulkan", key = "device-uuid")
-    public String vulkanDeviceUUID = "";
+
+    @IniField(section = "vulkan", key = "device-id")
+    public Optional<Long> vulkanDeviceId = Optional.empty();
 }

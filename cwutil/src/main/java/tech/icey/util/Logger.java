@@ -55,10 +55,6 @@ public record Logger(String className) {
     }
 
     public static synchronized void log_s(Level level, String message) {
-        if (level.value < Logger.level.value) {
-            return;
-        }
-
         Date now = new Date();
         for (Function3<Date, Level, String, Void> hook : hooks) {
             hook.apply(now, level, message);
@@ -71,6 +67,20 @@ public record Logger(String className) {
     }
 
     public void log(Level level, String message, Object... args) {
+        synchronized (Logger.level) {
+	        if (level.value < Logger.level.value) {
+	            return;
+	        }
+    	}
+    	
         log_s(level, className + ": " + String.format(message, args));
+    }
+    
+    public void debug(String message, Object... args) {
+    	log(Level.DEBUG, message, args);
+    }
+    
+    public void info(String message, Object... args) {
+    	log(Level.INFO, message, args);
     }
 }

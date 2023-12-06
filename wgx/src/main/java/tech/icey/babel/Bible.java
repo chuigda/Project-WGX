@@ -23,5 +23,16 @@ public final class Bible {
         return sharedData.get(ident);
     }
 
+    public void clearDirty() {
+        modelPosition.clearDirty();
+        jointStatus.clearDirty();
+
+        for (Radioactive item : sharedData.values()) {
+            item.clearDirty();
+        }
+    }
+    
+    public final ModelPosition modelPosition = new ModelPosition();
+    public final JointStatus jointStatus = new JointStatus();
     private final HashMap<String, Radioactive> sharedData = new HashMap<>();
 }

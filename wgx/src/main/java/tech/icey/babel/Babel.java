@@ -31,7 +31,7 @@ public final class Babel {
         }
     }
 
-    public void manipulate() {
+    public void runPipeline() {
         for (DataManipulator manipulator : this.dataManipulators) {
             manipulator.manipulate(this.bible);
         }
@@ -39,6 +39,10 @@ public final class Babel {
         for (DataConsumer consumer : this.dataConsumers) {
             consumer.consume(this.bible);
         }
+    }
+
+    public void cleanPipeline() {
+        bible.clearDirty();
     }
 
     private final List<DataManipulator> dataManipulators;

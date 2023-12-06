@@ -9,10 +9,6 @@ public class Drill {
         Init.initialise();
         try (var instance = new Instance("drill application", true)) {
             var physicalDeviceProperties = PhysicalDevice.listPhysicalDevices(instance, 0);
-            for (var physicalDevice : physicalDeviceProperties) {
-                System.out.println(physicalDevice);
-            }
-
             DeviceInfoDialog w = new DeviceInfoDialog(physicalDeviceProperties, null);
             w.setVisible(true);
         }

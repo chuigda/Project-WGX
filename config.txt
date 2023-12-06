@@ -6,4 +6,4 @@ mode = vulkan
 
 [vulkan]
 validation = true
-device = 17958
+device-id = 17958

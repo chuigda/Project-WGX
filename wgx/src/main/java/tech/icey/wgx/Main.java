@@ -57,7 +57,7 @@ public class Main {
             for (StackTraceElement element : e.getStackTrace()) {
                 errorMessageBuilder.append("\t").append(element.toString()).append("\n");
             }
-            errorMessageBuilder.append("如果你确信这是一个程序 bug，可向 Project-WGX 的开发者报告:");
+            errorMessageBuilder.append("如果你确信这是一个程序 bug，可向 Project-WGX 的开发者报告:\n");
             errorMessageBuilder.append("\thttps://github.com/chuigda/Project-WGX/issues");
 
             logger.log(Logger.Level.FATAL, errorMessageBuilder.toString());
