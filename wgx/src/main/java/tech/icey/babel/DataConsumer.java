@@ -1,6 +1,6 @@
-package tech.icey.bekhave;
+package tech.icey.babel;
 
-public interface DataManipulator<T> {
+public interface DataConsumer<T> {
     default Class getDataType() {
         return getClass().getGenericInterfaces()[0].getClass();
     }
@@ -9,5 +9,5 @@ public interface DataManipulator<T> {
 
     String dataName();
 
-    boolean manipulateData(T data);
+    void consumeData(T data);
 }

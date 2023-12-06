@@ -1,4 +1,4 @@
-package tech.icey.bekhave;
+package tech.icey.babel;
 
 import tech.icey.util.Pair;
 
