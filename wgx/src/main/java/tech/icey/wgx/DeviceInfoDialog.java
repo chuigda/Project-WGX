@@ -1,5 +1,7 @@
 package tech.icey.wgx;
 
+import tech.icey.kit.FontDatabase;
+import tech.icey.kit.MenuFactory;
 import tech.icey.r77.vk.PhysicalDeviceProperties;
 
 import javax.swing.*;
@@ -34,6 +36,7 @@ public class DeviceInfoDialog extends JDialog {
         detailTextArea.setFont(FontDatabase.defaultMonospaceFont);
         detailTextArea.setText("选择一个设备，然后这里会显示其具体细节");
         detailTextArea.setBorder(BorderFactory.createLineBorder(UIManager.getColor("MenuBar.borderColor"), 1));
+        MenuFactory.createTextAreaMenu(detailTextArea);
 
         JScrollPane detailScrollPane = new JScrollPane(detailTextArea);
 

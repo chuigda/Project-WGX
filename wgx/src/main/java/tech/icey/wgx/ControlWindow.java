@@ -1,5 +1,7 @@
 package tech.icey.wgx;
 
+import tech.icey.kit.FontDatabase;
+import tech.icey.kit.MenuFactory;
 import tech.icey.util.NotNull;
 
 import javax.swing.*;
@@ -60,6 +62,7 @@ public final class ControlWindow extends JFrame {
         this.textArea.setFont(font);
         this.textArea.setLineWrap(true);
         this.textArea.setEditable(false);
+        MenuFactory.createTextAreaMenu(this.textArea);
 
         JScrollPane scrollPane = new JScrollPane(this.textArea);
         this.add(scrollPane);
