@@ -7,7 +7,7 @@ public final class Babel {
     public Babel(List<DataPublisher> dataPublishers,
                  List<DataManipulator> dataManipulators,
                  List<DataConsumer> dataConsumers) {
-        dataPublishers = dataPublishers
+        this.dataPublishers = dataPublishers
                 .stream()
                 .sorted(Comparator.comparingInt(DataPublisher::priority))
                 .toList();
@@ -32,6 +32,10 @@ public final class Babel {
     }
 
     public void runPipeline() {
+        for (DataPublisher publisher : this.dataPublishers) {
+            publisher.publish();
+        }
+
         for (DataManipulator manipulator : this.dataManipulators) {
             manipulator.manipulate(this.bible);
         }
@@ -45,6 +49,7 @@ public final class Babel {
         bible.clearDirty();
     }
 
+    private final List<DataPublisher> dataPublishers;
     private final List<DataManipulator> dataManipulators;
     private final List<DataConsumer> dataConsumers;
     private final Bible bible;

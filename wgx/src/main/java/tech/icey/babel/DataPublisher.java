@@ -4,4 +4,6 @@ public interface DataPublisher {
     int priority();
 
     void initialise(Bible bible);
+
+    void publish();
 }
