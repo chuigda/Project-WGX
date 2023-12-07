@@ -1,6 +1,9 @@
 package tech.icey.rfc6455;
 
-import tech.icey.util.*;
+import tech.icey.util.Either;
+import tech.icey.util.NotNull;
+import tech.icey.util.Nullable;
+import tech.icey.util.Tuple3;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -162,6 +165,16 @@ public final class Connection implements AutoCloseable {
     private final boolean isClient;
     private Thread listenerThread;
 
+    /**
+     *
+     * @param uri
+     * @param socket
+     * @param rx
+     * @param tx
+     * @param isClient
+     * @param callback if null, then a listener thread will NOT be spawned. Reading and writing is handled by
+     *                 the user.
+     */
     Connection(@NotNull String uri,
                @NotNull Socket socket,
                @NotNull InputStream rx,
@@ -173,31 +186,31 @@ public final class Connection implements AutoCloseable {
         this.rx = rx;
         this.tx = tx;
         this.isClient = isClient;
-        this.listenerThread = new Thread(() -> {
-            while (!socket.isClosed()) {
-                try {
-                    Either<byte[], String> data = read();
-                    if (data == null) {
-                        // closed
-                        socket.close();
-                        break;
-                    }
+        if (callback != null) {
+            this.listenerThread = new Thread(() -> {
+                while (!socket.isClosed()) {
                     try {
-                        if (callback != null)
+                        Either<byte[], String> data = read();
+                        if (data == null) {
+                            // closed
+                            socket.close();
+                            break;
+                        }
+                        try {
                             callback.onData(data);
-                    } catch (Exception e) {
-                        // do not interrupt
+                        } catch (Exception e) {
+                            // do not interrupt
+                            callback.onError(e);
+                        }
+                    } catch (IOException e) {
                         callback.onError(e);
                     }
-                } catch (IOException e) {
-                    if (callback != null)
-                        callback.onError(e);
-                    else
-                        RuntimeError.runtimeError(e);
                 }
-            }
-        });
-        this.listenerThread.start();
+            });
+            this.listenerThread.start();
+        } else {
+            this.listenerThread = null;
+        }
     }
 
     private void impWrite(OpCode opCode, @Nullable byte[] bytes) throws IOException {
