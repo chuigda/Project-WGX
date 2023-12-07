@@ -41,7 +41,7 @@ public class Client {
 
             String handshakeRequest =
                 "GET " + uri + " HTTP/1.1\r\n" +
-                "Host: " + host + "\r\n" +
+                "Host: " + host + ":" + port + "\r\n" +
                 "Upgrade: websocket\r\n" +
                 "Connection: Upgrade\r\n" +
                 "Sec-WebSocket-Key: " + CLIENT_KEY + "\r\n" +

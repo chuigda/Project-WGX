@@ -12,6 +12,8 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import static tech.icey.util.RuntimeError.unreachable;
+
 public final class Connection implements AutoCloseable {
     // RFC6455 5.2 - Opcode
     //   %x0 denotes a continuation frame
@@ -39,6 +41,18 @@ public final class Connection implements AutoCloseable {
 
         public int getCode() {
             return code;
+        }
+
+        public static OpCode from(int code) {
+            return switch (code) {
+                case 0x0 -> CONTINUATION;
+                case 0x1 -> TEXT;
+                case 0x2 -> BINARY;
+                case 0x8 -> CLOSE;
+                case 0x9 -> PING;
+                case 0xA -> PONG;
+                default -> unreachable();
+            };
         }
     }
 
@@ -310,7 +324,7 @@ public final class Connection implements AutoCloseable {
             }
         }
 
-        return new Tuple3<>(OpCode.values()[opCodeByte], payload, fin);
+        return new Tuple3<>(OpCode.from(opCodeByte), payload, fin);
     }
 
     private static int payloadLengthFrom8Bytes(byte[] lengthBytes) throws IOException {
