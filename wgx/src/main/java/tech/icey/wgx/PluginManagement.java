@@ -7,11 +7,11 @@ import java.awt.*;
 import java.util.List;
 
 public final class PluginManagement extends JFrame {
-    public PluginManagement(List<BabelPlugin> plugins) {
+    public PluginManagement(List<BabelPlugin> plugins, List<List<Object>> pluginComponents) {
         super("插件管理");
 
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(1, 4));
+        panel.setLayout(new GridLayout(2, 2));
 
         JList<String> pluginList = new JList<>(plugins.stream().map(BabelPlugin::getName).toArray(String[]::new));
         JScrollPane pluginListScrollPane = new JScrollPane(pluginList);
@@ -46,6 +46,18 @@ public final class PluginManagement extends JFrame {
                 BorderFactory.createEmptyBorder(2, 2, 2, 2)
         ));
         componentBehaviourPanel.setLayout(new BoxLayout(componentBehaviourPanel, BoxLayout.Y_AXIS));
+        JCheckBox dataConsumerCheckBox = new JCheckBox("DataConsumer");
+        dataConsumerCheckBox.setEnabled(false);
+        JCheckBox dataManipulatorCheckBox = new JCheckBox("DataManipulator");
+        dataManipulatorCheckBox.setEnabled(false);
+        JCheckBox dataPublisherCheckBox = new JCheckBox("DataPublisher");
+        dataPublisherCheckBox.setEnabled(false);
+        JCheckBox uiProviderCheckBox = new JCheckBox("UIProvider");
+        uiProviderCheckBox.setEnabled(false);
+        componentBehaviourPanel.add(dataConsumerCheckBox);
+        componentBehaviourPanel.add(dataManipulatorCheckBox);
+        componentBehaviourPanel.add(dataPublisherCheckBox);
+        componentBehaviourPanel.add(uiProviderCheckBox);
 
         pluginList.addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) {
@@ -55,9 +67,32 @@ public final class PluginManagement extends JFrame {
             if (selectedIndex == -1) {
                 return;
             }
+
             BabelPlugin selectedPlugin = plugins.get(selectedIndex);
             pluginDescription.setText(selectedPlugin.getDescription());
-            pluginComponentList.setListData(selectedPlugin.getComponents().stream().map(Object::toString).toArray(String[]::new));
+            pluginComponentList.setListData(
+                    pluginComponents.get(selectedIndex)
+                            .stream()
+                            .map(x -> x.getClass().getName())
+                            .toArray(String[]::new)
+            );
+        });
+
+        pluginComponentList.addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) {
+                return;
+            }
+            int selectedIndex = pluginComponentList.getSelectedIndex();
+            if (selectedIndex == -1) {
+                return;
+            }
+
+            List<Object> selectedPluginComponents = pluginComponents.get(pluginList.getSelectedIndex());
+            Object selectedPluginComponent = selectedPluginComponents.get(selectedIndex);
+            dataConsumerCheckBox.setSelected(selectedPluginComponent instanceof tech.icey.babel.DataConsumer);
+            dataManipulatorCheckBox.setSelected(selectedPluginComponent instanceof tech.icey.babel.DataManipulator);
+            dataPublisherCheckBox.setSelected(selectedPluginComponent instanceof tech.icey.babel.DataPublisher);
+            uiProviderCheckBox.setSelected(selectedPluginComponent instanceof tech.icey.babel.UIProvider);
         });
 
         panel.add(pluginListPanel);
@@ -67,7 +102,7 @@ public final class PluginManagement extends JFrame {
 
         panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
         this.setContentPane(panel);
-        this.setSize(1000, 320);
+        this.setSize(640, 640);
         this.setResizable(false);
     }
 }

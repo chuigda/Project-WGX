@@ -1,8 +1,50 @@
 package tech.icey.wgx;
 
-import tech.icey.babel.BabelPlugin;
+import tech.icey.babel.*;
+import tech.icey.util.Tuple3;
 
+import javax.swing.*;
 import java.util.List;
+
+class Component1 implements UIProvider, DataConsumer {
+    @Override
+    public void initialise(Masterpiece masterpiece) {}
+
+    @Override
+    public void consume(Masterpiece masterpiece) {}
+
+    @Override
+    public List<Tuple3<String, UIEntryPoint, JPanel>> provide() {
+        return List.of();
+    }
+}
+
+class Component2 implements DataManipulator, DataPublisher, DataConsumer {
+    @Override
+    public void consume(Masterpiece masterpiece) {
+
+    }
+
+    @Override
+    public int priority() {
+        return 0;
+    }
+
+    @Override
+    public void initialise(Masterpiece masterpiece) {
+
+    }
+
+    @Override
+    public void publish() {
+
+    }
+
+    @Override
+    public void manipulate(Masterpiece masterpiece) {
+
+    }
+}
 
 class ExamplePlugin implements BabelPlugin {
     @Override
@@ -35,13 +77,18 @@ class ExamplePlugin implements BabelPlugin {
 
     @Override
     public List<Object> getComponents() {
-        return List.of();
+        return List.of(
+                new Component1(),
+                new Component2()
+        );
     }
 }
 
 public class Drill {
     public static void main(String[] args) {
-        PluginManagement mgmt = new PluginManagement(List.of(new ExamplePlugin()));
+        ExamplePlugin p = new ExamplePlugin();
+
+        PluginManagement mgmt = new PluginManagement(List.of(p), List.of(p.getComponents()));
         mgmt.setDefaultCloseOperation(PluginManagement.EXIT_ON_CLOSE);
         mgmt.setVisible(true);
     }
