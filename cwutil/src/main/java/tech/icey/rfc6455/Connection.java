@@ -149,10 +149,14 @@ public final class Connection implements AutoCloseable {
         try {
             // RFC6455 5.5.1
             //   The Close frame contains an opcode of 0x8.
-            impWrite(OpCode.CLOSE, new byte[0]);
+            impWrite(OpCode.CLOSE, new byte[] {0x03, (byte)0xe8});
             socket.close();
         } catch (IOException ignored) {
             // ignore any exception when we're already going to close
+        }
+        if (this.listenerThread != null) {
+            this.listenerThread.interrupt();
+            this.listenerThread = null;
         }
     }
 
@@ -161,17 +165,54 @@ public final class Connection implements AutoCloseable {
     private final InputStream rx;
     private final OutputStream tx;
     private final boolean isClient;
+    private Thread listenerThread;
 
+    /**
+     *
+     * @param uri
+     * @param socket
+     * @param rx
+     * @param tx
+     * @param isClient
+     * @param callback if null, then a listener thread will NOT be spawned. Reading and writing is handled by
+     *                 the user.
+     */
     Connection(@NotNull String uri,
                @NotNull Socket socket,
                @NotNull InputStream rx,
                @NotNull OutputStream tx,
-               boolean isClient) {
+               boolean isClient,
+               @Nullable RFC6455Callback callback) {
         this.uri = uri;
         this.socket = socket;
         this.rx = rx;
         this.tx = tx;
         this.isClient = isClient;
+        if (callback != null) {
+            this.listenerThread = new Thread(() -> {
+                while (!socket.isClosed()) {
+                    try {
+                        Either<byte[], String> data = read();
+                        if (data == null) {
+                            // closed
+                            socket.close();
+                            break;
+                        }
+                        try {
+                            callback.onData(data);
+                        } catch (Exception e) {
+                            // do not interrupt
+                            callback.onError(e);
+                        }
+                    } catch (IOException e) {
+                        callback.onError(e);
+                    }
+                }
+            });
+            this.listenerThread.start();
+        } else {
+            this.listenerThread = null;
+        }
     }
 
     private void impWrite(OpCode opCode, @Nullable byte[] bytes) throws IOException {
@@ -180,7 +221,8 @@ public final class Connection implements AutoCloseable {
         byte controlByte = (byte)(0x80 | opCode.getCode());
 
         byte[] maskingKeyBytes = null;
-        if (bytes != null && bytes.length != 0 && hasMask) {
+        // frame-masking-key present only if frame-masked is 1
+        if (hasMask) {
             int maskingKey = (int)(Math.random() * 0x7FFFFFFF);
             maskingKeyBytes = new byte[] {
                     (byte)((maskingKey >> 24) & 0xFF),
@@ -189,8 +231,10 @@ public final class Connection implements AutoCloseable {
                     (byte)(maskingKey & 0xFF)
             };
 
-            for (int i = 0; i < bytes.length; i++) {
-                bytes[i] ^= maskingKeyBytes[i % 4];
+            if (bytes != null && bytes.length > 0) {
+                for (int i = 0; i < bytes.length; i++) {
+                    bytes[i] ^= maskingKeyBytes[i % 4];
+                }
             }
         }
 
