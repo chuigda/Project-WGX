@@ -1,5 +1,6 @@
 package tech.icey.util;
 
+import tech.icey.util.Optional;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -7,10 +8,8 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 import static tech.icey.util.RuntimeError.runtimeError;
-import static tech.icey.util.RuntimeError.unreachable;
 
 public record IniParser() {
     public static Pair<HashMap<String, HashMap<String, String>>, List<String>> parse(String ini) {
@@ -120,7 +119,7 @@ public record IniParser() {
         System.out.println(ty);
         if (ty instanceof ParameterizedType pTy && pTy.getRawType() == Optional.class) {
             Type innerTy = pTy.getActualTypeArguments()[0];
-            return Optional.of(parseFieldValue(innerTy, value));
+            return Optional.fromNullable(parseFieldValue(innerTy, value));
         } else if (ty == String.class) {
             if (value.startsWith("\"") && value.endsWith("\"")) {
                 value = value.substring(1, value.length() - 1)

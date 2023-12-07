@@ -1,22 +1,24 @@
-import tech.icey.util.IniParser;
+import tech.icey.util.Either;
 
 public class TestMain {
     public static void main(String[] args) {
-        String ini = """
-intValue = 1
-stringValue = hello
-booleanValue = true
-""";
-        var parseResult = IniParser.parse(ini);
-        var iniContent = parseResult.first;
-        assert parseResult.second.isEmpty();
+        class ClassA {
+            @Override
+            public String toString() {
+                return "已知 A 班今天有若干人想上";
+            }
+        }
+        class ClassB {
+            @Override
+            public String toString() {
+                return "问今天这个 B 班有多少人想上";
+            }
+        }
 
-        var deserialiseResult = IniParser.deserialise(MyConfig.class, iniContent);
-        assert deserialiseResult.second.isEmpty();
+        Either<ClassA, ClassB> e1 = Either.left(new ClassA());
+        Either<ClassA, ClassB> e2 = Either.right(new ClassB());
 
-        var config = deserialiseResult.first;
-        assert config.getIntValue() == 1;
-        assert config.getStringValue().equals("hello");
-        assert config.getBooleanValue();
+        System.err.println(e1);
+        System.err.println(e2);
     }
 }

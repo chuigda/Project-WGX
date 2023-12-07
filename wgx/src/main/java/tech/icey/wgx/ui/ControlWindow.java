@@ -4,7 +4,6 @@ import tech.icey.wgx.babel.DockingPort;
 import tech.icey.wgx.babel.UIComponent;
 import tech.icey.wgx.babel.UIProvider;
 import tech.icey.util.Logger;
-import tech.icey.util.NotNull;
 import tech.icey.util.Pair;
 
 import javax.swing.*;
@@ -129,7 +128,7 @@ public final class ControlWindow extends JFrame {
         helpMenu.add(aboutItem);
     }
 
-    public void addLogText(@NotNull String logText) {
+    public void addLogText(String logText) {
         if (this.logPaused) {
             return;
         }

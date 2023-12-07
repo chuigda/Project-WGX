@@ -2,14 +2,13 @@ package tech.icey.r77.gl;
 
 import org.lwjgl.opengl.GL;
 import tech.icey.r77.Init;
-import tech.icey.util.NotNull;
 import tech.icey.util.Pair;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static tech.icey.util.RuntimeError.*;
 
 public abstract class GLWindow implements AutoCloseable {
-    public GLWindow(@NotNull String title, int width, int height, boolean vsync) {
+    public GLWindow(String title, int width, int height, boolean vsync) {
         if (!Init.isInitialised()) {
             unreachable("尚未初始化 GLFW");
         }
@@ -49,7 +48,7 @@ public abstract class GLWindow implements AutoCloseable {
         glfwShowWindow(windowHandle);
     }
 
-    public GLWindow(@NotNull String title, int width, int height) {
+    public GLWindow(String title, int width, int height) {
         this(title, width, height, true);
     }
 
@@ -76,7 +75,7 @@ public abstract class GLWindow implements AutoCloseable {
         return height[0];
     }
 
-    public final @NotNull Pair<Integer, Integer> getSize() {
+    public final Pair<Integer, Integer> getSize() {
         int[] width = new int[1];
         int[] height = new int[1];
         glfwGetWindowSize(windowHandle, width, height);

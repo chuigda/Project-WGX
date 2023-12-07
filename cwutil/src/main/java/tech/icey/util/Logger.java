@@ -18,7 +18,7 @@ public record Logger(String className) {
             return value;
         }
 
-        public static @Nullable Level fromString(@NotNull String str) {
+        public static Level fromString(String str) {
             return switch (str.toLowerCase()) {
                 case "debug" -> DEBUG;
                 case "info" -> INFO;

@@ -1,17 +1,16 @@
 package tech.icey.r77.vk;
 
-import tech.icey.util.NotNull;
+import tech.icey.util.Optional;
 
 import java.util.List;
-import java.util.Optional;
 
 public record PhysicalDeviceProperties(
         long deviceId,
-        @NotNull String deviceName,
+        String deviceName,
         long driverVersion,
         long vendorId,
-        @NotNull PhysicalDeviceType deviceType,
-        @NotNull List<String> deviceExtensions,
+        PhysicalDeviceType deviceType,
+        List<String> deviceExtensions,
         Optional<Long> graphicsQueueFamilyIndex,
         Optional<Long> presentationQueueFamilyIndex
 ) {

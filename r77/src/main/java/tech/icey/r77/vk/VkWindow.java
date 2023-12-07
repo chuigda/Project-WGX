@@ -1,7 +1,6 @@
 package tech.icey.r77.vk;
 
 import tech.icey.r77.Init;
-import tech.icey.util.NotNull;
 import tech.icey.util.Pair;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -57,7 +56,7 @@ public class VkWindow implements AutoCloseable {
         return height[0];
     }
 
-    public final @NotNull Pair<Integer, Integer> getSize() {
+    public final Pair<Integer, Integer> getSize() {
         int[] width = new int[1];
         int[] height = new int[1];
         glfwGetWindowSize(windowHandle, width, height);

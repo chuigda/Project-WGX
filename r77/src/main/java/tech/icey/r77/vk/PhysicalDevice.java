@@ -4,19 +4,18 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import tech.icey.util.Logger;
-import tech.icey.util.NotNull;
+import tech.icey.util.Optional;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.lwjgl.vulkan.VK10.*;
 import static tech.icey.util.RuntimeError.*;
 
 public class PhysicalDevice {
     public static List<PhysicalDeviceProperties> listPhysicalDevices(
-            @NotNull Instance instance,
+            Instance instance,
             long targetSurface
     ) {
         VkInstance vkInstance = instance.getVkInstance();
@@ -97,11 +96,11 @@ public class PhysicalDevice {
                             queueFamilyPropertiesBuf
                     );
 
-                    Optional<Long> graphicsQueueFamilyIndex = Optional.empty();
+                    Optional<Long> graphicsQueueFamilyIndex = Optional.none();
                     for (int j = 0; j < numQueueFamilyProperties; j++) {
                         VkQueueFamilyProperties queueFamilyProperties = queueFamilyPropertiesBuf.get(j);
                         if ((queueFamilyProperties.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
-                            graphicsQueueFamilyIndex = Optional.of((long) j);
+                            graphicsQueueFamilyIndex = Optional.some((long) j);
                         }
                     }
 
@@ -120,7 +119,7 @@ public class PhysicalDevice {
                             },
                             deviceExtensions,
                             graphicsQueueFamilyIndex,
-                            Optional.empty()
+                            Optional.none()
                     ));
                 }
             }

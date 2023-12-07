@@ -1,8 +1,6 @@
 package tech.icey.r77.asset;
 
-import tech.icey.util.NotNull;
-
-public record LayoutField(@NotNull String attrName, @NotNull Type type, int offset) {
+public record LayoutField(String attrName, Type type, int offset) {
     public enum Type {
         Float,
         Vector2,

@@ -1,8 +1,7 @@
 package tech.icey.rfc6455;
 
 import tech.icey.util.Either;
-import tech.icey.util.NotNull;
-import tech.icey.util.Nullable;
+import tech.icey.util.Optional;
 import tech.icey.util.Tuple3;
 
 import java.io.IOException;
@@ -58,22 +57,22 @@ public final class Connection implements AutoCloseable {
 
     public static final String RFC6455_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
-    public @NotNull String uri() {
+    public String uri() {
         return uri;
     }
 
-    public void write(@NotNull byte[] bytes) throws IOException {
+    public void write(byte[] bytes) throws IOException {
         byte[] copied = new byte[bytes.length];
         System.arraycopy(bytes, 0, copied, 0, bytes.length);
-        impWrite(OpCode.BINARY, copied);
+        impWrite(OpCode.BINARY, Optional.some(copied));
     }
 
-    public void write(@NotNull String string) throws IOException {
+    public void write(String string) throws IOException {
         byte[] utf8Bytes = string.getBytes(StandardCharsets.UTF_8);
-        impWrite(OpCode.TEXT, utf8Bytes);
+        impWrite(OpCode.TEXT, Optional.some(utf8Bytes));
     }
 
-    public @Nullable Either<byte[], String> read() throws IOException {
+    public Optional<Either<byte[], String>> read() throws IOException {
         while (true) {
             var fragmentResult = readFragment();
             OpCode opCode = fragmentResult.first;
@@ -82,7 +81,7 @@ public final class Connection implements AutoCloseable {
 
             ByteBuffer buffer = payload != null ? ByteBuffer.wrap(payload) : null;
             switch (opCode) {
-                case PING -> impWrite(OpCode.PONG, payload);
+                case PING -> impWrite(OpCode.PONG, Optional.some(payload));
                 case PONG -> {}
                 case CLOSE -> {
                     // RFC6455 7.1.2
@@ -93,11 +92,11 @@ public final class Connection implements AutoCloseable {
                     //   connection is said to have been closed _cleanly_.
 
                     try {
-                        impWrite(OpCode.CLOSE, payload);
+                        impWrite(OpCode.CLOSE, Optional.some(payload));
                     } catch (IOException ignored) {
                         // ignore any exception when we're already going to close
                     }
-                    return null;
+                    return Optional.none();
                 }
                 case TEXT, BINARY -> {
                     while (!fin) {
@@ -125,18 +124,18 @@ public final class Connection implements AutoCloseable {
                     }
                     if (opCode == OpCode.TEXT) {
                         if (buffer == null) {
-                            return Either.right("");
+                            return Optional.some(Either.right(""));
                         } else {
-                            return Either.right(StandardCharsets.UTF_8.decode(buffer).toString());
+                            return Optional.some(Either.right(StandardCharsets.UTF_8.decode(buffer).toString()));
                         }
                     } else {
                         if (buffer == null) {
-                            return Either.left(new byte[0]);
+                            return Optional.some(Either.left(new byte[0]));
                         } else {
                             byte[] bytes = new byte[buffer.position()];
                             buffer.flip();
                             buffer.get(bytes);
-                            return Either.left(bytes);
+                            return Optional.some(Either.left(bytes));
                         }
                     }
                 }
@@ -149,7 +148,7 @@ public final class Connection implements AutoCloseable {
         try {
             // RFC6455 5.5.1
             //   The Close frame contains an opcode of 0x8.
-            impWrite(OpCode.CLOSE, new byte[] {0x03, (byte)0xe8});
+            impWrite(OpCode.CLOSE, Optional.some(new byte[] { 0x03, (byte) 0xe8 }));
             socket.close();
         } catch (IOException ignored) {
             // ignore any exception when we're already going to close
@@ -177,35 +176,34 @@ public final class Connection implements AutoCloseable {
      * @param callback if null, then a listener thread will NOT be spawned. Reading and writing is handled by
      *                 the user.
      */
-    Connection(@NotNull String uri,
-               @NotNull Socket socket,
-               @NotNull InputStream rx,
-               @NotNull OutputStream tx,
+    Connection(String uri,
+               Socket socket,
+               InputStream rx,
+               OutputStream tx,
                boolean isClient,
-               @Nullable RFC6455Callback callback) {
+               Optional<RFC6455Callback> callback) {
         this.uri = uri;
         this.socket = socket;
         this.rx = rx;
         this.tx = tx;
         this.isClient = isClient;
-        if (callback != null) {
+        if (callback instanceof Optional.Some<RFC6455Callback> someCallback) {
             this.listenerThread = new Thread(() -> {
                 while (!socket.isClosed()) {
                     try {
-                        Either<byte[], String> data = read();
-                        if (data == null) {
-                            // closed
+                        Optional<Either<byte[], String>> data = read();
+                        if (!(data instanceof Optional.Some<Either<byte[], String>> some)) {
                             socket.close();
                             break;
                         }
+
                         try {
-                            callback.onData(data);
+                            someCallback.value.onData(some.value);
                         } catch (Exception e) {
-                            // do not interrupt
-                            callback.onError(e);
+                            someCallback.value.onError(e);
                         }
                     } catch (IOException e) {
-                        callback.onError(e);
+                        someCallback.value.onError(e);
                     }
                 }
             });
@@ -215,7 +213,7 @@ public final class Connection implements AutoCloseable {
         }
     }
 
-    private void impWrite(OpCode opCode, @Nullable byte[] bytes) throws IOException {
+    private void impWrite(OpCode opCode, Optional<byte[]> bytes) throws IOException {
         boolean hasMask = isClient;
         int maskBit = hasMask ? 0x80 : 0x00;
         byte controlByte = (byte)(0x80 | opCode.getCode());
@@ -231,14 +229,14 @@ public final class Connection implements AutoCloseable {
                     (byte)(maskingKey & 0xFF)
             };
 
-            if (bytes != null && bytes.length > 0) {
-                for (int i = 0; i < bytes.length; i++) {
-                    bytes[i] ^= maskingKeyBytes[i % 4];
+            if (bytes instanceof Optional.Some<byte[]> some && some.value.length > 0) {
+                for (int i = 0; i < some.value.length; i++) {
+                    some.value[i] ^= maskingKeyBytes[i % 4];
                 }
             }
         }
 
-        int payloadLength = bytes == null ? 0 : bytes.length;
+        int payloadLength = bytes instanceof Optional.Some<byte[]> some ? some.value.length : 0;
 
         synchronized (tx) {
             if (payloadLength <= 125) {
@@ -266,15 +264,13 @@ public final class Connection implements AutoCloseable {
                 tx.write(maskingKeyBytes);
             }
 
-            if (bytes == null || bytes.length == 0) {
-                return;
+            if (bytes instanceof Optional.Some<byte[]> some) {
+                tx.write(some.value);
             }
-
-            tx.write(bytes);
         }
     }
 
-    private @NotNull Tuple3<OpCode, byte[], Boolean> readFragment() throws IOException {
+    private Tuple3<OpCode, byte[], Boolean> readFragment() throws IOException {
         byte[] header = new byte[2];
         if (rx.read(header) < 2) {
             throw new IOException("Unexpected EOF");

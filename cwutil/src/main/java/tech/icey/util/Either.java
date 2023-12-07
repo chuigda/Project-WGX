@@ -1,6 +1,32 @@
 package tech.icey.util;
 
 public abstract sealed class Either<L, R> {
+    public static final class Left<L, R> extends Either<L, R> {
+        public final L value;
+
+        public Left(L value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return this.value.toString();
+        }
+    }
+
+    public static final class Right<L, R> extends Either<L, R> {
+        public final R value;
+
+        public Right(R value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return this.value.toString();
+        }
+    }
+
     public static <L, R> Either<L, R> left(L value) {
         return new Left<>(value);
     }
@@ -23,39 +49,5 @@ public abstract sealed class Either<L, R> {
 
     public boolean isRight() {
         return this instanceof Right;
-    }
-
-    @Override
-    public String toString() {
-        if (isLeft()) {
-            return this.left().toString();
-        }
-        return this.right().toString();
-    }
-}
-
-final class Left<L, R> extends Either<L, R> {
-    public final L value;
-
-    public Left(L value) {
-        this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value.toString();
-    }
-}
-
-final class Right<L, R> extends Either<L, R> {
-    public final R value;
-
-    public Right(R value) {
-        this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return this.value.toString();
     }
 }
