@@ -6,6 +6,7 @@ import tech.icey.r77.vk.VkWindow;
 import tech.icey.util.IniParser;
 import tech.icey.util.Logger;
 import tech.icey.util.Pair;
+import tech.icey.util.Optional;
 import tech.icey.wgx.ui.ControlWindow;
 
 import javax.swing.*;
@@ -40,12 +41,12 @@ public class Main {
         try {
             Config config = readConfig();
             Logger.setLogStderrAlways(config.logStderrAlways);
-            Logger.Level dedicatedLevel = Logger.Level.fromString(config.logLevel);
-            if (dedicatedLevel == null) {
-                logger.log(Logger.Level.WARN, "配置文件中的日志级别无效, 将会回退为默认值 (WARN)");
+            Optional<Logger.Level> dedicatedLevel = Logger.Level.fromString(config.logLevel);
+            if (dedicatedLevel instanceof Optional.Some<Logger.Level> someDedicatedLevel) {
+                Logger.setLevel(someDedicatedLevel.value);
+                logger.log(Logger.Level.INFO, "日志级别已设置为 %s", someDedicatedLevel.value.name());
             } else {
-                Logger.setLevel(dedicatedLevel);
-                logger.log(Logger.Level.INFO, "日志级别已设置为 %s", dedicatedLevel.name());
+                logger.log(Logger.Level.WARN, "配置文件中的日志级别无效, 将会回退为默认值 (WARN)");
             }
 
             renderMain();

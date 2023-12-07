@@ -18,14 +18,14 @@ public record Logger(String className) {
             return value;
         }
 
-        public static Level fromString(String str) {
+        public static Optional<Level> fromString(String str) {
             return switch (str.toLowerCase()) {
-                case "debug" -> DEBUG;
-                case "info" -> INFO;
-                case "warn" -> WARN;
-                case "error" -> ERROR;
-                case "fatal" -> FATAL;
-                default -> null;
+                case "debug" -> Optional.some(DEBUG);
+                case "info" -> Optional.some(INFO);
+                case "warn" -> Optional.some(WARN);
+                case "error" -> Optional.some(ERROR);
+                case "fatal" -> Optional.some(FATAL);
+                default -> Optional.none();
             };
         }
 

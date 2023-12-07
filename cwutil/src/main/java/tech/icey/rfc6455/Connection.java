@@ -79,7 +79,7 @@ public final class Connection implements AutoCloseable {
             byte[] payload = fragmentResult.second;
             boolean fin = fragmentResult.third;
 
-            ByteBuffer buffer = payload != null ? ByteBuffer.wrap(payload) : null;
+            ByteBuffer buffer = ByteBuffer.wrap(payload);
             switch (opCode) {
                 case PING -> impWrite(OpCode.PONG, Optional.some(payload));
                 case PONG -> {}
@@ -116,27 +116,15 @@ public final class Connection implements AutoCloseable {
                             throw new IOException("Invalid RFC6455 frame: continuation expected");
                         }
 
-                        if (buffer == null) {
-                            buffer = ByteBuffer.wrap(payload);
-                        } else {
-                            buffer.put(payload);
-                        }
+                        buffer.put(payload);
                     }
                     if (opCode == OpCode.TEXT) {
-                        if (buffer == null) {
-                            return Optional.some(Either.right(""));
-                        } else {
-                            return Optional.some(Either.right(StandardCharsets.UTF_8.decode(buffer).toString()));
-                        }
+                        return Optional.some(Either.right(StandardCharsets.UTF_8.decode(buffer).toString()));
                     } else {
-                        if (buffer == null) {
-                            return Optional.some(Either.left(new byte[0]));
-                        } else {
-                            byte[] bytes = new byte[buffer.position()];
-                            buffer.flip();
-                            buffer.get(bytes);
-                            return Optional.some(Either.left(bytes));
-                        }
+                        byte[] bytes = new byte[buffer.position()];
+                        buffer.rewind();
+                        buffer.get(bytes);
+                        return Optional.some(Either.left(bytes));
                     }
                 }
             }
