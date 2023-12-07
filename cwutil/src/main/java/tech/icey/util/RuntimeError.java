@@ -22,4 +22,12 @@ public class RuntimeError {
     public static <T> T runtimeError(String fmt, Object... args) {
         throw new RuntimeException(String.format(fmt, args));
     }
+
+    public static <T> T runtimeError(String message, Throwable cause) {
+        throw new RuntimeException(message, cause);
+    }
+
+    public static <T> T runtimeError(Throwable cause) {
+        throw new RuntimeException(cause);
+    }
 }

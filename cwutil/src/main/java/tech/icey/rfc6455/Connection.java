@@ -1,9 +1,6 @@
 package tech.icey.rfc6455;
 
-import tech.icey.util.Either;
-import tech.icey.util.NotNull;
-import tech.icey.util.Nullable;
-import tech.icey.util.Tuple3;
+import tech.icey.util.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -154,6 +151,8 @@ public final class Connection implements AutoCloseable {
         } catch (IOException ignored) {
             // ignore any exception when we're already going to close
         }
+        this.listenerThread.interrupt();
+        this.listenerThread = null;
     }
 
     private final String uri;
@@ -161,17 +160,44 @@ public final class Connection implements AutoCloseable {
     private final InputStream rx;
     private final OutputStream tx;
     private final boolean isClient;
+    private Thread listenerThread;
 
     Connection(@NotNull String uri,
                @NotNull Socket socket,
                @NotNull InputStream rx,
                @NotNull OutputStream tx,
-               boolean isClient) {
+               boolean isClient,
+               @Nullable RFC6455Callback callback) {
         this.uri = uri;
         this.socket = socket;
         this.rx = rx;
         this.tx = tx;
         this.isClient = isClient;
+        this.listenerThread = new Thread(() -> {
+            while (!socket.isClosed()) {
+                try {
+                    Either<byte[], String> data = read();
+                    if (data == null) {
+                        // closed
+                        socket.close();
+                        break;
+                    }
+                    try {
+                        if (callback != null)
+                            callback.onData(data);
+                    } catch (Exception e) {
+                        // do not interrupt
+                        callback.onError(e);
+                    }
+                } catch (IOException e) {
+                    if (callback != null)
+                        callback.onError(e);
+                    else
+                        RuntimeError.runtimeError(e);
+                }
+            }
+        });
+        this.listenerThread.start();
     }
 
     private void impWrite(OpCode opCode, @Nullable byte[] bytes) throws IOException {

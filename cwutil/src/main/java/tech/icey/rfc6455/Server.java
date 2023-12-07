@@ -13,8 +13,9 @@ import java.util.HashMap;
 import static tech.icey.rfc6455.Connection.RFC6455_GUID;
 
 public final class Server implements AutoCloseable {
-    public Server(int port) throws IOException {
+    public Server(int port, RFC6455Callback callback) throws IOException {
         this.serverSocket = new ServerSocket(port);
+        this.callback = callback;
     }
 
     public Connection accept() throws IOException {
@@ -134,7 +135,7 @@ public final class Server implements AutoCloseable {
             "\r\n";
 
         tx.write(response.getBytes(StandardCharsets.UTF_8));
-        return new Connection(uri, socket, rx, tx, false);
+        return new Connection(uri, socket, rx, tx, false, callback);
     }
 
     @Override
@@ -143,4 +144,6 @@ public final class Server implements AutoCloseable {
     }
 
     private final ServerSocket serverSocket;
+
+    private final RFC6455Callback callback;
 }
