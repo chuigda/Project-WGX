@@ -23,10 +23,8 @@ public final class PluginManagement extends JFrame {
 
         JLabel pluginDescription = new JLabel("选择一个插件来查看详情");
         JScrollPane pluginDescriptionScrollPane = new JScrollPane(pluginDescription);
-        // scroll only vertically
         pluginDescriptionScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         pluginDescriptionScrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-
         JPanel pluginDetailPanel = new JPanel();
         pluginDetailPanel.setBorder(BorderFactory.createTitledBorder("插件描述"));
         pluginDetailPanel.setLayout(new BorderLayout());
