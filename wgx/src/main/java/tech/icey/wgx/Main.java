@@ -18,7 +18,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        var controlWindow = new ControlWindow(List.of());
+        var controlWindow = new ControlWindow();
         controlWindow.setVisible(true);
 
         Date startTime = new Date();

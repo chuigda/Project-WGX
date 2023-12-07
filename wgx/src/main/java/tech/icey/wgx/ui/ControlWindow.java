@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.List;
 
 public final class ControlWindow extends JFrame {
-    public ControlWindow(List<UIProvider> uiProviderList) {
+    public ControlWindow() {
         super("Project-WGX - 控制器");
         ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/icon-v2.png")));
         this.setIconImage(icon.getImage());
@@ -25,6 +25,9 @@ public final class ControlWindow extends JFrame {
 
         JMenu systemMenu = new JMenu("系统");
         menuBar.add(systemMenu);
+
+        JMenuItem pluginManagementItem = new JMenuItem("插件管理");
+        systemMenu.add(pluginManagementItem);
 
         JMenu logLevelSubMenu = new JMenu("日志级别");
         systemMenu.add(logLevelSubMenu);
@@ -55,15 +58,6 @@ public final class ControlWindow extends JFrame {
         };
         systemMenu.add(exitMenuItem);
 
-        installUI(uiProviderList);
-
-        JMenu helpMenu = new JMenu("帮助");
-        menuBar.add(helpMenu);
-        JMenuItem helpMenuItem = new JMenuItem("帮助主题");
-        helpMenu.add(helpMenuItem);
-        JMenuItem aboutItem = new JMenuItem("关于");
-        helpMenu.add(aboutItem);
-
         this.textArea = new JTextArea();
         Font font = FontDatabase.defaultMonospaceFont.deriveFont(10.0f);
         this.textArea.setFont(font);
@@ -78,7 +72,7 @@ public final class ControlWindow extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    private void installUI(List<UIProvider> uiProviderList) {
+    public void installPluginUI(List<UIProvider> uiProviderList) {
         HashMap<String, UIComponent> components = new HashMap<>();
 
         for (UIProvider provider : uiProviderList) {
@@ -126,6 +120,13 @@ public final class ControlWindow extends JFrame {
                 }
             }
         }
+        
+        JMenu helpMenu = new JMenu("帮助");
+        menuBar.add(helpMenu);
+        JMenuItem helpMenuItem = new JMenuItem("帮助主题");
+        helpMenu.add(helpMenuItem);
+        JMenuItem aboutItem = new JMenuItem("关于");
+        helpMenu.add(aboutItem);
     }
 
     public void addLogText(@NotNull String logText) {
