@@ -131,15 +131,15 @@ public final class Connection implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         try {
             // RFC6455 5.5.1
             //   The Close frame contains an opcode of 0x8.
             impWrite(OpCode.CLOSE, new byte[0]);
+            socket.close();
         } catch (IOException ignored) {
             // ignore any exception when we're already going to close
         }
-        socket.close();
     }
 
     private final String uri;
