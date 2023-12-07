@@ -1,6 +1,7 @@
 package tech.icey.rfc6455;
 
 import tech.icey.util.IOUtil;
+import tech.icey.util.Optional;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -135,7 +136,7 @@ public final class Server implements AutoCloseable {
             "\r\n";
 
         tx.write(response.getBytes(StandardCharsets.UTF_8));
-        return new Connection(uri, socket, rx, tx, false, callback);
+        return new Connection(uri, socket, rx, tx, false, Optional.some(callback));
     }
 
     @Override

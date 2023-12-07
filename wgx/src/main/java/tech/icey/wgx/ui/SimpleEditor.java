@@ -22,7 +22,7 @@ public final class SimpleEditor extends JFrame {
 		menuBar.add(fileMenu);
 		JMenuItem createMenuItem = new JMenuItem("新建");
 		JMenuItem openMenuItem = new JMenuItem("打开");
-		JMenuItem saveMenuItem = new JMenu("保存");
+		JMenuItem saveMenuItem = new JMenuItem("保存");
 		JMenuItem saveAsMenuItem = new JMenuItem("另存为");
 		JMenuItem exitMenuItem = new JMenuItem("退出");
 

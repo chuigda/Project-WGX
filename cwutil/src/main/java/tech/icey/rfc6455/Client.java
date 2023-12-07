@@ -1,6 +1,7 @@
 package tech.icey.rfc6455;
 
 import tech.icey.util.IOUtil;
+import tech.icey.util.Optional;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,7 +87,7 @@ public class Client {
                 throw new IOException("Invalid HTTP response: missing WebSocket header");
             }
 
-            return new Connection(uri, socket, rx, tx, true, callback);
+            return new Connection(uri, socket, rx, tx, true, Optional.some(callback));
         } catch (Exception e) {
             socket.close();
             throw e;
