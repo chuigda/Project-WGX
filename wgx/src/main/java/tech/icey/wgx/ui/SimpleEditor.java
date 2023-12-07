@@ -33,6 +33,7 @@ public final class SimpleEditor extends JFrame {
 		this.setLayout(new BorderLayout());
 		
 		JTextArea textArea = new JTextArea();
+		textArea.setFont(FontDatabase.defaultMonospaceFont);
 		JScrollPane scrollPane = new JScrollPane(textArea);
 		this.add(scrollPane);
 		

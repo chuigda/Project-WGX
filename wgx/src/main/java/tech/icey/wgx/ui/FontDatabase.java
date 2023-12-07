@@ -29,6 +29,27 @@ public class FontDatabase {
                 break init;
             }
 
+            boolean hasDejavuSansMono = fontFamilies.stream()
+                    .anyMatch(s -> s.contains("DejaVu Sans Mono"));
+            if (hasDejavuSansMono) {
+                defaultMonospaceFont = new Font("DejaVu Sans Mono", Font.PLAIN, 14);
+                break init;
+            }
+
+            boolean hasLucidaConsole = fontFamilies.stream()
+                    .anyMatch(s -> s.contains("Lucida Console"));
+            if (hasLucidaConsole) {
+                defaultMonospaceFont = new Font("Lucida Console", Font.PLAIN, 14);
+                break init;
+            }
+
+            boolean hasConsolas = fontFamilies.stream()
+                    .anyMatch(s -> s.contains("Consolas"));
+            if (hasConsolas) {
+                defaultMonospaceFont = new Font("Consolas", Font.PLAIN, 14);
+                break init;
+            }
+
             boolean hasSimSun = fontFamilies.stream()
                     .anyMatch(s -> s.contains("宋体"));
             if (hasSimSun) {
