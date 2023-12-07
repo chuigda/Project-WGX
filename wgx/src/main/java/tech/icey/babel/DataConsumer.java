@@ -1,6 +1,6 @@
 package tech.icey.babel;
 
 public interface DataConsumer {
-    void initialise(Bible bible);
-    void consume(Bible bible);
+    void initialise(Masterpiece masterpiece);
+    void consume(Masterpiece masterpiece);
 }
