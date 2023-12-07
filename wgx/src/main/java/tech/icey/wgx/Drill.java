@@ -1,9 +1,8 @@
 package tech.icey.wgx;
 
 import tech.icey.babel.*;
-import tech.icey.util.Tuple3;
+import tech.icey.util.Pair;
 
-import javax.swing.*;
 import java.util.List;
 
 class Component1 implements UIProvider, DataConsumer {
@@ -14,7 +13,7 @@ class Component1 implements UIProvider, DataConsumer {
     public void consume(Masterpiece masterpiece) {}
 
     @Override
-    public List<Tuple3<String, UIEntryPoint, JPanel>> provide() {
+    public List<Pair<String, UIComponent>> provide() {
         return List.of();
     }
 }

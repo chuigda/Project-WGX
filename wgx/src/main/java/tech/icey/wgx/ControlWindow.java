@@ -1,8 +1,7 @@
 package tech.icey.wgx;
 
 import tech.icey.babel.DockingPort;
-import tech.icey.babel.HasMenuBar;
-import tech.icey.babel.UIEntryPoint;
+import tech.icey.babel.UIComponent;
 import tech.icey.babel.UIProvider;
 import tech.icey.kit.FontDatabase;
 import tech.icey.kit.MenuFactory;
@@ -83,63 +82,49 @@ public final class ControlWindow extends JFrame {
     }
 
     private void installUI(List<UIProvider> uiProviderList) {
-        HashMap<String, Pair<UIEntryPoint, JPanel>> components = new HashMap<>();
+        HashMap<String, UIComponent> components = new HashMap<>();
 
         for (UIProvider provider : uiProviderList) {
-            for (Tuple3<String, UIEntryPoint, JPanel> uiItem : provider.provide()) {
+            for (Pair<String, UIComponent> uiItem : provider.provide()) {
                 String name = uiItem.first;
-                UIEntryPoint entryPoint = uiItem.second;
-                JPanel panel = uiItem.third;
+                UIComponent uiComponent = uiItem.second;
 
-                components.put(name, new Pair<>(entryPoint, panel));
+                components.put(name, uiComponent);
             }
         }
 
-        for (Pair<UIEntryPoint, JPanel> uiItem : components.values()) {
-            UIEntryPoint entryPoint = uiItem.first;
-            JPanel panel = uiItem.second;
-
-            if (entryPoint instanceof UIEntryPoint.MenuItem menuItemEntryPoint) {
-                if (!createdMenus.containsKey(menuItemEntryPoint.menuName)) {
-                    JMenu menu = new JMenu(menuItemEntryPoint.menuName);
+        for (UIComponent uiComponent : components.values()) {
+            if (uiComponent instanceof UIComponent.MenuItem menuItemComponent) {
+                if (!createdMenus.containsKey(menuItemComponent.menuName)) {
+                    JMenu menu = new JMenu(menuItemComponent.menuName);
                     menuBar.add(menu);
-                    createdMenus.put(menuItemEntryPoint.menuName, menu);
+                    createdMenus.put(menuItemComponent.menuName, menu);
                 }
 
-                JMenu targetMenu = createdMenus.get(menuItemEntryPoint.menuName);
-                JMenuItem menuItem = new JMenuItem(menuItemEntryPoint.menuItemName);
-                JFrame containingFrame = new JFrame(menuItemEntryPoint.popupFrameName);
-                containingFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-                containingFrame.setContentPane(panel);
-
-                if (panel instanceof HasMenuBar hasMenuBar) {
-                    JMenuBar menuBar = hasMenuBar.getMenuBar();
-                    containingFrame.setJMenuBar(menuBar);
-                }
-
-                containingFrame.pack();
-                menuItem.addActionListener(e -> {
-                    containingFrame.setVisible(true);
-                    containingFrame.setLocationRelativeTo(null);
-                });
+                JMenu targetMenu = createdMenus.get(menuItemComponent.menuName);
+                JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(menuItemComponent.menuItemName);
+                menuItem.addActionListener(e -> menuItemComponent.frame.setVisible(menuItem.isSelected()));
 
                 targetMenu.add(menuItem);
-            } else if (entryPoint instanceof UIEntryPoint.SubElement subElementEntryPoint) {
-                String targetName = subElementEntryPoint.targetName;
+            } else if (uiComponent instanceof UIComponent.SubElement subElementComponent) {
+                String targetName = subElementComponent.targetName;
                 if (!components.containsKey(targetName)) {
                     logger.log(Logger.Level.WARN, "目标元素不存在: %s", targetName);
                 }
 
-                Pair<UIEntryPoint, JPanel> target = components.get(targetName);
-                JPanel targetPanel = target.second;
-                if (targetPanel instanceof DockingPort dockingPort) {
-                    dockingPort.addElement(subElementEntryPoint.name, subElementEntryPoint.location, panel);
+                UIComponent target = components.get(targetName);
+                if (target.getUnderlyingItem() instanceof DockingPort dockingPort) {
+                    dockingPort.addElement(
+                            subElementComponent.name,
+                            subElementComponent.location,
+                            subElementComponent.panel
+                    );
                 } else {
                     logger.log(
                             Logger.Level.WARN,
-                            "目标元素 (具有类型 %s) 不是 DockingPort: %s",
-                            targetPanel.getClass().getName(),
-                            targetName
+                            "目标元素 %s (具有类型 %s) 不是 DockingPort",
+                            targetName,
+                            target.getUnderlyingItem().getClass().getName()
                     );
                 }
             }
