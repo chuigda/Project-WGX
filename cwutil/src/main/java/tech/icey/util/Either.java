@@ -24,6 +24,14 @@ public abstract sealed class Either<L, R> {
     public boolean isRight() {
         return this instanceof Right;
     }
+
+    @Override
+    public String toString() {
+        if (isLeft()) {
+            return this.left().toString();
+        }
+        return this.right().toString();
+    }
 }
 
 final class Left<L, R> extends Either<L, R> {
@@ -32,6 +40,11 @@ final class Left<L, R> extends Either<L, R> {
     public Left(L value) {
         this.value = value;
     }
+
+    @Override
+    public String toString() {
+        return this.value.toString();
+    }
 }
 
 final class Right<L, R> extends Either<L, R> {
@@ -39,5 +52,10 @@ final class Right<L, R> extends Either<L, R> {
 
     public Right(R value) {
         this.value = value;
+    }
+
+    @Override
+    public String toString() {
+        return this.value.toString();
     }
 }

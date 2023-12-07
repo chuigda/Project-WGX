@@ -146,7 +146,7 @@ public final class Connection implements AutoCloseable {
         try {
             // RFC6455 5.5.1
             //   The Close frame contains an opcode of 0x8.
-            impWrite(OpCode.CLOSE, new byte[0]);
+            impWrite(OpCode.CLOSE, new byte[] {0x03, (byte)0xe8});
             socket.close();
         } catch (IOException ignored) {
             // ignore any exception when we're already going to close
@@ -206,7 +206,8 @@ public final class Connection implements AutoCloseable {
         byte controlByte = (byte)(0x80 | opCode.getCode());
 
         byte[] maskingKeyBytes = null;
-        if (bytes != null && bytes.length != 0 && hasMask) {
+        // frame-masking-key present only if frame-masked is 1
+        if (hasMask) {
             int maskingKey = (int)(Math.random() * 0x7FFFFFFF);
             maskingKeyBytes = new byte[] {
                     (byte)((maskingKey >> 24) & 0xFF),
@@ -215,8 +216,10 @@ public final class Connection implements AutoCloseable {
                     (byte)(maskingKey & 0xFF)
             };
 
-            for (int i = 0; i < bytes.length; i++) {
-                bytes[i] ^= maskingKeyBytes[i % 4];
+            if (bytes != null && bytes.length > 0) {
+                for (int i = 0; i < bytes.length; i++) {
+                    bytes[i] ^= maskingKeyBytes[i % 4];
+                }
             }
         }
 
