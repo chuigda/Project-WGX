@@ -1,4 +1,4 @@
-package tech.icey.kit;
+package tech.icey.wgx.ui;
 
 import javax.swing.*;
 

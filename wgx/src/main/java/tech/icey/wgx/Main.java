@@ -6,6 +6,7 @@ import tech.icey.r77.vk.VkWindow;
 import tech.icey.util.IniParser;
 import tech.icey.util.Logger;
 import tech.icey.util.Pair;
+import tech.icey.wgx.ui.ControlWindow;
 
 import javax.swing.*;
 import java.io.IOException;

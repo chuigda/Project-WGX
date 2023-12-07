@@ -1,4 +1,4 @@
-package tech.icey.kit;
+package tech.icey.wgx.ui;
 
 import java.awt.*;
 import java.util.Arrays;

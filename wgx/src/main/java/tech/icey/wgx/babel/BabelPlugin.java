@@ -1,4 +1,4 @@
-package tech.icey.babel;
+package tech.icey.wgx.babel;
 
 import java.util.List;
 

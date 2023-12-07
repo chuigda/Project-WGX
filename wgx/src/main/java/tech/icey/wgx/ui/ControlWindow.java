@@ -1,14 +1,11 @@
-package tech.icey.wgx;
+package tech.icey.wgx.ui;
 
-import tech.icey.babel.DockingPort;
-import tech.icey.babel.UIComponent;
-import tech.icey.babel.UIProvider;
-import tech.icey.kit.FontDatabase;
-import tech.icey.kit.MenuFactory;
+import tech.icey.wgx.babel.DockingPort;
+import tech.icey.wgx.babel.UIComponent;
+import tech.icey.wgx.babel.UIProvider;
 import tech.icey.util.Logger;
 import tech.icey.util.NotNull;
 import tech.icey.util.Pair;
-import tech.icey.util.Tuple3;
 
 import javax.swing.*;
 import java.awt.*;

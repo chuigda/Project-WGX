@@ -1,7 +1,7 @@
-package tech.icey.wgx;
+package tech.icey.wgx.ui;
 
-import tech.icey.kit.FontDatabase;
-import tech.icey.kit.MenuFactory;
+import tech.icey.wgx.ui.FontDatabase;
+import tech.icey.wgx.ui.MenuFactory;
 import tech.icey.r77.vk.PhysicalDeviceProperties;
 
 import javax.swing.*;

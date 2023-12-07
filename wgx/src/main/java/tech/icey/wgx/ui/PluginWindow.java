@@ -1,13 +1,13 @@
-package tech.icey.wgx;
+package tech.icey.wgx.ui;
 
-import tech.icey.babel.BabelPlugin;
+import tech.icey.wgx.babel.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public final class PluginManagement extends JFrame {
-    public PluginManagement(List<BabelPlugin> plugins, List<List<Object>> pluginComponents) {
+public final class PluginWindow extends JFrame {
+    public PluginWindow(List<BabelPlugin> plugins, List<List<Object>> pluginComponents) {
         super("插件管理");
 
         JPanel panel = new JPanel();
@@ -87,10 +87,10 @@ public final class PluginManagement extends JFrame {
 
             List<Object> selectedPluginComponents = pluginComponents.get(pluginList.getSelectedIndex());
             Object selectedPluginComponent = selectedPluginComponents.get(selectedIndex);
-            dataConsumerCheckBox.setSelected(selectedPluginComponent instanceof tech.icey.babel.DataConsumer);
-            dataManipulatorCheckBox.setSelected(selectedPluginComponent instanceof tech.icey.babel.DataManipulator);
-            dataPublisherCheckBox.setSelected(selectedPluginComponent instanceof tech.icey.babel.DataPublisher);
-            uiProviderCheckBox.setSelected(selectedPluginComponent instanceof tech.icey.babel.UIProvider);
+            dataConsumerCheckBox.setSelected(selectedPluginComponent instanceof DataConsumer);
+            dataManipulatorCheckBox.setSelected(selectedPluginComponent instanceof DataManipulator);
+            dataPublisherCheckBox.setSelected(selectedPluginComponent instanceof DataPublisher);
+            uiProviderCheckBox.setSelected(selectedPluginComponent instanceof UIProvider);
         });
 
         panel.add(pluginListPanel);

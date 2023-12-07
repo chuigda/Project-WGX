@@ -1,4 +1,4 @@
-package tech.icey.babel;
+package tech.icey.wgx.babel;
 
 public interface DataManipulator {
     int priority();

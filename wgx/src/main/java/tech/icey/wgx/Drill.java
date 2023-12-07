@@ -1,7 +1,8 @@
 package tech.icey.wgx;
 
-import tech.icey.babel.*;
 import tech.icey.util.Pair;
+import tech.icey.wgx.babel.*;
+import tech.icey.wgx.ui.PluginWindow;
 
 import java.util.List;
 
@@ -87,8 +88,8 @@ public class Drill {
     public static void main(String[] args) {
         ExamplePlugin p = new ExamplePlugin();
 
-        PluginManagement mgmt = new PluginManagement(List.of(p), List.of(p.getComponents()));
-        mgmt.setDefaultCloseOperation(PluginManagement.EXIT_ON_CLOSE);
+        PluginWindow mgmt = new PluginWindow(List.of(p), List.of(p.getComponents()));
+        mgmt.setDefaultCloseOperation(PluginWindow.EXIT_ON_CLOSE);
         mgmt.setVisible(true);
     }
 }
