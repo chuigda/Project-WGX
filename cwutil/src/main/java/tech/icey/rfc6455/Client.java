@@ -1,5 +1,7 @@
 package tech.icey.rfc6455;
 
+import tech.icey.util.IOUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,7 +13,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 
-import tech.icey.util.IOUtil;
 import static tech.icey.rfc6455.Connection.RFC6455_GUID;
 
 public class Client {
@@ -30,7 +31,11 @@ public class Client {
         }
     }
 
-    public static Connection connect(String host, int port, String uri) throws IOException {
+    public static Connection connect(
+            String host,
+            int port,
+            String uri,
+            RFC6455Callback callback) throws IOException {
         InetSocketAddress addr = new InetSocketAddress(host, port);
         Socket socket = new Socket();
         try {
@@ -81,7 +86,7 @@ public class Client {
                 throw new IOException("Invalid HTTP response: missing WebSocket header");
             }
 
-            return new Connection(uri, socket, rx, tx, true);
+            return new Connection(uri, socket, rx, tx, true, callback);
         } catch (Exception e) {
             socket.close();
             throw e;
