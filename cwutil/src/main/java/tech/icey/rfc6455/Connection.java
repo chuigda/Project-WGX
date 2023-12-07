@@ -154,8 +154,10 @@ public final class Connection implements AutoCloseable {
         } catch (IOException ignored) {
             // ignore any exception when we're already going to close
         }
-        this.listenerThread.interrupt();
-        this.listenerThread = null;
+        if (this.listenerThread != null) {
+            this.listenerThread.interrupt();
+            this.listenerThread = null;
+        }
     }
 
     private final String uri;
