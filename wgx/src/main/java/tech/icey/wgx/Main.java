@@ -17,7 +17,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        var controlWindow = new ControlWindow();
+        var controlWindow = new ControlWindow(List.of());
         controlWindow.setVisible(true);
 
         Date startTime = new Date();
@@ -68,9 +68,9 @@ public class Main {
         try {
             String iniContent = Files.readString(Paths.get("config.txt"));
             Pair<HashMap<String, HashMap<String, String>>, List<String>> parseResult = IniParser.parse(iniContent);
-            if (!parseResult.second().isEmpty()) {
+            if (!parseResult.second.isEmpty()) {
                 logger.log(Logger.Level.WARN, "配置文件解析时发生了以下错误:");
-                for (String error : parseResult.second()) {
+                for (String error : parseResult.second) {
                     logger.log(Logger.Level.WARN, "\t%s", error);
                 }
                 logger.log(
@@ -79,12 +79,12 @@ public class Main {
                 );
             }
 
-            HashMap<String, HashMap<String, String>> ini = parseResult.first();
+            HashMap<String, HashMap<String, String>> ini = parseResult.first;
             Pair<Config, List<String>> deserialiseResult = IniParser.deserialise(Config.class, ini);
 
-            if (!deserialiseResult.second().isEmpty()) {
+            if (!deserialiseResult.second.isEmpty()) {
                 logger.log(Logger.Level.WARN, "配置文件反序列化时发生了以下错误:");
-                for (String error : deserialiseResult.second()) {
+                for (String error : deserialiseResult.second) {
                     logger.log(Logger.Level.WARN, "\t%s", error);
                 }
                 logger.log(
@@ -93,7 +93,7 @@ public class Main {
                 );
             }
 
-            return deserialiseResult.first();
+            return deserialiseResult.first;
         } catch (IOException e) {
             logger.log(Logger.Level.WARN, "读取配置文件失败: %s, 将会回退为默认配置", e.getMessage());
             return new Config();
