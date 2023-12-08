@@ -5,5 +5,8 @@ import tech.icey.util.Either;
 public interface RFC6455Callback {
     void onData(Either<byte[], String> data);
 
-    default void onError(Exception e) {}
+    default void onError(Exception e) {
+        // need some logging
+        e.printStackTrace();
+    }
 }

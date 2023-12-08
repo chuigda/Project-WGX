@@ -36,7 +36,7 @@ public class Client {
             String host,
             int port,
             String uri,
-            RFC6455Callback callback) throws IOException {
+            Optional<RFC6455Callback> callback) throws IOException {
         InetSocketAddress addr = new InetSocketAddress(host, port);
         Socket socket = new Socket();
         try {
@@ -46,17 +46,17 @@ public class Client {
             OutputStream tx = socket.getOutputStream();
 
             String handshakeRequest =
-                "GET " + uri + " HTTP/1.1\r\n" +
-                "Host: " + host + ":" + port + "\r\n" +
-                "Upgrade: websocket\r\n" +
-                "Connection: Upgrade\r\n" +
-                "Sec-WebSocket-Key: " + CLIENT_KEY + "\r\n" +
-                "Sec-WebSocket-Version: 13\r\n" +
-                "\r\n";
+                    "GET " + uri + " HTTP/1.1\r\n" +
+                            "Host: " + host + ":" + port + "\r\n" +
+                            "Upgrade: websocket\r\n" +
+                            "Connection: Upgrade\r\n" +
+                            "Sec-WebSocket-Key: " + CLIENT_KEY + "\r\n" +
+                            "Sec-WebSocket-Version: 13\r\n" +
+                            "\r\n";
 
             tx.write(handshakeRequest.getBytes(StandardCharsets.UTF_8));
 
-            String headerLine = new String(IOUtil.readUntil(rx, (byte)'\n'), StandardCharsets.UTF_8).trim();
+            String headerLine = new String(IOUtil.readUntil(rx, (byte) '\n'), StandardCharsets.UTF_8).trim();
             String[] headerLineParts = headerLine.split(" ", 3);
             if (headerLineParts.length < 3 || !headerLineParts[1].equals("101")) {
                 throw new IOException("Invalid HTTP response status line: " + headerLine);
@@ -64,7 +64,7 @@ public class Client {
 
             HashMap<String, String> headers = new HashMap<>();
             while (true) {
-                byte[] line = IOUtil.readUntil(rx, (byte)'\n');
+                byte[] line = IOUtil.readUntil(rx, (byte) '\n');
                 String lineText = new String(line, StandardCharsets.UTF_8).trim();
                 if (lineText.isEmpty()) {
                     break;
@@ -87,7 +87,7 @@ public class Client {
                 throw new IOException("Invalid HTTP response: missing WebSocket header");
             }
 
-            return new Connection(uri, socket, rx, tx, true, Optional.some(callback));
+            return new Connection(uri, socket, rx, tx, true, callback);
         } catch (Exception e) {
             socket.close();
             throw e;
