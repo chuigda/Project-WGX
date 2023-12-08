@@ -135,7 +135,7 @@ public final class Connection implements AutoCloseable {
         try {
             // RFC6455 5.5.1
             //   The Close frame contains an opcode of 0x8.
-            impWrite(OpCode.CLOSE, Optional.some(new byte[]{0x03, (byte) 0xe8}));
+            impWrite(OpCode.CLOSE, Optional.some(new byte[] { 0x03, (byte) 0xe8 }));
             socket.close();
         } catch (IOException ignored) {
             // ignore any exception when we're already going to close
