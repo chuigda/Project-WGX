@@ -20,6 +20,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        <dependency>
             <groupId>tech.icey.cwutil</groupId>
             <artifactId>cwutil</artifactId>
             <version>${revision}</version>

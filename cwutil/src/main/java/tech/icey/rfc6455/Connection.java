@@ -4,6 +4,7 @@ import tech.icey.util.Either;
 import tech.icey.util.Optional;
 import tech.icey.util.Tuple3;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -79,7 +80,8 @@ public final class Connection implements AutoCloseable {
             byte[] payload = fragmentResult.second;
             boolean fin = fragmentResult.third;
 
-            ByteBuffer buffer = ByteBuffer.wrap(payload);
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream(payload.length);
+            buffer.write(payload);
             switch (opCode) {
                 case PING -> impWrite(OpCode.PONG, Optional.some(payload));
                 case PONG -> {}
@@ -116,15 +118,12 @@ public final class Connection implements AutoCloseable {
                             throw new IOException("Invalid RFC6455 frame: continuation expected");
                         }
 
-                        buffer.put(payload);
+                        buffer.write(payload);
                     }
                     if (opCode == OpCode.TEXT) {
-                        return Optional.some(Either.right(StandardCharsets.UTF_8.decode(buffer).toString()));
+                        return Optional.some(Either.right(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(buffer.toByteArray())).toString()));
                     } else {
-                        byte[] bytes = new byte[buffer.position()];
-                        buffer.rewind();
-                        buffer.get(bytes);
-                        return Optional.some(Either.left(bytes));
+                        return Optional.some(Either.left(buffer.toByteArray()));
                     }
                 }
             }
@@ -155,7 +154,6 @@ public final class Connection implements AutoCloseable {
     private Thread listenerThread;
 
     /**
-     *
      * @param uri
      * @param socket
      * @param rx

@@ -36,7 +36,7 @@ public class Client {
             String host,
             int port,
             String uri,
-            RFC6455Callback callback) throws IOException {
+            Optional<RFC6455Callback> callback) throws IOException {
         InetSocketAddress addr = new InetSocketAddress(host, port);
         Socket socket = new Socket();
         try {
@@ -87,7 +87,7 @@ public class Client {
                 throw new IOException("Invalid HTTP response: missing WebSocket header");
             }
 
-            return new Connection(uri, socket, rx, tx, true, Optional.some(callback));
+            return new Connection(uri, socket, rx, tx, true, callback);
         } catch (Exception e) {
             socket.close();
             throw e;
