@@ -155,6 +155,7 @@ public final class ControlWindow extends JFrame {
         }
 
         menuBar.add(this.helpMenu);
+        this.revalidate();
     }
 
     public void addLogText(String logText) {
