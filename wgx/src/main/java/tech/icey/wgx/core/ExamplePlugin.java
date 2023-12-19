@@ -7,7 +7,7 @@ import tech.icey.wgx.babel.UIProvider;
 
 import java.util.List;
 
-class ExampleComponent implements UIProvider {
+final class ExampleComponent implements UIProvider {
     @Override
     public List<Pair<String, UIComponent>> provide() {
         return List.of(
@@ -24,7 +24,7 @@ class ExampleComponent implements UIProvider {
     }
 }
 
-public class ExamplePlugin implements BabelPlugin {
+public final class ExamplePlugin implements BabelPlugin {
     @Override
     public String getName() {
         return "Example plugin";

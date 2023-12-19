@@ -1,7 +1,7 @@
 package tech.icey.wgx.babel;
 
 public interface DataPublisher {
-    int priority();
+    int publisherInitPriority();
 
     void initialise(Masterpiece masterpiece);
 
