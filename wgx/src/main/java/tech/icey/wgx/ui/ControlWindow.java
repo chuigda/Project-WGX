@@ -101,8 +101,8 @@ public final class ControlWindow extends JFrame {
 
     public void installPluginUI(List<UIProvider> uiProviderList) {
         logger.info("正在安装插件 UI");
-        this.setMenuBar(null);
-        this.menuBar = new JMenuBar();
+
+        menuBar.removeAll();
         menuBar.add(this.systemMenu);
 
         HashMap<String, UIComponent> components = new HashMap<>();
@@ -155,7 +155,6 @@ public final class ControlWindow extends JFrame {
         }
 
         menuBar.add(this.helpMenu);
-        this.setJMenuBar(this.menuBar);
     }
 
     public void addLogText(String logText) {
@@ -175,7 +174,7 @@ public final class ControlWindow extends JFrame {
         this.textArea.setCaretPosition(this.textArea.getDocument().getLength());
     }
 
-    private JMenuBar menuBar;
+    private final JMenuBar menuBar;
     private final JMenu systemMenu;
     private final JMenu helpMenu;
     private Optional<PluginWindow> pluginWindow;
