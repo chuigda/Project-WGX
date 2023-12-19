@@ -10,18 +10,13 @@ import java.util.List;
 final class EditorComponent implements UIProvider {
     @Override
     public List<Pair<String, UIComponent>> provide() {
-        return List.of(
-                new Pair<>(
-                        "TextEditor",
-                        new UIComponent.MenuItem(
-                                new SimpleEditor(),
-                                "工具",
-                                "文本编辑器"
-
-                        )
-                )
-        );
+        return List.of(new Pair<>(
+        		"TextEditor",
+                 new UIComponent.MenuItem(editor, "工具", "文本编辑器")
+        ));
     }
+
+    private final SimpleEditor editor = new SimpleEditor();
 }
 
 public final class EditorPlugin implements BabelPlugin {
