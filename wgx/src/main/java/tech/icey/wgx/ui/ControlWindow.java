@@ -10,6 +10,8 @@ import tech.icey.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.List;
@@ -128,6 +130,12 @@ public final class ControlWindow extends JFrame {
                 JMenu targetMenu = createdMenus.get(menuItemComponent.menuName);
                 JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(menuItemComponent.menuItemName);
                 menuItem.addActionListener(e -> menuItemComponent.frame.setVisible(menuItem.isSelected()));
+                menuItemComponent.frame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        menuItem.setSelected(false);
+                    }
+                });
 
                 targetMenu.add(menuItem);
             } else if (uiComponent instanceof UIComponent.SubElement subElementComponent) {
