@@ -1,4 +1,4 @@
-package tech.icey.wgx.core;
+package tech.icey.wgx.core.editor;
 
 import tech.icey.util.Logger;
 import tech.icey.util.Ref;

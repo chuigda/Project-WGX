@@ -26,6 +26,7 @@ public final class Masterpiece {
     public void clearDirty() {
         modelPosition.clearDirty();
         jointStatus.clearDirty();
+        trackingParam.clearDirty();
 
         for (Radioactive item : sharedData.values()) {
             item.clearDirty();
@@ -34,5 +35,7 @@ public final class Masterpiece {
     
     public final ModelPosition modelPosition = new ModelPosition();
     public final JointStatus jointStatus = new JointStatus();
+    public final TrackingParam trackingParam = new TrackingParam();
+
     private final HashMap<String, Radioactive> sharedData = new HashMap<>();
 }

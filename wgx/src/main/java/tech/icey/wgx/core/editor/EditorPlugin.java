@@ -1,4 +1,4 @@
-package tech.icey.wgx.core;
+package tech.icey.wgx.core.editor;
 
 import tech.icey.util.Pair;
 import tech.icey.wgx.babel.BabelPlugin;
@@ -7,15 +7,15 @@ import tech.icey.wgx.babel.UIProvider;
 
 import java.util.List;
 
-final class ExampleComponent implements UIProvider {
+final class EditorComponent implements UIProvider {
     @Override
     public List<Pair<String, UIComponent>> provide() {
         return List.of(
                 new Pair<>(
-                        "ExampleEditor",
+                        "TextEditor",
                         new UIComponent.MenuItem(
                                 new SimpleEditor(),
-                                "示例菜单",
+                                "工具",
                                 "文本编辑器"
 
                         )
@@ -24,21 +24,21 @@ final class ExampleComponent implements UIProvider {
     }
 }
 
-public final class ExamplePlugin implements BabelPlugin {
+public final class EditorPlugin implements BabelPlugin {
     @Override
     public String getName() {
-        return "Example plugin";
+        return EditorPlugin.class.getName();
     }
 
     @Override
     public String getDescription() {
-        return "用于演示插件系统功能的 plugin";
+        return "一个包含基本功能的编辑器，用来演示插件系统的功能";
     }
 
     @Override
     public List<Object> getComponents() {
         return List.of(
-                new ExampleComponent()
+                new EditorComponent()
         );
     }
 }

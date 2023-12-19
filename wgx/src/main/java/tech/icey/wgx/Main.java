@@ -9,7 +9,8 @@ import tech.icey.util.Pair;
 import tech.icey.util.Optional;
 import tech.icey.wgx.babel.BabelPlugin;
 import tech.icey.wgx.babel.UIProvider;
-import tech.icey.wgx.core.ExamplePlugin;
+import tech.icey.wgx.core.editor.EditorPlugin;
+import tech.icey.wgx.core.tracking.TrackingPlugin;
 import tech.icey.wgx.ui.ControlWindow;
 
 import javax.swing.*;
@@ -52,7 +53,10 @@ public class Main {
                 logger.log(Logger.Level.WARN, "配置文件中的日志级别无效, 将会回退为默认值 (WARN)");
             }
 
-            List<BabelPlugin> plugins = List.of(new ExamplePlugin()); // TODO: load actual plugins
+            List<BabelPlugin> plugins = List.of(
+                    new TrackingPlugin(),
+                    new EditorPlugin()
+            );
             List<List<Object>> pluginComponents = plugins.stream().map(BabelPlugin::getComponents).toList();
             List<UIProvider> uiProviders = pluginComponents.stream()
                     .flatMap(List::stream)
