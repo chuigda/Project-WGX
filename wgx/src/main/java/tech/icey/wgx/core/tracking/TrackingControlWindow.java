@@ -3,8 +3,27 @@ package tech.icey.wgx.core.tracking;
 import tech.icey.r77.math.Vector3;
 import tech.icey.wgx.babel.DockingPort;
 
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import java.util.function.Function;
+
+final class TripleEdit extends JPanel {
+	public TripleEdit(/* Vector3 initState, Function<Vector3, Void> updateState */) {
+		BoxLayout layout = new BoxLayout(this, BoxLayout.X_AXIS);
+		this.setLayout(layout);
+
+		this.add(new JSpinner());
+		this.add(Box.createRigidArea(new Dimension(4, 0)));
+		this.add(new JSpinner());
+		this.add(Box.createRigidArea(new Dimension(4, 0)));
+		this.add(new JSpinner());
+	}
+}
 
 public final class TrackingControlWindow extends JFrame implements DockingPort {
     public TrackingControlWindow(
@@ -12,11 +31,80 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
             Function<Vector3, Void> setFaceAngleLimit
     ) {
         super("姿态控制");
-        this.setSize(400, 400);
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+
+        BoxLayout mainLayout = new BoxLayout(mainPanel, BoxLayout.Y_AXIS);
+        mainPanel.setLayout(mainLayout);
+        this.setContentPane(mainPanel);
+
+        JPanel trackingModePanel = new JPanel();
+        trackingModePanel.setBorder(BorderFactory.createTitledBorder("控制模式"));
+        BoxLayout trackingModePanelLayout = new BoxLayout(trackingModePanel, BoxLayout.Y_AXIS);
+        trackingModePanel.setLayout(trackingModePanelLayout);
+
+        trackingModePanel.add(trackingModeComboBox);
+        trackingModePanel.add(trackingModelContentPanel);
+
+        trackingModelContentPanel.add(new JLabel("选择一个控制模式，相应的组件会在这里显示"));
+        mainPanel.add(trackingModePanel);
+
+        JPanel postProcessPanel = new JPanel();
+        postProcessPanel.setBorder(BorderFactory.createTitledBorder("后处理选项"));
+        postProcessPanel.setLayout(new GridBagLayout());
+        mainPanel.add(postProcessPanel);
+
+        JLabel translationAdjustLabel = new JLabel("位移修正");
+        JLabel faceAngleAdjustLabel = new JLabel("旋转修正");
+        JLabel translationLimitLabel = new JLabel("位移限制");
+        JLabel faceAngleLimitLabel = new JLabel("旋转限制");
+        
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(0, 0, 0, 4);
+        c.gridx = 0;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.WEST;
+        {
+        	c.gridy = 0;
+        	postProcessPanel.add(translationAdjustLabel, c);
+        	c.gridy = 1;
+        	postProcessPanel.add(faceAngleAdjustLabel, c);
+        	c.gridy = 2;
+        	postProcessPanel.add(translationLimitLabel, c);
+        	c.gridy = 3;
+        	postProcessPanel.add(faceAngleLimitLabel, c);
+        }
+        
+        c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        {
+        	c.gridy = 0;
+        	postProcessPanel.add(new TripleEdit(), c);
+        	c.gridy = 1;
+        	postProcessPanel.add(new TripleEdit(), c);
+        	c.gridy = 2;
+        	postProcessPanel.add(new TripleEdit(), c);
+        	c.gridy = 3;
+        	postProcessPanel.add(new TripleEdit(), c);
+        }
+        
+        this.setMinimumSize(new Dimension(400, 0));
+        this.pack();
+        this.setResizable(false);
     }
 
     @Override
     public void addElement(String name, long location, JPanel panel) {
-        // TODO
+        trackingModes.add(name);
+        trackingModePanels.add(panel);
     }
+    
+    private final JComboBox<String> trackingModeComboBox = new JComboBox<>();
+    private final JPanel trackingModelContentPanel = new JPanel();
+    private final List<String> trackingModes = new ArrayList();
+    private final List<JPanel> trackingModePanels = new ArrayList();
 }
