@@ -2,6 +2,8 @@ package tech.icey.wgx;
 
 import tech.icey.r77.Init;
 import tech.icey.r77.vk.Instance;
+import tech.icey.r77.vk.PhysicalDevice;
+import tech.icey.r77.vk.PhysicalDeviceProperties;
 import tech.icey.r77.vk.VkWindow;
 import tech.icey.util.IniParser;
 import tech.icey.util.Logger;
@@ -12,6 +14,7 @@ import tech.icey.wgx.babel.UIProvider;
 import tech.icey.wgx.core.editor.EditorPlugin;
 import tech.icey.wgx.core.tracking.TrackingPlugin;
 import tech.icey.wgx.ui.ControlWindow;
+import tech.icey.wgx.ui.DeviceInfoDialog;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -127,6 +130,14 @@ public class Main {
 
         try (var window = new VkWindow("你好", 600, 600);
              var instance = new Instance("Project-WGX", true)) {
+        	List<PhysicalDevice> physicalDevices = PhysicalDevice.listPhysicalDevices(instance);
+        	List<PhysicalDeviceProperties> physicalDeviceProperties = physicalDevices.stream()
+        			.map(PhysicalDevice::physicalDeviceProperties)
+        			.toList();
+        	
+        	DeviceInfoDialog deviceInfoDialog = new DeviceInfoDialog(physicalDeviceProperties, null);
+        	deviceInfoDialog.setVisible(true);
+        	
             while (window.poll()) {}
         }
     }

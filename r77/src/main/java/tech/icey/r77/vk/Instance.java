@@ -21,7 +21,7 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK13.*;
 import static tech.icey.util.RuntimeError.*;
 
-public class Instance implements ManualDispose {
+public class Instance implements AutoCloseable {
     public Instance(String appName, boolean validation) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             ByteBuffer appNameBuf = stack.UTF8(appName);
@@ -234,7 +234,7 @@ public class Instance implements ManualDispose {
     private static final Logger logger = new Logger(Instance.class.getName());
 
     @Override
-    public void dispose() {
+    public void close() {
         if (debugHandle != 0) {
             vkDestroyDebugUtilsMessengerEXT(instance, debugHandle, null);
         }

@@ -17,7 +17,7 @@ public record PhysicalDevice(
 		VkPhysicalDevice vkPhysicalDevice,
 		PhysicalDeviceProperties physicalDeviceProperties
 ) {
-    public static List<PhysicalDevice> listPhysicalDevices(Instance instance, long targetSurface) {
+    public static List<PhysicalDevice> listPhysicalDevices(Instance instance) {
         VkInstance vkInstance = instance.getVkInstance();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {

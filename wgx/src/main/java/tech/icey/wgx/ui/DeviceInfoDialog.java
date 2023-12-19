@@ -1,15 +1,14 @@
 package tech.icey.wgx.ui;
 
-import tech.icey.wgx.ui.FontDatabase;
-import tech.icey.wgx.ui.MenuFactory;
 import tech.icey.r77.vk.PhysicalDeviceProperties;
+import tech.icey.util.Optional;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class DeviceInfoDialog extends JDialog {
+public final class DeviceInfoDialog extends JDialog {
     public DeviceInfoDialog(
             List<PhysicalDeviceProperties> physicalDeviceProperties,
             JFrame owner
@@ -72,6 +71,17 @@ public class DeviceInfoDialog extends JDialog {
                 okButton.setEnabled(true);
                 detailTextArea.setCaretPosition(0);
             }
+        });
+
+        var self = this;
+        okButton.addActionListener(e -> {
+        	int deviceIndex = comboBox.getSelectedIndex() - 1;
+        	self.selectedDeviceId = Optional.some(deviceIndex);
+        	self.setVisible(false);
+        });
+        cancelButton.addActionListener(e -> {
+        	self.selectedDeviceId = Optional.none();
+        	self.setVisible(false);
         });
 
         {
@@ -139,4 +149,6 @@ public class DeviceInfoDialog extends JDialog {
         this.setResizable(false);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
+    
+    public Optional<Integer> selectedDeviceId = Optional.none();
 }
