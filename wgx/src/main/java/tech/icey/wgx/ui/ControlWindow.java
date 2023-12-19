@@ -1,5 +1,7 @@
 package tech.icey.wgx.ui;
 
+import tech.icey.util.Optional;
+import tech.icey.wgx.babel.BabelPlugin;
 import tech.icey.wgx.babel.DockingPort;
 import tech.icey.wgx.babel.UIComponent;
 import tech.icey.wgx.babel.UIProvider;
@@ -20,13 +22,25 @@ public final class ControlWindow extends JFrame {
 
         this.menuBar = new JMenuBar();
         this.setJMenuBar(menuBar);
-        this.createdMenus = new HashMap<>();
 
-        JMenu systemMenu = new JMenu("系统");
+        this.systemMenu = new JMenu("系统");
         menuBar.add(systemMenu);
 
         JMenuItem pluginManagementItem = new JMenuItem("插件管理");
         systemMenu.add(pluginManagementItem);
+        pluginManagementItem.addActionListener(e -> {
+            if (pluginWindow instanceof Optional.Some<PluginWindow> somePluginWindow) {
+                somePluginWindow.value.setVisible(!somePluginWindow.value.isVisible());
+            } else {
+                // plugin systems not loaded yet, prompt user for that
+                JOptionPane.showMessageDialog(
+                        this,
+                        "插件系统尚未加载，请稍等片刻",
+                        "提示",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            }
+        });
 
         JMenu logLevelSubMenu = new JMenu("日志级别");
         systemMenu.add(logLevelSubMenu);
@@ -57,6 +71,15 @@ public final class ControlWindow extends JFrame {
         };
         systemMenu.add(exitMenuItem);
 
+        this.helpMenu = new JMenu("帮助");
+        menuBar.add(helpMenu);
+        JMenuItem helpMenuItem = new JMenuItem("帮助主题");
+        helpMenu.add(helpMenuItem);
+        JMenuItem aboutItem = new JMenuItem("关于");
+        helpMenu.add(aboutItem);
+
+        this.pluginWindow = Optional.none();
+
         this.textArea = new JTextArea();
         Font font = FontDatabase.defaultMonospaceFont.deriveFont(10.0f);
         this.textArea.setFont(font);
@@ -71,8 +94,19 @@ public final class ControlWindow extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
+    public void installPluginDatabase(List<BabelPlugin> plugins, List<List<Object>> pluginComponents) {
+        logger.info("加载插件信息数据库");
+        this.pluginWindow = Optional.some(new PluginWindow(plugins, pluginComponents));
+    }
+
     public void installPluginUI(List<UIProvider> uiProviderList) {
+        logger.info("正在安装插件 UI");
+        this.setMenuBar(null);
+        this.menuBar = new JMenuBar();
+        menuBar.add(this.systemMenu);
+
         HashMap<String, UIComponent> components = new HashMap<>();
+        HashMap<String, JMenu> createdMenus = new HashMap<>();
 
         for (UIProvider provider : uiProviderList) {
             for (Pair<String, UIComponent> uiItem : provider.provide()) {
@@ -119,13 +153,9 @@ public final class ControlWindow extends JFrame {
                 }
             }
         }
-        
-        JMenu helpMenu = new JMenu("帮助");
-        menuBar.add(helpMenu);
-        JMenuItem helpMenuItem = new JMenuItem("帮助主题");
-        helpMenu.add(helpMenuItem);
-        JMenuItem aboutItem = new JMenuItem("关于");
-        helpMenu.add(aboutItem);
+
+        menuBar.add(this.helpMenu);
+        this.setJMenuBar(this.menuBar);
     }
 
     public void addLogText(String logText) {
@@ -145,8 +175,11 @@ public final class ControlWindow extends JFrame {
         this.textArea.setCaretPosition(this.textArea.getDocument().getLength());
     }
 
-    private final JMenuBar menuBar;
-    private final HashMap<String, JMenu> createdMenus;
+    private JMenuBar menuBar;
+    private final JMenu systemMenu;
+    private final JMenu helpMenu;
+    private Optional<PluginWindow> pluginWindow;
+
     private final JTextArea textArea;
     private boolean logPaused = false;
     private final Logger logger = new Logger(ControlWindow.class.getName());

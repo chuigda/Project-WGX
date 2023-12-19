@@ -12,9 +12,8 @@ public abstract sealed class UIComponent {
 
         public final String menuName;
         public final String menuItemName;
-        public final String popupFrameName;
 
-        public MenuItem(JFrame frame, String menuName, String menuItemName, String popupFrameName) {
+        public MenuItem(JFrame frame, String menuName, String menuItemName) {
             if (frame.getDefaultCloseOperation() != JFrame.HIDE_ON_CLOSE) {
                 logger.log(
                         Logger.Level.WARN,
@@ -28,7 +27,6 @@ public abstract sealed class UIComponent {
             this.frame = frame;
             this.menuName = menuName;
             this.menuItemName = menuItemName;
-            this.popupFrameName = popupFrameName;
         }
 
         @Override

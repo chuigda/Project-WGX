@@ -1,8 +1,10 @@
-package tech.icey.wgx.ui;
+package tech.icey.wgx.core;
 
 import tech.icey.util.Logger;
 import tech.icey.util.Ref;
 import tech.icey.util.Optional;
+import tech.icey.wgx.ui.FontDatabase;
+import tech.icey.wgx.ui.MenuFactory;
 
 import java.awt.BorderLayout;
 import java.io.IOException;

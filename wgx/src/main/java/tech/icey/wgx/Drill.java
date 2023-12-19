@@ -2,7 +2,7 @@ package tech.icey.wgx;
 
 import javax.swing.WindowConstants;
 
-import tech.icey.wgx.ui.SimpleEditor;
+import tech.icey.wgx.core.SimpleEditor;
 
 public class Drill {
     public static void main(String[] args) {
