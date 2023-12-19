@@ -24,6 +24,17 @@ public final class TrackingControlComponent implements UIProvider, DataManipulat
 
     @Override
     public List<Pair<String, UIComponent>> provide() {
-        return null;
+        return List.of(
+                new Pair<>(
+                        "TrackingControl",
+                        new UIComponent.MenuItem(
+                                trackingControlWindow,
+                                "动作",
+                                "姿态控制"
+                        )
+                )
+        );
     }
+
+    private final TrackingControlWindow trackingControlWindow = new TrackingControlWindow();
 }

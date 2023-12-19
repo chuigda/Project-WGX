@@ -17,6 +17,8 @@ public class TrackingPlugin implements BabelPlugin {
 
     @Override
     public List<Object> getComponents() {
-        return List.of();
+        return List.of(
+                new TrackingControlComponent()
+        );
     }
 }
