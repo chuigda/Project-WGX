@@ -4,6 +4,8 @@ import tech.icey.util.Optional;
 
 import java.util.List;
 
+import org.lwjgl.vulkan.VkQueueFamilyProperties;
+
 public record PhysicalDeviceProperties(
         long deviceId,
         String deviceName,
@@ -11,8 +13,7 @@ public record PhysicalDeviceProperties(
         long vendorId,
         PhysicalDeviceType deviceType,
         List<String> deviceExtensions,
-        Optional<Long> graphicsQueueFamilyIndex,
-        Optional<Long> presentationQueueFamilyIndex
+        List<VkQueueFamilyProperties> graphicsQueueFamilies
 ) {
     public enum PhysicalDeviceType {
         OTHER,

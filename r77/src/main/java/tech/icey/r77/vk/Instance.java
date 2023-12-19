@@ -6,6 +6,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 import tech.icey.util.Logger;
+import tech.icey.util.ManualDispose;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -20,7 +21,7 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK13.*;
 import static tech.icey.util.RuntimeError.*;
 
-public class Instance implements AutoCloseable {
+public class Instance implements ManualDispose {
     public Instance(String appName, boolean validation) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             ByteBuffer appNameBuf = stack.UTF8(appName);
@@ -233,7 +234,7 @@ public class Instance implements AutoCloseable {
     private static final Logger logger = new Logger(Instance.class.getName());
 
     @Override
-    public void close() {
+    public void dispose() {
         if (debugHandle != 0) {
             vkDestroyDebugUtilsMessengerEXT(instance, debugHandle, null);
         }

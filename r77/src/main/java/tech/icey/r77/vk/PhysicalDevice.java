@@ -4,7 +4,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import tech.icey.util.Logger;
-import tech.icey.util.Optional;
+import tech.icey.util.ManualDispose;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -13,11 +13,11 @@ import java.util.List;
 import static org.lwjgl.vulkan.VK10.*;
 import static tech.icey.util.RuntimeError.*;
 
-public class PhysicalDevice {
-    public static List<PhysicalDeviceProperties> listPhysicalDevices(
-            Instance instance,
-            long targetSurface
-    ) {
+public record PhysicalDevice(
+		VkPhysicalDevice vkPhysicalDevice,
+		PhysicalDeviceProperties physicalDeviceProperties
+) {
+    public static List<PhysicalDevice> listPhysicalDevices(Instance instance, long targetSurface) {
         VkInstance vkInstance = instance.getVkInstance();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -40,7 +40,7 @@ public class PhysicalDevice {
                 runtimeError("枚举物理设备失败: %d", ret);
             }
 
-            List<PhysicalDeviceProperties> devices = new ArrayList<>();
+            List<PhysicalDevice> devices = new ArrayList<>();
             for (int i = 0; i < numDevices; i++) {
                 try (MemoryStack stack1 = MemoryStack.stackPush()) {
                     VkPhysicalDevice vkPhysicalDevice = new VkPhysicalDevice(devicesBuf.get(i), vkInstance);
@@ -96,37 +96,41 @@ public class PhysicalDevice {
                             queueFamilyPropertiesBuf
                     );
 
-                    Optional<Long> graphicsQueueFamilyIndex = Optional.none();
+                    List<VkQueueFamilyProperties> graphicsQueueFamilies = new ArrayList();
                     for (int j = 0; j < numQueueFamilyProperties; j++) {
                         VkQueueFamilyProperties queueFamilyProperties = queueFamilyPropertiesBuf.get(j);
                         if ((queueFamilyProperties.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
-                            graphicsQueueFamilyIndex = Optional.some((long) j);
+                        	graphicsQueueFamilies.add(queueFamilyProperties);
                         }
                     }
 
-                    devices.add(new PhysicalDeviceProperties(
-                            deviceId,
-                            deviceName,
-                            driverVersion,
-                            vendorId,
-                            switch (vkPhysicalDeviceProperties.deviceType()) {
-                                case VK_PHYSICAL_DEVICE_TYPE_OTHER -> PhysicalDeviceProperties.PhysicalDeviceType.OTHER;
-                                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU -> PhysicalDeviceProperties.PhysicalDeviceType.INTEGRATED_GPU;
-                                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU -> PhysicalDeviceProperties.PhysicalDeviceType.DISCRETE_GPU;
-                                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU -> PhysicalDeviceProperties.PhysicalDeviceType.VIRTUAL_GPU;
-                                case VK_PHYSICAL_DEVICE_TYPE_CPU -> PhysicalDeviceProperties.PhysicalDeviceType.CPU;
-                                default -> unreachable();
-                            },
-                            deviceExtensions,
-                            graphicsQueueFamilyIndex,
-                            Optional.none()
-                    ));
+                    devices.add(new PhysicalDevice(vkPhysicalDevice, new PhysicalDeviceProperties(
+	                            deviceId,
+	                            deviceName,
+	                            driverVersion,
+	                            vendorId,
+	                            switch (vkPhysicalDeviceProperties.deviceType()) {
+	                                case VK_PHYSICAL_DEVICE_TYPE_OTHER -> 
+	                                	PhysicalDeviceProperties.PhysicalDeviceType.OTHER;
+	                                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU ->
+	                                	PhysicalDeviceProperties.PhysicalDeviceType.INTEGRATED_GPU;
+	                                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ->
+	                                	PhysicalDeviceProperties.PhysicalDeviceType.DISCRETE_GPU;
+	                                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU ->
+	                                	PhysicalDeviceProperties.PhysicalDeviceType.VIRTUAL_GPU;
+	                                case VK_PHYSICAL_DEVICE_TYPE_CPU ->
+	                                	PhysicalDeviceProperties.PhysicalDeviceType.CPU;
+	                                default -> unreachable();
+	                            },
+	                            deviceExtensions,
+	                            graphicsQueueFamilies
+                    )));
                 }
             }
 
             return devices;
         }
     }
-
+    
     private static final Logger logger = new Logger(PhysicalDevice.class.getName());
 }
