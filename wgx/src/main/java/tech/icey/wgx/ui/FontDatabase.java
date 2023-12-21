@@ -18,7 +18,7 @@ public class FontDatabase {
             boolean hasFiraCode = fontFamilies.stream()
                     .anyMatch(s -> s.contains("Fira Code"));
             if (hasFiraCode) {
-                defaultMonospaceFont = new StyleContext().getFont("Fira Code", Font.PLAIN, 14);
+                defaultMonospaceFont = new StyleContext().getFont("Fira Code", Font.PLAIN, 12);
                 break init;
             }
 
