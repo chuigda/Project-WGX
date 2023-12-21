@@ -83,6 +83,7 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
         BoxLayout trackingModePanelLayout = new BoxLayout(trackingModePanel, BoxLayout.Y_AXIS);
         trackingModePanel.setLayout(trackingModePanelLayout);
 
+        trackingModelContentPanel.setLayout(new BorderLayout());
         JLabel trackingModelContentDefault = new JLabel("选择一个控制模式，相应的组件会在这里显示");
 
         trackingModeComboBox.addItem("关闭");
@@ -92,6 +93,7 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
                 d.undock();
             }
             trackingModelContentPanel.removeAll();
+
             if (selectedIndex == 0) {
                 trackingModelContentPanel.add(trackingModelContentDefault);
             } else {
@@ -107,6 +109,7 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
         trackingModelContentPanel.add(trackingModelContentDefault);
 
         trackingModePanel.add(trackingModeComboBox);
+        trackingModePanel.add(Box.createRigidArea(new Dimension(0, 2)));
         trackingModePanel.add(trackingModelContentPanel);
         mainPanel.add(trackingModePanel);
 
@@ -152,7 +155,7 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
         	postProcessPanel.add(new TripleEdit(Vector3.mul(90.0f, Vector3.UNIT), setFaceAngleLimit), c);
         }
         
-        this.setMinimumSize(new Dimension(480, 0));
+        this.setMinimumSize(new Dimension(400, 0));
         this.pack();
         this.setResizable(false);
     }

@@ -15,13 +15,13 @@ import tech.icey.wgx.babel.*;
 
 import javax.swing.*;
 
-final class CompressedFileReader {
-	public CompressedFileReader(String filePath) throws IOException {
+final class TCKFileReader {
+	public TCKFileReader(String filePath) throws IOException {
 		this.file = new File(filePath);
 		this.inputStream = new FileInputStream(file);
 	}
 
-	public Optional<String> readLine() {
+	public synchronized Optional<String> readLine() {
 		try {
 			if (cachedJSONLines instanceof Optional.Some<List<String>> someCachedJSONLines) {
 				if (cachedJSONLineIndex < someCachedJSONLines.value.size()) {
@@ -63,7 +63,7 @@ final class CompressedFileReader {
 		}
 	}
 
-	public void rewind() throws IOException {
+	public synchronized void rewind() throws IOException {
 		inputStream = new FileInputStream(file);
 		cachedJSONLineIndex = 0;
 		cachedJSONLines = Optional.none();
@@ -78,7 +78,7 @@ final class CompressedFileReader {
 final class AutopilotTrackingPanel extends JPanel implements Dockable {
 	AutopilotTrackingPanel(
 			Function<Boolean, Void> setEnabled,
-			Function<CompressedFileReader, Void> setCurrentFile,
+			Function<TCKFileReader, Void> setCurrentFile,
 			Function0<Void> rewindCurrentFile
 	) {
 		this.setEnabled = setEnabled;
@@ -87,6 +87,18 @@ final class AutopilotTrackingPanel extends JPanel implements Dockable {
 
 		BoxLayout layout = new BoxLayout(this, BoxLayout.Y_AXIS);
 		this.setLayout(layout);
+
+		JPanel inputBoxPanel = new JPanel();
+		BoxLayout inputBoxLayout = new BoxLayout(inputBoxPanel, BoxLayout.X_AXIS);
+		inputBoxPanel.setLayout(inputBoxLayout);
+
+		inputBoxPanel.add(new JLabel("TCK 文件: "));
+		JTextField tckFilePathTextField = new JTextField();
+		inputBoxPanel.add(tckFilePathTextField);
+		JButton tckFileOpenButton = new JButton("打开");
+		inputBoxPanel.add(tckFileOpenButton);
+
+		this.add(inputBoxPanel);
 	}
 
 	@Override
@@ -100,7 +112,7 @@ final class AutopilotTrackingPanel extends JPanel implements Dockable {
 	}
 
 	private final Function<Boolean, Void> setEnabled;
-	private final Function<CompressedFileReader, Void> setCurrentFile;
+	private final Function<TCKFileReader, Void> setCurrentFile;
 	private final Function0<Void> rewindCurrentFile;
 }
 
@@ -138,6 +150,7 @@ public final class AutopilotTrackingComponent implements DataPublisher, UIProvid
 	}
 
 	private volatile boolean isEnabled;
+	private volatile TCKFileReader tckFileReader;
 	private Masterpiece masterpiece;
 	private final AutopilotTrackingPanel autopilotTrackingPanel = new AutopilotTrackingPanel(
 			isEnabled -> {
