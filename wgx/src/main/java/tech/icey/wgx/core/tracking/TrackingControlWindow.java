@@ -6,26 +6,66 @@ import tech.icey.wgx.babel.Dockable;
 import tech.icey.wgx.babel.DockingPort;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 final class TripleEdit extends JPanel {
-	public TripleEdit(/* Vector3 initState, Function<Vector3, Void> updateState */) {
+	public TripleEdit(Vector3 initState, Function<Vector3, Void> updateState) {
 		BoxLayout layout = new BoxLayout(this, BoxLayout.X_AXIS);
 		this.setLayout(layout);
 
-		this.add(new JSpinner());
-		this.add(Box.createRigidArea(new Dimension(4, 0)));
-		this.add(new JSpinner());
-		this.add(Box.createRigidArea(new Dimension(4, 0)));
-		this.add(new JSpinner());
+		float initX = initState.x();
+        float initY = initState.y();
+        float initZ = initState.z();
+
+        JSpinner xSpinner = new JSpinner(new SpinnerNumberModel(initX, -Float.MAX_VALUE, Float.MAX_VALUE, 0.1f));
+        JSpinner ySpinner = new JSpinner(new SpinnerNumberModel(initY, -Float.MAX_VALUE, Float.MAX_VALUE, 0.1f));
+        JSpinner zSpinner = new JSpinner(new SpinnerNumberModel(initZ, -Float.MAX_VALUE, Float.MAX_VALUE, 0.1f));
+
+        var spinnerEventListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                float x = (float) xSpinner.getValue();
+                float y = (float) ySpinner.getValue();
+                float z = (float) zSpinner.getValue();
+                updateState.apply(new Vector3(x, y, z));
+            }
+        };
+
+        xSpinner.addChangeListener(spinnerEventListener);
+        ySpinner.addChangeListener(spinnerEventListener);
+        zSpinner.addChangeListener(spinnerEventListener);
+
+        var preferredSize = new Dimension(32, xSpinner.getEditor().getPreferredSize().height);
+        xSpinner.getEditor().setPreferredSize(preferredSize);
+        ySpinner.getEditor().setPreferredSize(preferredSize);
+        zSpinner.getEditor().setPreferredSize(preferredSize);
+
+        var gapSize = new Dimension(4, 0);
+
+        this.add(new JPanel());
+        this.add(new JLabel("X"));
+        this.add(Box.createRigidArea(gapSize));
+        this.add(xSpinner);
+        this.add(Box.createRigidArea(gapSize));
+        this.add(new JLabel("Y"));
+        this.add(Box.createRigidArea(gapSize));
+        this.add(ySpinner);
+        this.add(Box.createRigidArea(gapSize));
+        this.add(new JLabel("Z"));
+        this.add(Box.createRigidArea(gapSize));
+        this.add(zSpinner);
 	}
 }
 
 public final class TrackingControlWindow extends JFrame implements DockingPort {
     public TrackingControlWindow(
+            Function<Vector3, Void> setTranslationAdjust,
+            Function<Vector3, Void> setFaceAngleAdjust,
             Function<Vector3, Void> setTranslationLimit,
             Function<Vector3, Void> setFaceAngleLimit
     ) {
@@ -45,7 +85,7 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
 
         JLabel trackingModelContentDefault = new JLabel("选择一个控制模式，相应的组件会在这里显示");
 
-        trackingModeComboBox.addItem("");
+        trackingModeComboBox.addItem("关闭");
         trackingModeComboBox.addActionListener(e -> {
             int selectedIndex = trackingModeComboBox.getSelectedIndex();
             if (trackingModelContentPanel.getComponent(0) instanceof Dockable d) {
@@ -103,25 +143,27 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
         c.gridx = 1;
         {
         	c.gridy = 0;
-        	postProcessPanel.add(new TripleEdit(), c);
+        	postProcessPanel.add(new TripleEdit(Vector3.ZERO, setTranslationAdjust), c);
         	c.gridy = 1;
-        	postProcessPanel.add(new TripleEdit(), c);
+        	postProcessPanel.add(new TripleEdit(Vector3.ZERO, setFaceAngleAdjust), c);
         	c.gridy = 2;
-        	postProcessPanel.add(new TripleEdit(), c);
+        	postProcessPanel.add(new TripleEdit(Vector3.mul(120.0f, Vector3.UNIT), setTranslationLimit), c);
         	c.gridy = 3;
-        	postProcessPanel.add(new TripleEdit(), c);
+        	postProcessPanel.add(new TripleEdit(Vector3.mul(90.0f, Vector3.UNIT), setFaceAngleLimit), c);
         }
         
-        this.setMinimumSize(new Dimension(400, 0));
+        this.setMinimumSize(new Dimension(480, 0));
         this.pack();
         this.setResizable(false);
     }
 
     @Override
     public void addElement(String name, long location, JPanel panel) {
-        trackingModes.add(name);
-        trackingModeComboBox.addItem(name);
-        trackingModePanels.add(panel);
+        SwingUtilities.invokeLater(() -> {
+            trackingModes.add(name);
+            trackingModeComboBox.addItem(name);
+            trackingModePanels.add(panel);
+        });
     }
     
     private final JComboBox<String> trackingModeComboBox = new JComboBox<>();

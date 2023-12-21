@@ -25,10 +25,10 @@ public final class TrackingControlComponent implements UIProvider, DataManipulat
 
         if (masterpiece.trackingParam.dirty()) {
             masterpiece.trackingParam.setTranslation(
-                    masterpiece.trackingParam.getTranslation().threshold(translationLimit)
+                    masterpiece.trackingParam.getTranslation().add(translationAdjust).threshold(translationLimit)
             );
             masterpiece.trackingParam.setFaceAngle(
-                    masterpiece.trackingParam.getFaceAngle().threshold(rotationLimit)
+                    masterpiece.trackingParam.getFaceAngle().add(faceAngleAdjust).threshold(rotationLimit)
             );
         }
     }
@@ -48,10 +48,14 @@ public final class TrackingControlComponent implements UIProvider, DataManipulat
     }
 
     private final TrackingControlWindow trackingControlWindow = new TrackingControlWindow(
+            translationAdjust -> { this.translationAdjust = translationAdjust; return null; },
+            faceAngleAdjust -> { this.faceAngleAdjust = faceAngleAdjust; return null; },
             translationLimit -> { this.translationLimit = translationLimit; return null; },
             faceAngleLimit -> { this.faceAngleLimit = faceAngleLimit; return null; }
     );
 
-    private volatile Vector3 translationLimit = new Vector3(100, 100, 100);
-    private volatile Vector3 faceAngleLimit = new Vector3(90, 90, 90);
+    private volatile Vector3 translationAdjust = Vector3.ZERO;
+    private volatile Vector3 faceAngleAdjust = Vector3.ZERO;
+    private volatile Vector3 translationLimit = Vector3.mul(120, Vector3.UNIT);
+    private volatile Vector3 faceAngleLimit = Vector3.mul(90, Vector3.UNIT);
 }

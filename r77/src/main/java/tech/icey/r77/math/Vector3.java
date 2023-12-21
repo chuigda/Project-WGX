@@ -16,6 +16,10 @@ public record Vector3(float x, float y, float z) implements IntoBytes {
         buffer.putFloat(z);
     }
 
+    public Vector3 add(Vector3 b) {
+        return Vector3.add(this, b);
+    }
+
     public Vector3 threshold(Vector3 thres) {
         return new Vector3(
                 Math.abs(x) < thres.x ? 0.0f : x,

@@ -25,39 +25,39 @@ public class FontDatabase {
             boolean hasNotoMono = fontFamilies.stream()
                     .anyMatch(s -> s.contains("Noto Mono"));
             if (hasNotoMono) {
-                defaultMonospaceFont = new StyleContext().getFont("Noto Mono", Font.PLAIN, 14);
+                defaultMonospaceFont = new StyleContext().getFont("Noto Mono", Font.PLAIN, 12);
                 break init;
             }
 
             boolean hasDejavuSansMono = fontFamilies.stream()
                     .anyMatch(s -> s.contains("DejaVu Sans Mono"));
             if (hasDejavuSansMono) {
-                defaultMonospaceFont = new Font("DejaVu Sans Mono", Font.PLAIN, 14);
+                defaultMonospaceFont = new StyleContext().getFont("DejaVu Sans Mono", Font.PLAIN, 12);
                 break init;
             }
 
             boolean hasLucidaConsole = fontFamilies.stream()
                     .anyMatch(s -> s.contains("Lucida Console"));
             if (hasLucidaConsole) {
-                defaultMonospaceFont = new Font("Lucida Console", Font.PLAIN, 14);
+                defaultMonospaceFont = new StyleContext().getFont("Lucida Console", Font.PLAIN, 12);
                 break init;
             }
 
             boolean hasConsolas = fontFamilies.stream()
                     .anyMatch(s -> s.contains("Consolas"));
             if (hasConsolas) {
-                defaultMonospaceFont = new Font("Consolas", Font.PLAIN, 14);
+                defaultMonospaceFont = new StyleContext().getFont("Consolas", Font.PLAIN, 12);
                 break init;
             }
 
             boolean hasSimSun = fontFamilies.stream()
                     .anyMatch(s -> s.contains("宋体"));
             if (hasSimSun) {
-                defaultMonospaceFont = new Font("宋体", Font.PLAIN, 14);
+                defaultMonospaceFont = new StyleContext().getFont("宋体", Font.PLAIN, 12);
                 break init;
             }
 
-            defaultMonospaceFont = new Font(Font.MONOSPACED, Font.PLAIN, 14);
+            defaultMonospaceFont = new StyleContext().getFont(Font.MONOSPACED, Font.PLAIN, 12);
         }
     }
 }
