@@ -2,6 +2,7 @@ package tech.icey.wgx.core.tracking;
 
 import tech.icey.r77.math.Vector3;
 import tech.icey.util.Logger;
+import tech.icey.wgx.babel.Dockable;
 import tech.icey.wgx.babel.DockingPort;
 
 import javax.swing.*;
@@ -47,16 +48,21 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
         trackingModeComboBox.addItem("");
         trackingModeComboBox.addActionListener(e -> {
             int selectedIndex = trackingModeComboBox.getSelectedIndex();
-            SwingUtilities.invokeLater(() -> {
-                trackingModelContentPanel.removeAll();
-                if (selectedIndex == 0) {
-                    trackingModelContentPanel.add(trackingModelContentDefault);
-                } else {
-                    trackingModelContentPanel.add(trackingModePanels.get(selectedIndex - 1));
+            if (trackingModelContentPanel.getComponent(0) instanceof Dockable d) {
+                d.undock();
+            }
+            trackingModelContentPanel.removeAll();
+            if (selectedIndex == 0) {
+                trackingModelContentPanel.add(trackingModelContentDefault);
+            } else {
+                JPanel p = trackingModePanels.get(selectedIndex - 1);
+                if (p instanceof Dockable d) {
+                    d.dock();
                 }
-                this.pack();
-                this.revalidate();
-            });
+                trackingModelContentPanel.add(p);
+            }
+            this.pack();
+            this.revalidate();
         });
         trackingModelContentPanel.add(trackingModelContentDefault);
 
@@ -113,9 +119,9 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
 
     @Override
     public void addElement(String name, long location, JPanel panel) {
-        trackingModes.add((int)location, name);
-        trackingModeComboBox.insertItemAt(name, (int)(location + 1));
-        trackingModePanels.add((int)location, panel);
+        trackingModes.add(name);
+        trackingModeComboBox.addItem(name);
+        trackingModePanels.add(panel);
     }
     
     private final JComboBox<String> trackingModeComboBox = new JComboBox<>();

@@ -1,5 +1,6 @@
 package tech.icey.wgx.core.tracking;
 
+import tech.icey.util.Logger;
 import tech.icey.util.Pair;
 import tech.icey.wgx.babel.*;
 
@@ -39,8 +40,14 @@ final class VTSTrackingPanel extends JPanel implements Dockable {
 	}
 
 	@Override
-	public void dock() {}
+	public void dock() {
+		logger.info("docked");
+	}
 
 	@Override
-	public void undock() {}
+	public void undock() {
+		logger.info("undocked");
+	}
+
+	private static final Logger logger = new Logger(VTSTrackingPanel.class.getName());
 }
