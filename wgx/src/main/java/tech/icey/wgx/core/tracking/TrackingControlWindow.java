@@ -1,15 +1,13 @@
 package tech.icey.wgx.core.tracking;
 
 import tech.icey.r77.math.Vector3;
+import tech.icey.util.Logger;
 import tech.icey.wgx.babel.DockingPort;
 
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.*;
 import java.util.function.Function;
 
 final class TripleEdit extends JPanel {
@@ -44,10 +42,26 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
         BoxLayout trackingModePanelLayout = new BoxLayout(trackingModePanel, BoxLayout.Y_AXIS);
         trackingModePanel.setLayout(trackingModePanelLayout);
 
+        JLabel trackingModelContentDefault = new JLabel("选择一个控制模式，相应的组件会在这里显示");
+
+        trackingModeComboBox.addItem("");
+        trackingModeComboBox.addActionListener(e -> {
+            int selectedIndex = trackingModeComboBox.getSelectedIndex();
+            SwingUtilities.invokeLater(() -> {
+                trackingModelContentPanel.removeAll();
+                if (selectedIndex == 0) {
+                    trackingModelContentPanel.add(trackingModelContentDefault);
+                } else {
+                    trackingModelContentPanel.add(trackingModePanels.get(selectedIndex - 1));
+                }
+                this.pack();
+                this.revalidate();
+            });
+        });
+        trackingModelContentPanel.add(trackingModelContentDefault);
+
         trackingModePanel.add(trackingModeComboBox);
         trackingModePanel.add(trackingModelContentPanel);
-
-        trackingModelContentPanel.add(new JLabel("选择一个控制模式，相应的组件会在这里显示"));
         mainPanel.add(trackingModePanel);
 
         JPanel postProcessPanel = new JPanel();
@@ -99,12 +113,15 @@ public final class TrackingControlWindow extends JFrame implements DockingPort {
 
     @Override
     public void addElement(String name, long location, JPanel panel) {
-        trackingModes.add(name);
-        trackingModePanels.add(panel);
+        trackingModes.add((int)location, name);
+        trackingModeComboBox.insertItemAt(name, (int)(location + 1));
+        trackingModePanels.add((int)location, panel);
     }
     
     private final JComboBox<String> trackingModeComboBox = new JComboBox<>();
     private final JPanel trackingModelContentPanel = new JPanel();
-    private final List<String> trackingModes = new ArrayList();
-    private final List<JPanel> trackingModePanels = new ArrayList();
+    private final List<String> trackingModes = new ArrayList<>();
+    private final List<JPanel> trackingModePanels = new ArrayList<>();
+
+    private static final Logger logger = new Logger(TrackingControlWindow.class.getName());
 }
