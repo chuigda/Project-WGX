@@ -1,5 +1,6 @@
 package tech.icey.wgx.core.tracking;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -95,10 +96,26 @@ final class AutopilotTrackingPanel extends JPanel implements Dockable {
 		inputBoxPanel.add(new JLabel("TCK 文件: "));
 		JTextField tckFilePathTextField = new JTextField();
 		inputBoxPanel.add(tckFilePathTextField);
+		inputBoxPanel.add(Box.createRigidArea(new Dimension(2, 0)));
 		JButton tckFileOpenButton = new JButton("打开");
 		inputBoxPanel.add(tckFileOpenButton);
 
 		this.add(inputBoxPanel);
+		this.add(Box.createRigidArea(new Dimension(0, 2)));
+
+		JPanel buttonPanel = new JPanel();
+		BoxLayout buttonBoxLayout = new BoxLayout(buttonPanel, BoxLayout.X_AXIS);
+		buttonPanel.setLayout(buttonBoxLayout);
+		JButton startButton = new JButton("开始");
+		buttonPanel.add(startButton);
+		buttonPanel.add(Box.createRigidArea(new Dimension(2, 0)));
+		JButton pauseResumeButton = new JButton("暂停");
+		buttonPanel.add(pauseResumeButton);
+		buttonPanel.add(Box.createRigidArea(new Dimension(2, 0)));
+		JButton stopButton = new JButton("停止");
+		buttonPanel.add(stopButton);
+
+		this.add(buttonPanel);
 	}
 
 	@Override
