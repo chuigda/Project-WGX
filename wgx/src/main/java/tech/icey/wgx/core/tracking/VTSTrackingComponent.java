@@ -1,17 +1,21 @@
 package tech.icey.wgx.core.tracking;
 
-import java.util.List;
-
+import tech.icey.util.Logger;
 import tech.icey.util.Pair;
-import tech.icey.wgx.babel.DataPublisher;
-import tech.icey.wgx.babel.Masterpiece;
-import tech.icey.wgx.babel.UIComponent;
-import tech.icey.wgx.babel.UIProvider;
+import tech.icey.wgx.babel.*;
+
+import javax.swing.*;
+import java.util.List;
 
 public final class VTSTrackingComponent implements DataPublisher, UIProvider {
 	@Override
 	public List<Pair<String, UIComponent>> provide() {
-		return List.of();
+		return List.of(
+			new Pair<>(
+				"VTSTracking",
+				new UIComponent.SubElement(vtsTrackingPanel, "VTS", "TrackingControl", 0)
+			)
+		);
 	}
 
 	@Override
@@ -24,4 +28,26 @@ public final class VTSTrackingComponent implements DataPublisher, UIProvider {
 
 	@Override
 	public void publish() {}
+
+	private final VTSTrackingPanel vtsTrackingPanel = new VTSTrackingPanel();
+}
+
+final class VTSTrackingPanel extends JPanel implements Dockable {
+
+	public VTSTrackingPanel() {
+		JLabel l = new JLabel("hi");
+		this.add(l);
+	}
+
+	@Override
+	public void dock() {
+		logger.info("docked");
+	}
+
+	@Override
+	public void undock() {
+		logger.info("undocked");
+	}
+
+	private static final Logger logger = new Logger(VTSTrackingPanel.class.getName());
 }
