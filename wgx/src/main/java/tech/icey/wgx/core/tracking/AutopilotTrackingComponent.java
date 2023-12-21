@@ -22,7 +22,7 @@ final class TCKFileReader {
 		this.inputStream = new FileInputStream(file);
 	}
 
-	public synchronized Optional<String> readLine() {
+	public Optional<String> readLine() {
 		try {
 			if (cachedJSONLines instanceof Optional.Some<List<String>> someCachedJSONLines) {
 				if (cachedJSONLineIndex < someCachedJSONLines.value.size()) {
@@ -64,12 +64,6 @@ final class TCKFileReader {
 		}
 	}
 
-	public synchronized void rewind() throws IOException {
-		inputStream = new FileInputStream(file);
-		cachedJSONLineIndex = 0;
-		cachedJSONLines = Optional.none();
-	}
-
 	private final File file;
 	private InputStream inputStream;
 	private Optional<List<String>> cachedJSONLines;
@@ -80,11 +74,10 @@ final class AutopilotTrackingPanel extends JPanel implements Dockable {
 	AutopilotTrackingPanel(
 			Function<Boolean, Void> setEnabled,
 			Function<TCKFileReader, Void> setCurrentFile,
-			Function0<Void> rewindCurrentFile
+			Function0<Void> stopAutopilot
 	) {
 		this.setEnabled = setEnabled;
-		this.setCurrentFile = setCurrentFile;
-		this.rewindCurrentFile = rewindCurrentFile;
+		this.stopAutopilot = stopAutopilot;
 
 		BoxLayout layout = new BoxLayout(this, BoxLayout.Y_AXIS);
 		this.setLayout(layout);
@@ -100,37 +93,130 @@ final class AutopilotTrackingPanel extends JPanel implements Dockable {
 		JButton tckFileOpenButton = new JButton("打开");
 		inputBoxPanel.add(tckFileOpenButton);
 
+		tckFileOpenButton.addActionListener(e -> {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			fileChooser.setMultiSelectionEnabled(false);
+			fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+				@Override
+				public boolean accept(File f) {
+					return f.isDirectory() || f.getName().endsWith(".tck");
+				}
+
+				@Override
+				public String getDescription() {
+					return "DSYS 数据记录文件 (*.tck)";
+				}
+			});
+			int result = fileChooser.showOpenDialog(this);
+			if (result == JFileChooser.APPROVE_OPTION) {
+				File selectedFile = fileChooser.getSelectedFile();
+				tckFilePathTextField.setText(selectedFile.getAbsolutePath());
+			}
+		});
+
 		this.add(inputBoxPanel);
 		this.add(Box.createRigidArea(new Dimension(0, 2)));
+
+		startButton = new JButton("开始");
+		pauseResumeButton = new JButton("暂停");
+		stopButton = new JButton("停止");
+
+		startButton.addActionListener(e -> {
+			String tckFilePath = tckFilePathTextField.getText();
+			if (tckFilePath.isEmpty()) {
+				JOptionPane.showMessageDialog(
+						this,
+						"TCK 文件路径不能为空",
+						"错误",
+						JOptionPane.ERROR_MESSAGE
+				);
+				return;
+			}
+
+			try {
+				var tckFileReader = new TCKFileReader(tckFilePath);
+
+				setCurrentFile.apply(tckFileReader);
+				this.startButton.setEnabled(false);
+				this.pauseResumeButton.setEnabled(true);
+				this.stopButton.setEnabled(true);
+				this.isEnabled = true;
+			} catch (IOException ioException) {
+				JOptionPane.showMessageDialog(
+						this,
+						"无法打开 TCK 文件",
+						"错误",
+						JOptionPane.ERROR_MESSAGE
+				);
+			}
+		});
+
+		pauseResumeButton.addActionListener(e -> {
+			if (this.isEnabled) {
+				this.pauseResumeButton.setText("继续");
+				this.isEnabled = false;
+			} else {
+				this.pauseResumeButton.setText("暂停");
+				this.isEnabled = true;
+			}
+
+			this.setEnabled.apply(this.isEnabled);
+		});
+
+		stopButton.addActionListener(e -> {
+			this.isEnabled = false;
+			this.setEnabled.apply(false);
+			stopAutopilot.apply();
+			this.stopButton.setEnabled(false);
+			this.pauseResumeButton.setEnabled(false);
+			this.pauseResumeButton.setText("暂停");
+			this.startButton.setEnabled(true);
+		});
+
+		pauseResumeButton.setEnabled(false);
+		stopButton.setEnabled(false);
 
 		JPanel buttonPanel = new JPanel();
 		BoxLayout buttonBoxLayout = new BoxLayout(buttonPanel, BoxLayout.X_AXIS);
 		buttonPanel.setLayout(buttonBoxLayout);
-		JButton startButton = new JButton("开始");
 		buttonPanel.add(startButton);
 		buttonPanel.add(Box.createRigidArea(new Dimension(2, 0)));
-		JButton pauseResumeButton = new JButton("暂停");
 		buttonPanel.add(pauseResumeButton);
 		buttonPanel.add(Box.createRigidArea(new Dimension(2, 0)));
-		JButton stopButton = new JButton("停止");
 		buttonPanel.add(stopButton);
 
 		this.add(buttonPanel);
 	}
 
+	public void onAutopilotStopped() {
+		SwingUtilities.invokeLater(() -> {
+			this.startButton.setEnabled(true);
+			this.pauseResumeButton.setEnabled(false);
+			this.stopButton.setEnabled(false);
+		});
+	}
+
 	@Override
 	public void dock() {
-
 	}
 
 	@Override
 	public void undock() {
 		this.setEnabled.apply(false);
+		this.stopAutopilot.apply();
+		this.startButton.setEnabled(true);
+		this.pauseResumeButton.setEnabled(false);
+		this.stopButton.setEnabled(false);
+		this.pauseResumeButton.setText("暂停");
 	}
 
+	private final JButton startButton;
+	private final JButton pauseResumeButton;
+	private final JButton stopButton;
 	private final Function<Boolean, Void> setEnabled;
-	private final Function<TCKFileReader, Void> setCurrentFile;
-	private final Function0<Void> rewindCurrentFile;
+	private final Function0<Void> stopAutopilot;
+	private volatile boolean isEnabled = false;
 }
 
 public final class AutopilotTrackingComponent implements DataPublisher, UIProvider {
@@ -164,17 +250,42 @@ public final class AutopilotTrackingComponent implements DataPublisher, UIProvid
 		if (!isEnabled) {
 			return;
 		}
+
+		if (tckFileReader instanceof Optional.Some<TCKFileReader> someTCKFileReader) {
+			Optional<String> line = someTCKFileReader.value.readLine();
+			if (line instanceof Optional.Some<String> someLine) {
+				System.out.println(someLine);
+			} else {
+				this.isEnabled = false;
+				this.tckFileReader = Optional.none();
+				autopilotTrackingPanel.onAutopilotStopped();
+
+				JOptionPane.showMessageDialog(
+						autopilotTrackingPanel,
+						"自动驾驶已停止运行",
+						"提示",
+						JOptionPane.INFORMATION_MESSAGE
+				);
+			}
+		}
 	}
 
 	private volatile boolean isEnabled;
-	private volatile TCKFileReader tckFileReader;
+	private volatile Optional<TCKFileReader> tckFileReader;
 	private Masterpiece masterpiece;
 	private final AutopilotTrackingPanel autopilotTrackingPanel = new AutopilotTrackingPanel(
 			isEnabled -> {
 				this.isEnabled = isEnabled;
 				return null;
 			},
-			f -> { return null; },
-			() -> { return null; }
+			f -> {
+				this.tckFileReader = Optional.some(f);
+				return null;
+			},
+			() -> {
+				this.isEnabled = false;
+				this.tckFileReader = Optional.none();
+				return null;
+			}
 	);
 }
