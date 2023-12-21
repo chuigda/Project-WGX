@@ -17,6 +17,8 @@ import tech.icey.wgx.ui.ControlWindow;
 import tech.icey.wgx.ui.DeviceInfoDialog;
 
 import javax.swing.*;
+import javax.swing.plaf.metal.DefaultMetalTheme;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -26,6 +28,13 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+        MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
+        try {
+            UIManager.setLookAndFeel(new MetalLookAndFeel());
+        } catch (UnsupportedLookAndFeelException e) {
+            logger.log(Logger.Level.WARN, "设置外观时发生了错误: %s", e.getMessage());
+        }
+
         var controlWindow = new ControlWindow();
         controlWindow.setVisible(true);
 
