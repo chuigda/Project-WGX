@@ -13,7 +13,7 @@ public final class VTSTrackingComponent implements DataPublisher, UIProvider {
 		return List.of(
 			new Pair<>(
 				"VTSTracking",
-				new UIComponent.SubElement(vtsTrackingPanel, "VTS", "TrackingControl", 0)
+				new UIComponent.SubElement(vtsTrackingPanel, "VTUBESTUIDIO", "TrackingControl", 0)
 			)
 		);
 	}

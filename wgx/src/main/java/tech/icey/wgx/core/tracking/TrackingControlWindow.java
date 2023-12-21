@@ -29,9 +29,9 @@ final class TripleEdit extends JPanel {
         var spinnerEventListener = new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                float x = (float) xSpinner.getValue();
-                float y = (float) ySpinner.getValue();
-                float z = (float) zSpinner.getValue();
+                float x = (float)(double) xSpinner.getValue();
+                float y = (float)(double) ySpinner.getValue();
+                float z = (float)(double) zSpinner.getValue();
                 updateState.apply(new Vector3(x, y, z));
             }
         };
