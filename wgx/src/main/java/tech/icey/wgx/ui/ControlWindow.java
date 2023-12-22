@@ -82,6 +82,11 @@ public final class ControlWindow extends JFrame {
 
         this.pluginWindow = Optional.none();
 
+        JPanel contentPanel = new JPanel();
+        GridBagLayout contentPanelLayout = new GridBagLayout();
+        contentPanel.setLayout(contentPanelLayout);
+        this.setContentPane(contentPanel);
+
         this.textArea = new JTextArea();
         Font font = FontDatabase.defaultMonospaceFont.deriveFont(10.0f);
         this.textArea.setFont(font);
@@ -90,10 +95,49 @@ public final class ControlWindow extends JFrame {
         MenuFactory.createTextAreaMenu(this.textArea);
 
         JScrollPane scrollPane = new JScrollPane(this.textArea);
-        this.add(scrollPane);
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.BOTH;
+        c.weightx = 1;
+        c.weighty = 1;
+        c.gridx = 0;
+        c.gridy = 0;
+        this.add(scrollPane, c);
 
-        this.setSize(480, 360);
+        JLabel statusLabel = new JLabel("就绪");
+        statusLabel.setBorder(BorderFactory.createLoweredBevelBorder());
+        statusLabel.setFont(font);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weighty = 0;
+        c.gridy = 1;
+        this.add(statusLabel, c);
+
+        this.setMinimumSize(new Dimension(480, 360));
+        this.pack();
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // update indicator every 100ms
+        new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(100);
+                    Runtime runtime = Runtime.getRuntime();
+                    long totalMemory = runtime.totalMemory() / (1024 * 1024);
+                    long freeMemory = runtime.freeMemory() / (1024 * 1024);
+                    long maxMemory = runtime.maxMemory() / (1024 * 1024);
+                    long usedMemory = totalMemory - freeMemory;
+                    SwingUtilities.invokeLater(() -> {
+                        statusLabel.setText(String.format(
+                                "JVM 内存: 当前 %d, 最大 %d, 已使用 %d, 空闲 %d (MiB)",
+                                totalMemory,
+                                maxMemory,
+                                usedMemory,
+                                freeMemory
+                        ));
+                    });
+                } catch (InterruptedException ignored) {}
+            }
+        }).start();
     }
 
     public void installPluginDatabase(List<BabelPlugin> plugins, List<List<Object>> pluginComponents) {

@@ -28,6 +28,14 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            logger.log(Logger.Level.FATAL, "线程 %s 发生了一个无法恢复的异常: %s", t.getName(), e.getMessage());
+            logger.log(Logger.Level.FATAL, "堆栈跟踪: ");
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.log(Logger.Level.FATAL, "\t%s", element.toString());
+            }
+        });
+
         MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
         try {
             UIManager.setLookAndFeel(new MetalLookAndFeel());
