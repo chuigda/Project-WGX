@@ -11,6 +11,7 @@ import tech.icey.util.Pair;
 import tech.icey.util.Optional;
 import tech.icey.wgx.babel.BabelPlugin;
 import tech.icey.wgx.babel.UIProvider;
+import tech.icey.wgx.core.MatrixGeneratorPlugin;
 import tech.icey.wgx.core.editor.EditorPlugin;
 import tech.icey.wgx.core.tracking.TrackingPlugin;
 import tech.icey.wgx.ui.ControlWindow;
@@ -75,7 +76,8 @@ public class Main {
 
             List<BabelPlugin> plugins = List.of(
                     new TrackingPlugin(),
-                    new EditorPlugin()
+                    new EditorPlugin(),
+                    new MatrixGeneratorPlugin()
             );
             List<List<Object>> pluginComponents = plugins.stream().map(BabelPlugin::getComponents).toList();
             List<UIProvider> uiProviders = pluginComponents.stream()
