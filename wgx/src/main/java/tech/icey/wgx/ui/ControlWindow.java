@@ -88,11 +88,11 @@ public final class ControlWindow extends JFrame {
         this.setContentPane(contentPanel);
 
         this.textArea = new JTextArea();
-        Font font = FontDatabase.defaultMonospaceFont.deriveFont(10.0f);
+        Font font = UICommonUtils.defaultMonospaceFont.deriveFont(10.0f);
         this.textArea.setFont(font);
         this.textArea.setLineWrap(true);
         this.textArea.setEditable(false);
-        MenuFactory.createTextAreaMenu(this.textArea);
+        UICommonUtils.createTextAreaMenu(this.textArea);
 
         JScrollPane scrollPane = new JScrollPane(this.textArea);
         GridBagConstraints c = new GridBagConstraints();

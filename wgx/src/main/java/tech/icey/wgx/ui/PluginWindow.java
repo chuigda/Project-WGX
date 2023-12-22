@@ -22,6 +22,7 @@ public final class PluginWindow extends JFrame {
         pluginListPanel.add(pluginListScrollPane, BorderLayout.CENTER);
 
         JTextArea pluginDescription = new JTextArea("选择一个插件来查看详情");
+        UICommonUtils.makeGrayBackgroundAndReadonly(pluginDescription);
         JScrollPane pluginDescriptionScrollPane = new JScrollPane(pluginDescription);
         pluginDescriptionScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         pluginDescriptionScrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));

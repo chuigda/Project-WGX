@@ -15,9 +15,9 @@ import tech.icey.wgx.core.editor.EditorPlugin;
 import tech.icey.wgx.core.tracking.TrackingPlugin;
 import tech.icey.wgx.ui.ControlWindow;
 import tech.icey.wgx.ui.DeviceInfoDialog;
+import tech.icey.wgx.ui.UICommonUtils;
 
 import javax.swing.*;
-import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,7 +36,7 @@ public class Main {
             }
         });
 
-        MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
+        MetalLookAndFeel.setCurrentTheme(UICommonUtils.defaultMetalTheme);
         try {
             UIManager.setLookAndFeel(new MetalLookAndFeel());
         } catch (UnsupportedLookAndFeelException e) {

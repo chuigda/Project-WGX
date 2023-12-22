@@ -29,13 +29,13 @@ public final class DeviceInfoDialog extends JDialog {
         JComboBox<String> comboBox = new JComboBox<>(deviceNameArray);
 
         JTextArea detailTextArea = new JTextArea();
-        detailTextArea.setEditable(false);
+        UICommonUtils.makeGrayBackgroundAndReadonly(detailTextArea);
         detailTextArea.setLineWrap(true);
         detailTextArea.setWrapStyleWord(true);
-        detailTextArea.setFont(FontDatabase.defaultMonospaceFont);
+        detailTextArea.setFont(UICommonUtils.defaultMonospaceFont);
         detailTextArea.setText("选择一个设备，然后这里会显示其具体细节");
         detailTextArea.setBorder(BorderFactory.createLineBorder(UIManager.getColor("MenuBar.borderColor"), 1));
-        MenuFactory.createTextAreaMenu(detailTextArea);
+        UICommonUtils.createTextAreaMenu(detailTextArea);
 
         JScrollPane detailScrollPane = new JScrollPane(detailTextArea);
 

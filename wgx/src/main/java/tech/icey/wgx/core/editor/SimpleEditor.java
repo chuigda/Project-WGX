@@ -3,8 +3,7 @@ package tech.icey.wgx.core.editor;
 import tech.icey.util.Logger;
 import tech.icey.util.Ref;
 import tech.icey.util.Optional;
-import tech.icey.wgx.ui.FontDatabase;
-import tech.icey.wgx.ui.MenuFactory;
+import tech.icey.wgx.ui.UICommonUtils;
 
 import java.awt.BorderLayout;
 import java.io.IOException;
@@ -43,8 +42,8 @@ public final class SimpleEditor extends JFrame {
 		this.setLayout(new BorderLayout());
 		
 		JTextArea textArea = new JTextArea();
-		textArea.setFont(FontDatabase.defaultMonospaceFont);
-		MenuFactory.createTextAreaMenu(textArea);
+		textArea.setFont(UICommonUtils.defaultMonospaceFont);
+		UICommonUtils.createTextAreaMenu(textArea);
 		JScrollPane scrollPane = new JScrollPane(textArea);
 		this.add(scrollPane);
 

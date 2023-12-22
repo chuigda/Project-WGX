@@ -3,9 +3,14 @@ package tech.icey.wgx.ui;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.plaf.metal.DefaultMetalTheme;
+import javax.swing.plaf.metal.MetalTheme;
 import javax.swing.text.StyleContext;
 
-public class FontDatabase {
+public class UICommonUtils {
+    public static final MetalTheme defaultMetalTheme = new DefaultMetalTheme();
+
     public static final Font defaultMonospaceFont;
 
     static {
@@ -59,5 +64,34 @@ public class FontDatabase {
 
             defaultMonospaceFont = new StyleContext().getFont(Font.MONOSPACED, Font.PLAIN, 12);
         }
+    }
+
+    public static JPopupMenu createTextAreaMenu(JTextArea textArea) {
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem cut = new JMenuItem("剪切");
+        JMenuItem copy = new JMenuItem("复制");
+        JMenuItem paste = new JMenuItem("粘贴");
+        JMenuItem selectAll = new JMenuItem("全选");
+        menu.add(cut);
+        menu.add(copy);
+        menu.add(paste);
+        menu.add(selectAll);
+        cut.addActionListener(e -> textArea.cut());
+        copy.addActionListener(e -> textArea.copy());
+        paste.addActionListener(e -> textArea.paste());
+        selectAll.addActionListener(e -> textArea.selectAll());
+
+        if (!textArea.isEditable()) {
+            cut.setEnabled(false);
+            paste.setEnabled(false);
+        }
+
+        textArea.setComponentPopupMenu(menu);
+        return menu;
+    }
+
+    public static void makeGrayBackgroundAndReadonly(JTextArea textArea) {
+        textArea.setBackground(defaultMetalTheme.getControl());
+        textArea.setEditable(false);
     }
 }
