@@ -1,11 +1,12 @@
 package tech.icey.wgx.babel;
 
 import tech.icey.r77.asset.Vertex;
+import tech.icey.util.Pair;
 
 import java.util.List;
 
 public interface MeshProvider {
     boolean hasMeshUpdate();
 
-    List<Vertex> provideMesh();
+    Pair<String, List<Vertex>> provideMesh();
 }
