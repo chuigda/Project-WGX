@@ -16,6 +16,11 @@ public record Vector4(float x, float y, float z, float t) implements IntoBytes {
     public Vector3 xzt() { return new Vector3(x, z, t); }
     public Vector3 yzt() { return new Vector3(y, z, t); }
 
+    @Override
+    public int bytesSize() {
+        return Float.BYTES * 4;
+    }
+
     public Vector4 perspectiveDivide() {
         return new Vector4(x / t, y / t, z / t, 1.0f);
     }

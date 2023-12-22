@@ -10,6 +10,11 @@ public record Vector3(float x, float y, float z) implements IntoBytes {
     public Vector2 yz() { return new Vector2(y, z); }
 
     @Override
+    public int bytesSize() {
+        return Float.BYTES * 3;
+    }
+
+    @Override
     public void writeToByteBuffer(ByteBuffer buffer) {
         buffer.putFloat(x);
         buffer.putFloat(y);

@@ -6,6 +6,11 @@ import java.nio.ByteBuffer;
 
 public record Vector2(float x, float y) implements IntoBytes {
     @Override
+    public int bytesSize() {
+        return Float.BYTES * 2;
+    }
+
+    @Override
     public void writeToByteBuffer(ByteBuffer buffer) {
         buffer.putFloat(x);
         buffer.putFloat(y);

@@ -5,7 +5,7 @@ import java.nio.ByteOrder;
 
 public interface IntoBytes {
     default byte[] intoBytes() {
-        ByteBuffer buffer = ByteBuffer.allocate(0).order(ByteOrder.nativeOrder());
+        ByteBuffer buffer = ByteBuffer.allocate(bytesSize()).order(ByteOrder.nativeOrder());
         writeToByteBuffer(buffer);
 
         buffer.rewind();
@@ -13,6 +13,8 @@ public interface IntoBytes {
         buffer.get(bytes);
         return bytes;
     }
+
+    int bytesSize();
 
     void writeToByteBuffer(ByteBuffer buffer);
 }

@@ -1,9 +1,38 @@
 package tech.icey.r77.math;
 
+import tech.icey.r77.asset.IntoBytes;
+
+import java.nio.ByteBuffer;
+
 public record Matrix4x4(float m11, float m12, float m13, float m14,
                         float m21, float m22, float m23, float m24,
                         float m31, float m32, float m33, float m34,
-                        float m41, float m42, float m43, float m44) {
+                        float m41, float m42, float m43, float m44) implements IntoBytes {
+    @Override
+    public int bytesSize() {
+        return Float.BYTES * 16;
+    }
+
+    @Override
+    public void writeToByteBuffer(ByteBuffer buffer) {
+        buffer.putFloat(m11);
+        buffer.putFloat(m12);
+        buffer.putFloat(m13);
+        buffer.putFloat(m14);
+        buffer.putFloat(m21);
+        buffer.putFloat(m22);
+        buffer.putFloat(m23);
+        buffer.putFloat(m24);
+        buffer.putFloat(m31);
+        buffer.putFloat(m32);
+        buffer.putFloat(m33);
+        buffer.putFloat(m34);
+        buffer.putFloat(m41);
+        buffer.putFloat(m42);
+        buffer.putFloat(m43);
+        buffer.putFloat(m44);
+    }
+
     public static final Matrix4x4 IDENTITY = new Matrix4x4(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
