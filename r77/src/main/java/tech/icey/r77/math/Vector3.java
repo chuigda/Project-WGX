@@ -25,11 +25,16 @@ public record Vector3(float x, float y, float z) implements IntoBytes {
         return Vector3.add(this, b);
     }
 
+    public boolean isPositive() {
+        return Vector3.isPositive(this);
+    }
+
     public Vector3 threshold(Vector3 thres) {
+        assert thres.isPositive();
         return new Vector3(
-                Math.abs(x) < thres.x ? 0.0f : x,
-                Math.abs(y) < thres.y ? 0.0f : y,
-                Math.abs(z) < thres.z ? 0.0f : z
+                Math.abs(x) < thres.x ? x : Math.copySign(thres.x, x),
+                Math.abs(y) < thres.y ? y : Math.copySign(thres.y, y),
+                Math.abs(z) < thres.z ? z : Math.copySign(thres.z, z)
         );
     }
 
@@ -58,5 +63,9 @@ public record Vector3(float x, float y, float z) implements IntoBytes {
 
     public static Vector3 mul(Vector3 a, Vector3 b) {
         return new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
+    }
+
+    public static boolean isPositive(Vector3 v) {
+        return v.x > 0 && v.y > 0 && v.z > 0;
     }
 }
