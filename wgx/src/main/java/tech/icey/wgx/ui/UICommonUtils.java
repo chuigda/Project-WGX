@@ -66,7 +66,7 @@ public class UICommonUtils {
         }
     }
 
-    public static JPopupMenu createTextAreaMenu(JTextArea textArea) {
+    public static void createTextAreaMenu(JTextArea textArea) {
         JPopupMenu menu = new JPopupMenu();
         JMenuItem cut = new JMenuItem("剪切");
         JMenuItem copy = new JMenuItem("复制");
@@ -87,7 +87,6 @@ public class UICommonUtils {
         }
 
         textArea.setComponentPopupMenu(menu);
-        return menu;
     }
 
     public static void makeGrayBackgroundAndReadonly(JTextArea textArea) {
