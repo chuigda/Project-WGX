@@ -32,7 +32,7 @@ public record Logger(String className) {
         private final int value;
     }
 
-    private static Level level = Level.WARN;
+    private static volatile Level level = Level.WARN;
 
     private static boolean logStderrAlways = false;
 
@@ -67,12 +67,18 @@ public record Logger(String className) {
     }
 
     public void log(Level level, String message, Object... args) {
-        synchronized (Logger.level) {
-	        if (level.value < Logger.level.value) {
-	            return;
-	        }
-    	}
-    	
+        if (level.value < Logger.level.value) {
+            return;
+        }
+
+        log_s(level, className + ": " + String.format(message, args));
+    }
+
+    public static void log(Level level, String className, String message, Object... args) {
+        if (level.value < Logger.level.value) {
+            return;
+        }
+
         log_s(level, className + ": " + String.format(message, args));
     }
     
