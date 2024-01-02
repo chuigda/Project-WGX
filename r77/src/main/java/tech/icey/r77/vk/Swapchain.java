@@ -2,6 +2,7 @@ package tech.icey.r77.vk;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import tech.icey.util.ManualDispose;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -11,7 +12,7 @@ import static org.lwjgl.vulkan.VK11.*;
 import static tech.icey.util.RuntimeError.runtimeError;
 
 
-public final class Swapchain {
+public final class Swapchain implements ManualDispose {
     public Swapchain(Device device, Surface surface, VkWindow vkWindow, int requestedImages, boolean vsync) {
         this.device = device;
 
@@ -59,8 +60,34 @@ public final class Swapchain {
                 runtimeError("创建交换链失败: %d", ret);
             }
             this.vkSwapchain = swapchainBuf.get(0);
+            this.imageViews = createImageViews(stack, device, vkSwapchain, surfaceFormat.imageFormat());
         }
     }
+
+    @Override
+    public boolean isManuallyDisposed() {
+        return isDisposed;
+    }
+
+    @Override
+    public void dispose() {
+        if (!isDisposed) {
+            for (ImageView imageView : imageViews) {
+                imageView.dispose();
+            }
+            KHRSwapchain.vkDestroySwapchainKHR(device.vkDevice, vkSwapchain, null);
+            isDisposed = true;
+        }
+    }
+
+    public final Device device;
+    public final int numImages;
+    public final SurfaceFormat surfaceFormat;
+    public final VkExtent2D swapchainExtent;
+    public final boolean vsync;
+
+    public final long vkSwapchain;
+    public final ImageView[] imageViews;
 
     private int calcNumImages(VkSurfaceCapabilitiesKHR surfaceCapabilities, int requestedImages) {
         int maxImages = surfaceCapabilities.maxImageCount();
@@ -140,13 +167,29 @@ public final class Swapchain {
         return result;
     }
 
-    public final Device device;
-    public final int numImages;
-    public final SurfaceFormat surfaceFormat;
-    public final VkExtent2D swapchainExtent;
-    public final boolean vsync;
+    private ImageView[] createImageViews(MemoryStack stack, Device device, long swapchain, int format) {
+        IntBuffer numImagesBuf = stack.mallocInt(1);
+        int ret = KHRSwapchain.vkGetSwapchainImagesKHR(device.vkDevice, swapchain, numImagesBuf, null);
+        if (ret != VK_SUCCESS) {
+            runtimeError("无法获取交换链图像: %d", ret);
+        }
+        int numImages = numImagesBuf.get(0);
 
+        LongBuffer imagesBuf = stack.mallocLong(numImages);
+        ret = KHRSwapchain.vkGetSwapchainImagesKHR(device.vkDevice, swapchain, numImagesBuf, imagesBuf);
+        if (ret != VK_SUCCESS) {
+            runtimeError("无法获取交换链图像: %d", ret);
+        }
 
-    public final long vkSwapchain;
-    public final ImageView[] imageViews;
+        ImageView[] result = new ImageView[numImages];
+        ImageViewData imageViewData = new ImageViewData()
+                .format(format)
+                .aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+        for (int i = 0; i < numImages; i++) {
+            result[i] = new ImageView(device, imagesBuf.get(i), imageViewData);
+        }
+        return result;
+    }
+
+    private volatile boolean isDisposed = false;
 }
