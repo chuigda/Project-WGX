@@ -1,7 +1,5 @@
 package tech.icey.r77.vk;
 
-import tech.icey.util.Optional;
-
 import java.util.List;
 
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
