@@ -1,5 +1,25 @@
 package tech.icey.r77.vk;
 
-import tech.icey.util.ManualDispose;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkQueue;
 
-public abstract sealed class Queue implements ManualDispose permits GraphicsQueue { }
+import static org.lwjgl.vulkan.VK10.vkGetDeviceQueue;
+import static org.lwjgl.vulkan.VK10.vkQueueWaitIdle;
+
+public abstract sealed class Queue permits GraphicsQueue {
+    public Queue(Device device, int queueFamilyIndex, int queueIndex) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            PointerBuffer pQueue = stack.mallocPointer(1);
+            vkGetDeviceQueue(device.vkDevice, queueFamilyIndex, queueIndex, pQueue);
+            long queue = pQueue.get(0);
+            vkQueue = new VkQueue(queue, device.vkDevice);
+        }
+    }
+
+    public void waitIdle() {
+        vkQueueWaitIdle(vkQueue);
+    }
+
+    public final VkQueue vkQueue;
+}
