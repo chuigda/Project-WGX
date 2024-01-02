@@ -17,7 +17,7 @@ public abstract sealed class Queue permits GraphicsQueue {
         }
     }
 
-    public void waitIdle() {
+    public final void waitIdle() {
         vkQueueWaitIdle(vkQueue);
     }
 
