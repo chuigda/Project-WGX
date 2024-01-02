@@ -3,6 +3,7 @@ package tech.icey.r77.vk;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import tech.icey.util.ManualDispose;
 
 import java.nio.FloatBuffer;
 import java.util.List;
@@ -10,11 +11,8 @@ import java.util.List;
 import static org.lwjgl.vulkan.VK11.*;
 import static tech.icey.util.RuntimeError.*;
 
-public record Device(
-		PhysicalDevice physicalDevice,
-		VkDevice vkDevice
-) {
-	public static Device create(PhysicalDevice physicalDevice) {
+public final class Device implements ManualDispose {
+	public Device(PhysicalDevice physicalDevice) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			PointerBuffer requiredExtensionsBuf = stack.mallocPointer(1);
 			requiredExtensionsBuf.put(stack.ASCII(KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME));
@@ -49,7 +47,27 @@ public record Device(
 			}
 			
 			VkDevice vkDevice = new VkDevice(vkDeviceBuf.get(0), physicalDevice.vkPhysicalDevice(), deviceCreateInfo);
-			return new Device(physicalDevice, vkDevice);
+
+			this.physicalDevice = physicalDevice;
+			this.vkDevice = vkDevice;
 		}
 	}
+
+	@Override
+	public boolean isManuallyDisposed() {
+		return isDisposed;
+	}
+
+	@Override
+	public void dispose() {
+		if (!isDisposed) {
+			vkDestroyDevice(vkDevice, null);
+			isDisposed = true;
+		}
+	}
+
+	public final PhysicalDevice physicalDevice;
+	public final VkDevice vkDevice;
+
+	private volatile boolean isDisposed = false;
 }

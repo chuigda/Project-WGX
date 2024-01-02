@@ -3,11 +3,12 @@ package tech.icey.r77.vk;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
+import tech.icey.util.ManualDispose;
 
 import java.nio.LongBuffer;
 
-public record Surface(PhysicalDevice physicalDevice, long vkSurface) {
-	public static Surface create(PhysicalDevice physicalDevice, long windowHandle) {
+public final class Surface implements ManualDispose {
+	public Surface(PhysicalDevice physicalDevice, long windowHandle) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             LongBuffer surfaceBuf = stack.mallocLong(1);
             GLFWVulkan.glfwCreateWindowSurface(
@@ -17,7 +18,27 @@ public record Surface(PhysicalDevice physicalDevice, long vkSurface) {
                     surfaceBuf
             );
             long vkSurface = surfaceBuf.get(0);
-            return new Surface(physicalDevice, vkSurface);
+
+            this.physicalDevice = physicalDevice;
+            this.vkSurface = vkSurface;
         }
 	}
+
+    public final PhysicalDevice physicalDevice;
+    public final long vkSurface;
+
+    @Override
+    public boolean isManuallyDisposed() {
+        return isDisposed;
+    }
+
+    @Override
+    public void dispose() {
+        if (!isDisposed) {
+            KHRSurface.vkDestroySurfaceKHR(physicalDevice.vkPhysicalDevice().getInstance(), vkSurface, null);
+            isDisposed = true;
+        }
+    }
+
+    private volatile boolean isDisposed = false;
 }

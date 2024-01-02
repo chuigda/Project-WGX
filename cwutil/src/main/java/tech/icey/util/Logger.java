@@ -74,7 +74,7 @@ public record Logger(String className) {
         log_s(level, className + ": " + String.format(message, args));
     }
 
-    public static void log(Level level, String className, String message, Object... args) {
+    public static void log_static(Level level, String className, String message, Object... args) {
         if (level.value < Logger.level.value) {
             return;
         }

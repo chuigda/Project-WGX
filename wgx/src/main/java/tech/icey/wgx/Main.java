@@ -151,6 +151,7 @@ public class Main {
 
         try (var window = new VkWindow("你好", 600, 600);
              var instance = new Instance("Project-WGX", true)) {
+
         	List<PhysicalDevice> physicalDevices = PhysicalDevice.listPhysicalDevices(instance);
         	List<PhysicalDeviceProperties> physicalDeviceProperties = physicalDevices.stream()
         			.map(PhysicalDevice::physicalDeviceProperties)
@@ -160,6 +161,8 @@ public class Main {
         	deviceInfoDialog.setVisible(true);
         	
             while (window.poll()) {}
+
+            instance.dispose();
         }
     }
 

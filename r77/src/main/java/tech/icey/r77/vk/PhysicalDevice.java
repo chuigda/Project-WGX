@@ -96,7 +96,7 @@ public record PhysicalDevice(
                             queueFamilyPropertiesBuf
                     );
 
-                    List<VkQueueFamilyProperties> graphicsQueueFamilies = new ArrayList();
+                    List<VkQueueFamilyProperties> graphicsQueueFamilies = new ArrayList<>();
                     for (int j = 0; j < numQueueFamilyProperties; j++) {
                         VkQueueFamilyProperties queueFamilyProperties = queueFamilyPropertiesBuf.get(j);
                         if ((queueFamilyProperties.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {

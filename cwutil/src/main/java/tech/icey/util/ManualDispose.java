@@ -4,7 +4,7 @@ public interface ManualDispose extends AutoCloseable {
 	@Override
 	default void close() {
 		if (!isManuallyDisposed()) {
-			Logger.log(
+			Logger.log_static(
 					Logger.Level.ERROR,
 					this.getClass().getName(),
 					"ManualDispose 在手动释放前被 GC 清理"

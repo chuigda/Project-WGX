@@ -21,7 +21,7 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK13.*;
 import static tech.icey.util.RuntimeError.*;
 
-public class Instance implements AutoCloseable {
+public final class Instance implements ManualDispose {
     public Instance(String appName, boolean validation) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             ByteBuffer appNameBuf = stack.UTF8(appName);
@@ -133,6 +133,30 @@ public class Instance implements AutoCloseable {
         return validation;
     }
 
+    @Override
+    public boolean isManuallyDisposed() {
+        return isDisposed;
+    }
+
+    @Override
+    public void dispose() {
+        if (!isDisposed) {
+            if (debugHandle != 0) {
+                vkDestroyDebugUtilsMessengerEXT(instance, debugHandle, null);
+            }
+
+            if (debugUtils != null) {
+                debugUtils.pfnUserCallback().free();
+                debugUtils.free();
+            }
+
+            vkDestroyInstance(instance, null);
+            logger.log(Logger.Level.INFO, "成功销毁了 Vulkan 实例");
+
+            isDisposed = true;
+        }
+    }
+
     /* internal */ VkInstance getVkInstance() {
         return instance;
     }
@@ -230,21 +254,7 @@ public class Instance implements AutoCloseable {
     private final long debugHandle;
     private final VkDebugUtilsMessengerCreateInfoEXT debugUtils;
     private final boolean validation;
+    private volatile boolean isDisposed = false;
 
     private static final Logger logger = new Logger(Instance.class.getName());
-
-    @Override
-    public void close() {
-        if (debugHandle != 0) {
-            vkDestroyDebugUtilsMessengerEXT(instance, debugHandle, null);
-        }
-
-        if (debugUtils != null) {
-            debugUtils.pfnUserCallback().free();
-            debugUtils.free();
-        }
-
-        vkDestroyInstance(instance, null);
-        logger.log(Logger.Level.INFO, "成功销毁了 Vulkan 实例");
-    }
 }
