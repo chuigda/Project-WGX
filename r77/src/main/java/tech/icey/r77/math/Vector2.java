@@ -4,7 +4,14 @@ import tech.icey.r77.asset.IntoBytes;
 
 import java.nio.ByteBuffer;
 
-public record Vector2(float x, float y) implements IntoBytes {
+public final class Vector2 implements IntoBytes {
+    public Vector2(float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public final float x, y;
+
     @Override
     public int bytesSize() {
         return Float.BYTES * 2;

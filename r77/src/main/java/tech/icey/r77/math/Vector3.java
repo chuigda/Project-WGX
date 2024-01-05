@@ -4,7 +4,15 @@ import tech.icey.r77.asset.IntoBytes;
 
 import java.nio.ByteBuffer;
 
-public record Vector3(float x, float y, float z) implements IntoBytes {
+public final class Vector3 implements IntoBytes {
+    public Vector3(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public final float x, y, z;
+
     public Vector2 xy() { return new Vector2(x, y); }
     public Vector2 xz() { return new Vector2(x, z); }
     public Vector2 yz() { return new Vector2(y, z); }
