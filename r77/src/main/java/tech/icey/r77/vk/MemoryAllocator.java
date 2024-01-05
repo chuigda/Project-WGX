@@ -11,7 +11,7 @@ import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 import static tech.icey.util.RuntimeError.runtimeError;
 
-public class MemoryAllocator implements ManualDispose {
+public final class MemoryAllocator implements ManualDispose {
     public MemoryAllocator(Instance instance, Device device) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VmaAllocatorCreateInfo vmaAllocatorCreateInfo = VmaAllocatorCreateInfo.calloc(stack);

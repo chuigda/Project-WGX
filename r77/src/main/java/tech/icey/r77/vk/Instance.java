@@ -129,11 +129,8 @@ public final class Instance implements ManualDispose {
         }
     }
 
-    public boolean hasValidation() {
-        return validation;
-    }
-
     public final VkInstance vkInstance;
+    public final boolean validation;
 
     @Override
     public boolean isManuallyDisposed() {
@@ -250,7 +247,6 @@ public final class Instance implements ManualDispose {
 
     private final long debugHandle;
     private final VkDebugUtilsMessengerCreateInfoEXT debugUtils;
-    private final boolean validation;
     private volatile boolean isDisposed = false;
 
     private static final Logger logger = new Logger(Instance.class.getName());
