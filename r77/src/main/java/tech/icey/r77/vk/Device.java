@@ -21,7 +21,7 @@ public final class Device implements ManualDispose {
 			VkPhysicalDeviceFeatures features = VkPhysicalDeviceFeatures.calloc(stack);
 			
 			List<VkQueueFamilyProperties> graphicsQueueFamilies = 
-					physicalDevice.physicalDeviceProperties().graphicsQueueFamilies();
+					physicalDevice.physicalDeviceProperties.graphicsQueueFamilies;
 			VkDeviceQueueCreateInfo.Buffer queueCreationInfoBuffer =
 					VkDeviceQueueCreateInfo.calloc(graphicsQueueFamilies.size(), stack);
 			
@@ -41,12 +41,12 @@ public final class Device implements ManualDispose {
                     .pQueueCreateInfos(queueCreationInfoBuffer);
 			
 			PointerBuffer vkDeviceBuf = stack.mallocPointer(1);
-			int result = vkCreateDevice(physicalDevice.vkPhysicalDevice(), deviceCreateInfo, null, vkDeviceBuf);
+			int result = vkCreateDevice(physicalDevice.vkPhysicalDevice, deviceCreateInfo, null, vkDeviceBuf);
 			if (result != VK_SUCCESS) {
 				runtimeError("无法创建 Vulkan 设备: %d", result);
 			}
 			
-			VkDevice vkDevice = new VkDevice(vkDeviceBuf.get(0), physicalDevice.vkPhysicalDevice(), deviceCreateInfo);
+			VkDevice vkDevice = new VkDevice(vkDeviceBuf.get(0), physicalDevice.vkPhysicalDevice, deviceCreateInfo);
 
 			this.physicalDevice = physicalDevice;
 			this.vkDevice = vkDevice;

@@ -17,7 +17,7 @@ public final class MemoryAllocator implements ManualDispose {
             VmaAllocatorCreateInfo vmaAllocatorCreateInfo = VmaAllocatorCreateInfo.calloc(stack);
             vmaAllocatorCreateInfo.vulkanApiVersion(VK_API_VERSION_1_3);
             vmaAllocatorCreateInfo.instance(instance.vkInstance);
-            vmaAllocatorCreateInfo.physicalDevice(device.physicalDevice.vkPhysicalDevice());
+            vmaAllocatorCreateInfo.physicalDevice(device.physicalDevice.vkPhysicalDevice);
             vmaAllocatorCreateInfo.device(device.vkDevice);
             VmaVulkanFunctions vmaVulkanFunctions = VmaVulkanFunctions.calloc(stack);
             vmaVulkanFunctions.set(instance.vkInstance, device.vkDevice);

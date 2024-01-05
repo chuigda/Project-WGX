@@ -24,7 +24,7 @@ public final class DeviceInfoDialog extends JDialog {
                 Stream.of("请选择"),
                 physicalDeviceProperties
                         .stream()
-                        .map(PhysicalDeviceProperties::deviceName)
+                        .map(deviceProperties -> deviceProperties.deviceName)
         ).toArray(String[]::new);
         JComboBox<String> comboBox = new JComboBox<>(deviceNameArray);
 
@@ -60,12 +60,12 @@ public final class DeviceInfoDialog extends JDialog {
                                         厂商 ID: %d
                                         设备扩展: %s
                                         """,
-                                selectedDevice.deviceName(),
-                                selectedDevice.deviceType().descriptiveName(),
-                                selectedDevice.deviceId(),
-                                selectedDevice.driverVersion(),
-                                selectedDevice.vendorId(),
-                                String.join(" ", selectedDevice.deviceExtensions())
+                                selectedDevice.deviceName,
+                                selectedDevice.deviceType.descriptiveName(),
+                                selectedDevice.deviceId,
+                                selectedDevice.driverVersion,
+                                selectedDevice.vendorId,
+                                String.join(" ", selectedDevice.deviceExtensions)
                         )
                 );
                 okButton.setEnabled(true);

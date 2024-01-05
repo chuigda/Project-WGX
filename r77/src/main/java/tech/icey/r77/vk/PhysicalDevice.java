@@ -12,10 +12,10 @@ import java.util.List;
 import static org.lwjgl.vulkan.VK10.*;
 import static tech.icey.util.RuntimeError.*;
 
-public record PhysicalDevice(
-		VkPhysicalDevice vkPhysicalDevice,
-		PhysicalDeviceProperties physicalDeviceProperties
-) {
+public final class PhysicalDevice {
+    public final VkPhysicalDevice vkPhysicalDevice;
+    public final PhysicalDeviceProperties physicalDeviceProperties;
+
     public static List<PhysicalDevice> listPhysicalDevices(Instance instance) {
         VkInstance vkInstance = instance.vkInstance;
 
@@ -130,6 +130,12 @@ public record PhysicalDevice(
             return devices;
         }
     }
-    
+
+    private PhysicalDevice(VkPhysicalDevice vkPhysicalDevice, PhysicalDeviceProperties physicalDeviceProperties) {
+        this.vkPhysicalDevice = vkPhysicalDevice;
+        this.physicalDeviceProperties = physicalDeviceProperties;
+    }
+
+
     private static final Logger logger = new Logger(PhysicalDevice.class.getName());
 }

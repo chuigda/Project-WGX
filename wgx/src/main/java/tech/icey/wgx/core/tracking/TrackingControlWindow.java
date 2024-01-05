@@ -18,9 +18,9 @@ final class TripleEdit extends JPanel {
 		BoxLayout layout = new BoxLayout(this, BoxLayout.X_AXIS);
 		this.setLayout(layout);
 
-		float initX = initState.x();
-        float initY = initState.y();
-        float initZ = initState.z();
+		float initX = initState.x;
+        float initY = initState.y;
+        float initZ = initState.z;
 
         JSpinner xSpinner = new JSpinner(new SpinnerNumberModel(initX, -Float.MAX_VALUE, Float.MAX_VALUE, 0.1f));
         JSpinner ySpinner = new JSpinner(new SpinnerNumberModel(initY, -Float.MAX_VALUE, Float.MAX_VALUE, 0.1f));

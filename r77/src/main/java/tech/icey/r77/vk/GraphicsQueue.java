@@ -16,7 +16,7 @@ public final class GraphicsQueue extends Queue {
         int index = -1;
         PhysicalDevice physicalDevice = device.physicalDevice;
         List<VkQueueFamilyProperties> queueFamilyProperties =
-                physicalDevice.physicalDeviceProperties().graphicsQueueFamilies();
+                physicalDevice.physicalDeviceProperties.graphicsQueueFamilies;
         for (int i = 0; i < queueFamilyProperties.size(); i++) {
             VkQueueFamilyProperties props = queueFamilyProperties.get(i);
             boolean graphicsQueue = (props.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0;

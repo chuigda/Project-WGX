@@ -21,7 +21,7 @@ public final class Swapchain implements ManualDispose {
 
             VkSurfaceCapabilitiesKHR surfaceCapabilities = VkSurfaceCapabilitiesKHR.calloc(stack);
             int ret = KHRSurface.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-                    device.physicalDevice.vkPhysicalDevice(),
+                    device.physicalDevice.vkPhysicalDevice,
                     surface.vkSurface,
                     surfaceCapabilities
             );
@@ -38,8 +38,8 @@ public final class Swapchain implements ManualDispose {
                     .sType(KHRSwapchain.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
                     .surface(surface.vkSurface)
                     .minImageCount(this.numImages)
-                    .imageFormat(this.surfaceFormat.imageFormat())
-                    .imageColorSpace(this.surfaceFormat.colorSpace())
+                    .imageFormat(this.surfaceFormat.imageFormat)
+                    .imageColorSpace(this.surfaceFormat.colorSpace)
                     .imageExtent(swapchainExtent)
                     .imageArrayLayers(1)
                     .imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
@@ -60,7 +60,7 @@ public final class Swapchain implements ManualDispose {
                 runtimeError("创建交换链失败: %d", ret);
             }
             this.vkSwapchain = swapchainBuf.get(0);
-            this.imageViews = createImageViews(stack, device, vkSwapchain, surfaceFormat.imageFormat());
+            this.imageViews = createImageViews(stack, device, vkSwapchain, surfaceFormat.imageFormat);
         }
     }
 
@@ -107,7 +107,7 @@ public final class Swapchain implements ManualDispose {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer buf = stack.mallocInt(1);
             int ret = KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
-                    physicalDevice.vkPhysicalDevice(),
+                    physicalDevice.vkPhysicalDevice,
                     surface.vkSurface,
                     buf,
                     null
@@ -123,7 +123,7 @@ public final class Swapchain implements ManualDispose {
 
             VkSurfaceFormatKHR.Buffer surfaceFormats = VkSurfaceFormatKHR.calloc(numFormats, stack);
             ret = KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
-                    physicalDevice.vkPhysicalDevice(),
+                    physicalDevice.vkPhysicalDevice,
                     surface.vkSurface,
                     buf,
                     surfaceFormats

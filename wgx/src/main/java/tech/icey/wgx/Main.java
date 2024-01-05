@@ -154,7 +154,7 @@ public class Main {
 
         	List<PhysicalDevice> physicalDevices = PhysicalDevice.listPhysicalDevices(instance);
         	List<PhysicalDeviceProperties> physicalDeviceProperties = physicalDevices.stream()
-        			.map(PhysicalDevice::physicalDeviceProperties)
+        			.map(physicalDevice -> physicalDevice.physicalDeviceProperties)
         			.toList();
         	
         	DeviceInfoDialog deviceInfoDialog = new DeviceInfoDialog(physicalDeviceProperties, null);
