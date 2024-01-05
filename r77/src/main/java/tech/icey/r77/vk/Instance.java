@@ -113,12 +113,12 @@ public final class Instance implements ManualDispose {
             if (err != VK_SUCCESS) {
                 runtimeError("创建 Vulkan 实例失败，错误码：%d", err);
             }
-            this.instance = new VkInstance(instanceBuf.get(0), createInfo);
+            this.vkInstance = new VkInstance(instanceBuf.get(0), createInfo);
 
             long debugHandle = VK_NULL_HANDLE;
             if (validation) {
                 LongBuffer debugHandleBuf = stack.mallocLong(1);
-                err = vkCreateDebugUtilsMessengerEXT(this.instance, debugUtils, null, debugHandleBuf);
+                err = vkCreateDebugUtilsMessengerEXT(this.vkInstance, debugUtils, null, debugHandleBuf);
                 if (err != VK_SUCCESS) {
                     runtimeError("创建 Vulkan 调试回调失败，错误码：%d", err);
                 }
@@ -133,6 +133,8 @@ public final class Instance implements ManualDispose {
         return validation;
     }
 
+    public final VkInstance vkInstance;
+
     @Override
     public boolean isManuallyDisposed() {
         return isDisposed;
@@ -142,7 +144,7 @@ public final class Instance implements ManualDispose {
     public void dispose() {
         if (!isDisposed) {
             if (debugHandle != 0) {
-                vkDestroyDebugUtilsMessengerEXT(instance, debugHandle, null);
+                vkDestroyDebugUtilsMessengerEXT(vkInstance, debugHandle, null);
             }
 
             if (debugUtils != null) {
@@ -150,15 +152,11 @@ public final class Instance implements ManualDispose {
                 debugUtils.free();
             }
 
-            vkDestroyInstance(instance, null);
+            vkDestroyInstance(vkInstance, null);
             logger.log(Logger.Level.INFO, "成功销毁了 Vulkan 实例");
 
             isDisposed = true;
         }
-    }
-
-    /* internal */ VkInstance getVkInstance() {
-        return instance;
     }
 
     private Set<String> getSupportedValidationLayers() {
@@ -250,7 +248,6 @@ public final class Instance implements ManualDispose {
         return messageSeverityBitmask;
     }
 
-    private final VkInstance instance;
     private final long debugHandle;
     private final VkDebugUtilsMessengerCreateInfoEXT debugUtils;
     private final boolean validation;
