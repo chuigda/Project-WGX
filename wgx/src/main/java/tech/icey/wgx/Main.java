@@ -1,10 +1,7 @@
 package tech.icey.wgx;
 
 import tech.icey.r77.Init;
-import tech.icey.r77.vk.Instance;
-import tech.icey.r77.vk.PhysicalDevice;
-import tech.icey.r77.vk.PhysicalDeviceProperties;
-import tech.icey.r77.vk.VkWindow;
+import tech.icey.r77.vk.*;
 import tech.icey.util.IniParser;
 import tech.icey.util.Logger;
 import tech.icey.util.Pair;
@@ -159,7 +156,16 @@ public class Main {
         	
         	DeviceInfoDialog deviceInfoDialog = new DeviceInfoDialog(physicalDeviceProperties, null);
         	deviceInfoDialog.setVisible(true);
-        	
+
+            if (!(deviceInfoDialog.selectedDeviceId instanceof Optional.Some<Integer> someDeviceId)) {
+                logger.log(Logger.Level.FATAL, "未选择任何设备, 无法继续运行");
+                return;
+            }
+
+            PhysicalDevice physicalDevice = physicalDevices.get(someDeviceId.value);
+            Device device = new Device(physicalDevice);
+            GraphicsQueue graphicsQueue = new GraphicsQueue(device, 0);
+
             while (window.poll()) {}
 
             instance.dispose();

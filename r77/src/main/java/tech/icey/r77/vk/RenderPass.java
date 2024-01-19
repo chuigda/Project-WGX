@@ -36,7 +36,8 @@ public final class RenderPass implements ManualDispose {
                     .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
                     .pAttachments(attachments)
                     .pSubpasses(subPass)
-                    .pDependencies(subpassDependencies);
+//                    .pDependencies(subpassDependencies)
+                    ;
 
             LongBuffer renderPassBuffer = stack.mallocLong(1);
             int ret = vkCreateRenderPass(swapchain.device().vkDevice(), renderPassCreateInfo, null, renderPassBuffer);
