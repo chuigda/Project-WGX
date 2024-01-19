@@ -21,6 +21,7 @@ public final class VkWindow implements AutoCloseable {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         windowHandle = glfwCreateWindow(width, height, title, 0, 0);
         if (windowHandle == NULL) {

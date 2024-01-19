@@ -7,16 +7,22 @@ import tech.icey.util.ManualDispose;
 
 import java.nio.LongBuffer;
 
+import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
+import static tech.icey.util.RuntimeError.runtimeError;
+
 public final class Surface implements ManualDispose {
 	public Surface(PhysicalDevice physicalDevice, long windowHandle) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             LongBuffer surfaceBuf = stack.mallocLong(1);
-            GLFWVulkan.glfwCreateWindowSurface(
+            int ret = GLFWVulkan.glfwCreateWindowSurface(
             		physicalDevice.vkPhysicalDevice.getInstance(),
             		windowHandle,
                     null,
                     surfaceBuf
             );
+            if (ret != VK_SUCCESS) {
+                runtimeError("无法从 GLFW 窗口创建 Vulkan 表面：%d", ret);
+            }
             long vkSurface = surfaceBuf.get(0);
 
             this.physicalDevice = physicalDevice;
