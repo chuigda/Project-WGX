@@ -115,7 +115,6 @@ public record IniParser() {
     }
     
     public static Object parseFieldValue(Type ty, String value) {
-        System.out.println(ty);
         if (ty instanceof ParameterizedType pTy && pTy.getRawType() == Optional.class) {
             Type innerTy = pTy.getActualTypeArguments()[0];
             return Optional.fromNullable(parseFieldValue(innerTy, value));
