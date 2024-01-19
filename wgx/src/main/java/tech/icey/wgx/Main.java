@@ -164,9 +164,21 @@ public class Main {
 
             PhysicalDevice physicalDevice = physicalDevices.get(someDeviceId.value);
             Device device = new Device(physicalDevice);
-            GraphicsQueue graphicsQueue = new GraphicsQueue(device, 0);
             Surface surface = new Surface(physicalDevice, window.windowHandle());
-            Swapchain swapchain = new Swapchain(device, surface, window, 2, true);
+            GraphicsQueue graphicsQueue = new GraphicsQueue(device, 0);
+            PresentQueue presentQueue = new PresentQueue(device, surface, 0);
+
+            Swapchain swapchain = new Swapchain(
+                    device,
+                    surface,
+                    window,
+                    2,
+                    true,
+                    presentQueue,
+                    Optional.some(new Queue[]{ graphicsQueue })
+            );
+
+            CommandPool commandPool = new CommandPool(device, 0);
 
             while (window.poll()) {}
 

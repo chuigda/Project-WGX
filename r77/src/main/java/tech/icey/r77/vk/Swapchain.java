@@ -3,17 +3,27 @@ package tech.icey.r77.vk;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import tech.icey.util.ManualDispose;
+import tech.icey.util.Optional;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 import static org.lwjgl.vulkan.VK11.*;
 import static tech.icey.util.RuntimeError.runtimeError;
 
 
 public final class Swapchain implements ManualDispose {
-    public Swapchain(Device device, Surface surface, VkWindow vkWindow, int requestedImages, boolean vsync) {
+    public Swapchain(
+            Device device,
+            Surface surface,
+            VkWindow vkWindow,
+            int requestedImages,
+            boolean vsync,
+            PresentQueue presentQueue,
+            Optional<Queue[]> concurrentQueues
+    ) {
         this.device = device;
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -54,6 +64,35 @@ public final class Swapchain implements ManualDispose {
                 vkSwapchainCreateInfo.presentMode(KHRSurface.VK_PRESENT_MODE_IMMEDIATE_KHR);
             }
 
+            int numQueues;
+            List<Integer> queueIndices = new ArrayList<>();
+            if (concurrentQueues instanceof Optional.Some<Queue[]> someConcurrentQueues) {
+                numQueues = someConcurrentQueues.value.length;
+                for (int i = 0; i < numQueues; i++) {
+                    Queue queue = someConcurrentQueues.value[i];
+                    if (queue.queueFamilyIndex != presentQueue.queueFamilyIndex) {
+                        queueIndices.add(queue.queueFamilyIndex);
+                    }
+                }
+            } else {
+                numQueues = 1;
+            }
+
+            if (!queueIndices.isEmpty()) {
+                IntBuffer queueFamilyIndices = stack.mallocInt(queueIndices.size() + 1);
+                for (int i = 0; i < numQueues; i++) {
+                    queueFamilyIndices.put(queueIndices.get(i));
+                }
+                queueFamilyIndices.put(presentQueue.queueFamilyIndex);
+                queueFamilyIndices.rewind();
+
+                vkSwapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_CONCURRENT)
+                        .queueFamilyIndexCount(queueFamilyIndices.capacity())
+                        .pQueueFamilyIndices(queueFamilyIndices);
+            } else {
+                vkSwapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
+            }
+
             LongBuffer swapchainBuf = stack.mallocLong(1);
             ret = KHRSwapchain.vkCreateSwapchainKHR(device.vkDevice(), vkSwapchainCreateInfo, null, swapchainBuf);
             if (ret != VK_SUCCESS) {
@@ -61,6 +100,56 @@ public final class Swapchain implements ManualDispose {
             }
             this.vkSwapchain = swapchainBuf.get(0);
             this.imageViews = createImageViews(stack, device, vkSwapchain, surfaceFormat.imageFormat);
+
+            this.syncSemaphores = new SyncSemaphores[numImages];
+            for (int i = 0; i < numImages; i++) {
+                syncSemaphores[i] = new SyncSemaphores(device);
+            }
+        }
+    }
+
+    public boolean acquireNextImage() {
+        assert !isDisposed;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer imageIndexBuf = stack.mallocInt(1);
+            int ret = KHRSwapchain.vkAcquireNextImageKHR(
+                    device.vkDevice(),
+                    vkSwapchain,
+                    Long.MAX_VALUE,
+                    syncSemaphores[currentFrame].imgAcquisitionSemaphore.vkSemaphore(),
+                    VK_NULL_HANDLE,
+                    imageIndexBuf
+            );
+            if (ret == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {
+                return true;
+            } else if (ret != VK_SUCCESS && ret != KHRSwapchain.VK_SUBOPTIMAL_KHR) {
+                runtimeError("无法获取交换链图像: %d", ret);
+            }
+
+            currentFrame = imageIndexBuf.get(0);
+            return false;
+        }
+    }
+
+    public boolean presentImage(Queue queue) {
+        assert !isDisposed;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack)
+                    .sType(KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
+                    .pWaitSemaphores(stack.longs(syncSemaphores[currentFrame].renderCompleteSemaphore.vkSemaphore()))
+                    .swapchainCount(1)
+                    .pSwapchains(stack.longs(vkSwapchain))
+                    .pImageIndices(stack.ints(currentFrame));
+
+            int ret = KHRSwapchain.vkQueuePresentKHR(queue.vkQueue, presentInfo);
+            if (ret == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || ret == KHRSwapchain.VK_SUBOPTIMAL_KHR) {
+                return true;
+            } else if (ret != VK_SUCCESS) {
+                runtimeError("无法呈现图像: %d", ret);
+            }
+
+            currentFrame = (currentFrame + 1) % numImages;
+            return false;
         }
     }
 
@@ -224,5 +313,37 @@ public final class Swapchain implements ManualDispose {
     private final boolean vsync;
     private final long vkSwapchain;
     private final ImageView[] imageViews;
+
+    private final class SyncSemaphores implements ManualDispose {
+        SyncSemaphores(Semaphore imgAcquisitionSemaphore, Semaphore renderCompleteSemaphore) {
+            this.imgAcquisitionSemaphore = imgAcquisitionSemaphore;
+            this.renderCompleteSemaphore = renderCompleteSemaphore;
+        }
+
+        SyncSemaphores(Device device) {
+            this(new Semaphore(device), new Semaphore(device));
+        }
+
+        @Override
+        public boolean isManuallyDisposed() {
+            return imgAcquisitionSemaphore.isManuallyDisposed() && renderCompleteSemaphore.isManuallyDisposed();
+        }
+
+        @Override
+        public void dispose() {
+            if (isManuallyDisposed()) {
+                return;
+            }
+
+            imgAcquisitionSemaphore.dispose();
+            renderCompleteSemaphore.dispose();
+        }
+
+        private final Semaphore imgAcquisitionSemaphore, renderCompleteSemaphore;
+    }
+
+    private final SyncSemaphores[] syncSemaphores;
+    private int currentFrame = 0;
+
     private volatile boolean isDisposed = false;
 }
