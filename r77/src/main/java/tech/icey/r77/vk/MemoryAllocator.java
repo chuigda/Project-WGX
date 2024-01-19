@@ -16,11 +16,11 @@ public final class MemoryAllocator implements ManualDispose {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VmaAllocatorCreateInfo vmaAllocatorCreateInfo = VmaAllocatorCreateInfo.calloc(stack);
             vmaAllocatorCreateInfo.vulkanApiVersion(VK_API_VERSION_1_3);
-            vmaAllocatorCreateInfo.instance(instance.vkInstance);
-            vmaAllocatorCreateInfo.physicalDevice(device.physicalDevice.vkPhysicalDevice);
-            vmaAllocatorCreateInfo.device(device.vkDevice);
+            vmaAllocatorCreateInfo.instance(instance.vkInstance());
+            vmaAllocatorCreateInfo.physicalDevice(device.physicalDevice().vkPhysicalDevice);
+            vmaAllocatorCreateInfo.device(device.vkDevice());
             VmaVulkanFunctions vmaVulkanFunctions = VmaVulkanFunctions.calloc(stack);
-            vmaVulkanFunctions.set(instance.vkInstance, device.vkDevice);
+            vmaVulkanFunctions.set(instance.vkInstance(), device.vkDevice());
             vmaAllocatorCreateInfo.pVulkanFunctions(vmaVulkanFunctions);
 
             PointerBuffer pAllocator = stack.mallocPointer(1);
@@ -32,7 +32,10 @@ public final class MemoryAllocator implements ManualDispose {
         }
     }
 
-    public final long vma;
+    public long vma() {
+        assert !isDisposed;
+        return vma;
+    }
 
     @Override
     public boolean isManuallyDisposed() {
@@ -47,5 +50,6 @@ public final class MemoryAllocator implements ManualDispose {
         }
     }
 
+    private final long vma;
     private volatile boolean isDisposed = false;
 }

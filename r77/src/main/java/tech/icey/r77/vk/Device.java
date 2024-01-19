@@ -53,6 +53,16 @@ public final class Device implements ManualDispose {
 		}
 	}
 
+	public PhysicalDevice physicalDevice() {
+		assert !isDisposed;
+		return physicalDevice;
+	}
+
+	public VkDevice vkDevice() {
+		assert !isDisposed;
+		return vkDevice;
+	}
+
 	@Override
 	public boolean isManuallyDisposed() {
 		return isDisposed;
@@ -66,8 +76,8 @@ public final class Device implements ManualDispose {
 		}
 	}
 
-	public final PhysicalDevice physicalDevice;
-	public final VkDevice vkDevice;
+	private final PhysicalDevice physicalDevice;
+	private final VkDevice vkDevice;
 
 	private volatile boolean isDisposed = false;
 }

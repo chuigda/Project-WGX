@@ -20,7 +20,7 @@ public final class CommandPool implements ManualDispose {
                     .queueFamilyIndex(queueFamilyIndex);
 
             LongBuffer commandPoolBuffer = stack.mallocLong(1);
-            int ret = vkCreateCommandPool(device.vkDevice, commandPoolCreateInfo, null, commandPoolBuffer);
+            int ret = vkCreateCommandPool(device.vkDevice(), commandPoolCreateInfo, null, commandPoolBuffer);
             if (ret != VK_SUCCESS) {
                 runtimeError("无法创建指令池");
             }
@@ -29,8 +29,15 @@ public final class CommandPool implements ManualDispose {
         }
     }
 
-    public final Device device;
-    public final long vkCommandPool;
+    public Device device() {
+        assert !isDisposed;
+        return device;
+    }
+
+    public long vkCommandPool() {
+        assert !isDisposed;
+        return vkCommandPool;
+    }
 
     @Override
     public boolean isManuallyDisposed() {
@@ -44,8 +51,10 @@ public final class CommandPool implements ManualDispose {
         }
 
         isDisposed = true;
-        vkDestroyCommandPool(device.vkDevice, vkCommandPool, null);
+        vkDestroyCommandPool(device.vkDevice(), vkCommandPool, null);
     }
 
-    private boolean isDisposed = false;
+    private final Device device;
+    private final long vkCommandPool;
+    private volatile boolean isDisposed = false;
 }

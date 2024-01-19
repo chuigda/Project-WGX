@@ -17,12 +17,12 @@ public final class Swapchain implements ManualDispose {
         this.device = device;
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            PhysicalDevice physicalDevice = device.physicalDevice;
+            PhysicalDevice physicalDevice = device.physicalDevice();
 
             VkSurfaceCapabilitiesKHR surfaceCapabilities = VkSurfaceCapabilitiesKHR.calloc(stack);
             int ret = KHRSurface.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-                    device.physicalDevice.vkPhysicalDevice,
-                    surface.vkSurface,
+                    device.physicalDevice().vkPhysicalDevice,
+                    surface.vkSurface(),
                     surfaceCapabilities
             );
             if (ret != VK_SUCCESS) {
@@ -36,7 +36,7 @@ public final class Swapchain implements ManualDispose {
 
             VkSwapchainCreateInfoKHR vkSwapchainCreateInfo = VkSwapchainCreateInfoKHR.calloc(stack)
                     .sType(KHRSwapchain.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
-                    .surface(surface.vkSurface)
+                    .surface(surface.vkSurface())
                     .minImageCount(this.numImages)
                     .imageFormat(this.surfaceFormat.imageFormat)
                     .imageColorSpace(this.surfaceFormat.colorSpace)
@@ -55,13 +55,48 @@ public final class Swapchain implements ManualDispose {
             }
 
             LongBuffer swapchainBuf = stack.mallocLong(1);
-            ret = KHRSwapchain.vkCreateSwapchainKHR(device.vkDevice, vkSwapchainCreateInfo, null, swapchainBuf);
+            ret = KHRSwapchain.vkCreateSwapchainKHR(device.vkDevice(), vkSwapchainCreateInfo, null, swapchainBuf);
             if (ret != VK_SUCCESS) {
                 runtimeError("创建交换链失败: %d", ret);
             }
             this.vkSwapchain = swapchainBuf.get(0);
             this.imageViews = createImageViews(stack, device, vkSwapchain, surfaceFormat.imageFormat);
         }
+    }
+
+    public Device device() {
+        assert !isDisposed;
+        return device;
+    }
+
+    public int numImages() {
+        assert !isDisposed;
+        return numImages;
+    }
+
+    public SurfaceFormat surfaceFormat() {
+        assert !isDisposed;
+        return surfaceFormat;
+    }
+
+    public VkExtent2D swapchainExtent() {
+        assert !isDisposed;
+        return swapchainExtent;
+    }
+
+    public boolean vsync() {
+        assert !isDisposed;
+        return vsync;
+    }
+
+    public long vkSwapchain() {
+        assert !isDisposed;
+        return vkSwapchain;
+    }
+
+    public ImageView[] imageViews() {
+        assert !isDisposed;
+        return imageViews;
     }
 
     @Override
@@ -75,19 +110,10 @@ public final class Swapchain implements ManualDispose {
             for (ImageView imageView : imageViews) {
                 imageView.dispose();
             }
-            KHRSwapchain.vkDestroySwapchainKHR(device.vkDevice, vkSwapchain, null);
+            KHRSwapchain.vkDestroySwapchainKHR(device.vkDevice(), vkSwapchain, null);
             isDisposed = true;
         }
     }
-
-    public final Device device;
-    public final int numImages;
-    public final SurfaceFormat surfaceFormat;
-    public final VkExtent2D swapchainExtent;
-    public final boolean vsync;
-
-    public final long vkSwapchain;
-    public final ImageView[] imageViews;
 
     private int calcNumImages(VkSurfaceCapabilitiesKHR surfaceCapabilities, int requestedImages) {
         int maxImages = surfaceCapabilities.maxImageCount();
@@ -108,7 +134,7 @@ public final class Swapchain implements ManualDispose {
             IntBuffer buf = stack.mallocInt(1);
             int ret = KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
                     physicalDevice.vkPhysicalDevice,
-                    surface.vkSurface,
+                    surface.vkSurface(),
                     buf,
                     null
             );
@@ -124,7 +150,7 @@ public final class Swapchain implements ManualDispose {
             VkSurfaceFormatKHR.Buffer surfaceFormats = VkSurfaceFormatKHR.calloc(numFormats, stack);
             ret = KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
                     physicalDevice.vkPhysicalDevice,
-                    surface.vkSurface,
+                    surface.vkSurface(),
                     buf,
                     surfaceFormats
             );
@@ -169,14 +195,14 @@ public final class Swapchain implements ManualDispose {
 
     private ImageView[] createImageViews(MemoryStack stack, Device device, long swapchain, int format) {
         IntBuffer numImagesBuf = stack.mallocInt(1);
-        int ret = KHRSwapchain.vkGetSwapchainImagesKHR(device.vkDevice, swapchain, numImagesBuf, null);
+        int ret = KHRSwapchain.vkGetSwapchainImagesKHR(device.vkDevice(), swapchain, numImagesBuf, null);
         if (ret != VK_SUCCESS) {
             runtimeError("无法获取交换链图像: %d", ret);
         }
         int numImages = numImagesBuf.get(0);
 
         LongBuffer imagesBuf = stack.mallocLong(numImages);
-        ret = KHRSwapchain.vkGetSwapchainImagesKHR(device.vkDevice, swapchain, numImagesBuf, imagesBuf);
+        ret = KHRSwapchain.vkGetSwapchainImagesKHR(device.vkDevice(), swapchain, numImagesBuf, imagesBuf);
         if (ret != VK_SUCCESS) {
             runtimeError("无法获取交换链图像: %d", ret);
         }
@@ -191,5 +217,12 @@ public final class Swapchain implements ManualDispose {
         return result;
     }
 
+    private final Device device;
+    private final int numImages;
+    private final SurfaceFormat surfaceFormat;
+    private final VkExtent2D swapchainExtent;
+    private final boolean vsync;
+    private final long vkSwapchain;
+    private final ImageView[] imageViews;
     private volatile boolean isDisposed = false;
 }

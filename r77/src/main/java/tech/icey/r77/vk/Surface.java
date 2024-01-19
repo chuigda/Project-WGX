@@ -24,8 +24,15 @@ public final class Surface implements ManualDispose {
         }
 	}
 
-    public final PhysicalDevice physicalDevice;
-    public final long vkSurface;
+    public PhysicalDevice physicalDevice() {
+        assert !isDisposed;
+        return physicalDevice;
+    }
+
+    public long vkSurface() {
+        assert !isDisposed;
+        return vkSurface;
+    }
 
     @Override
     public boolean isManuallyDisposed() {
@@ -40,5 +47,7 @@ public final class Surface implements ManualDispose {
         }
     }
 
+    private final PhysicalDevice physicalDevice;
+    private final long vkSurface;
     private volatile boolean isDisposed = false;
 }

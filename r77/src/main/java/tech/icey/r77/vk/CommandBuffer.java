@@ -15,12 +15,12 @@ public final class CommandBuffer implements ManualDispose {
         this.primary = primary;
         this.oneTimeSubmit = oneTimeSubmit;
 
-        VkDevice vkDevice = commandPool.device.vkDevice;
+        VkDevice vkDevice = commandPool.device().vkDevice();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VkCommandBufferAllocateInfo commandBufferAllocateInfo = VkCommandBufferAllocateInfo.calloc(stack)
                     .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                    .commandPool(commandPool.vkCommandPool)
+                    .commandPool(commandPool.vkCommandPool())
                     .level(primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY)
                     .commandBufferCount(1);
 
@@ -34,10 +34,25 @@ public final class CommandBuffer implements ManualDispose {
         }
     }
 
-    public final CommandPool commandPool;
-    public final boolean oneTimeSubmit;
-    public final boolean primary;
-    public final VkCommandBuffer vkCommandBuffer;
+    public CommandPool commandPool() {
+        assert !isDisposed;
+        return commandPool;
+    }
+
+    public long vkCommandBuffer() {
+        assert !isDisposed;
+        return vkCommandBuffer.address();
+    }
+
+    public boolean primary() {
+        assert !isDisposed;
+        return primary;
+    }
+
+    public boolean oneTimeSubmit() {
+        assert !isDisposed;
+        return oneTimeSubmit;
+    }
 
     public final class InheritanceInfo {
         public InheritanceInfo(long vkRenderPass, long vkFramebuffer, int subpass) {
@@ -56,6 +71,7 @@ public final class CommandBuffer implements ManualDispose {
     }
 
     public void beginRecording(Optional<InheritanceInfo> inheritanceInfo) {
+        assert !isDisposed;
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VkCommandBufferBeginInfo cmdBufBeginInfo = VkCommandBufferBeginInfo.calloc(stack)
                     .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
@@ -87,6 +103,7 @@ public final class CommandBuffer implements ManualDispose {
     }
 
     public void endRecording() {
+        assert !isDisposed;
         int ret = vkEndCommandBuffer(vkCommandBuffer);
         if (ret != VK_SUCCESS) {
             runtimeError("无法完成指令缓冲录制");
@@ -94,6 +111,7 @@ public final class CommandBuffer implements ManualDispose {
     }
 
     public void reset() {
+        assert !isDisposed;
         vkResetCommandBuffer(vkCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     }
 
@@ -109,8 +127,12 @@ public final class CommandBuffer implements ManualDispose {
         }
 
         isDisposed = true;
-        vkFreeCommandBuffers(commandPool.device.vkDevice, commandPool.vkCommandPool, vkCommandBuffer);
+        vkFreeCommandBuffers(commandPool.device().vkDevice(), commandPool.vkCommandPool(), vkCommandBuffer);
     }
 
-    private boolean isDisposed;
+    private final CommandPool commandPool;
+    private final boolean oneTimeSubmit;
+    private final boolean primary;
+    private final VkCommandBuffer vkCommandBuffer;
+    private volatile boolean isDisposed = false;
 }
