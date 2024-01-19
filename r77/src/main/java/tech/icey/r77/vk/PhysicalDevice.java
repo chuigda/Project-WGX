@@ -136,6 +136,5 @@ public final class PhysicalDevice {
         this.physicalDeviceProperties = physicalDeviceProperties;
     }
 
-
     private static final Logger logger = new Logger(PhysicalDevice.class.getName());
 }

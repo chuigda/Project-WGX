@@ -7,7 +7,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static tech.icey.util.RuntimeError.*;
 
-public class VkWindow implements AutoCloseable {
+public final class VkWindow implements AutoCloseable {
     public VkWindow(String title, int width, int height) {
         if (!Init.isInitialised()) {
             unreachable("尚未初始化 GLFW");
@@ -32,51 +32,55 @@ public class VkWindow implements AutoCloseable {
         glfwShowWindow(windowHandle);
     }
 
-    public final boolean poll() {
+    public boolean poll() {
         glfwPollEvents();
         return !glfwWindowShouldClose(windowHandle);
     }
 
-    public final void closeWindow() {
+    public void closeWindow() {
         if (windowHandle != NULL) {
             glfwDestroyWindow(windowHandle);
             windowHandle = NULL;
         }
     }
 
-    public final int getWidth() {
+    public int getWidth() {
         int[] width = new int[1];
         glfwGetWindowSize(windowHandle, width, null);
         return width[0];
     }
 
-    public final int getHeight() {
+    public int getHeight() {
         int[] height = new int[1];
         glfwGetWindowSize(windowHandle, null, height);
         return height[0];
     }
 
-    public final Pair<Integer, Integer> getSize() {
+    public Pair<Integer, Integer> getSize() {
         int[] width = new int[1];
         int[] height = new int[1];
         glfwGetWindowSize(windowHandle, width, height);
         return new Pair<>(width[0], height[0]);
     }
 
-    public final void setWidth(int width) {
+    public void setWidth(int width) {
         int[] height = new int[1];
         glfwGetWindowSize(windowHandle, null, height);
         glfwSetWindowSize(windowHandle, width, height[0]);
     }
 
-    public final void setHeight(int height) {
+    public void setHeight(int height) {
         int[] width = new int[1];
         glfwGetWindowSize(windowHandle, width, null);
         glfwSetWindowSize(windowHandle, width[0], height);
     }
 
-    public final void setSize(int width, int height) {
+    public void setSize(int width, int height) {
         glfwSetWindowSize(windowHandle, width, height);
+    }
+
+    public long windowHandle() {
+        return windowHandle;
     }
 
     @Override

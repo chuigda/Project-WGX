@@ -165,6 +165,8 @@ public class Main {
             PhysicalDevice physicalDevice = physicalDevices.get(someDeviceId.value);
             Device device = new Device(physicalDevice);
             GraphicsQueue graphicsQueue = new GraphicsQueue(device, 0);
+            Surface surface = new Surface(physicalDevice, window.windowHandle());
+            Swapchain swapchain = new Swapchain(device, surface, window, 2, true);
 
             while (window.poll()) {}
 
