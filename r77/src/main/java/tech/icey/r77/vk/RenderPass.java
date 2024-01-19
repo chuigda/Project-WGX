@@ -16,7 +16,7 @@ public final class RenderPass implements ManualDispose {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(1, stack);
             attachments.get(0)
-                    .format(swapchain.surfaceFormat.imageFormat)
+                    .format(swapchain.surfaceFormat().imageFormat)
                     .samples(VK_SAMPLE_COUNT_1_BIT)
                     .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
                     .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
@@ -39,7 +39,7 @@ public final class RenderPass implements ManualDispose {
                     .pDependencies(subpassDependencies);
 
             LongBuffer renderPassBuffer = stack.mallocLong(1);
-            int ret = vkCreateRenderPass(swapchain.device.vkDevice, renderPassCreateInfo, null, renderPassBuffer);
+            int ret = vkCreateRenderPass(swapchain.device().vkDevice(), renderPassCreateInfo, null, renderPassBuffer);
             if (ret != VK_SUCCESS) {
                 runtimeError("无法创建 RenderPass");
             }
@@ -61,7 +61,7 @@ public final class RenderPass implements ManualDispose {
         }
 
         isDisposed = true;
-        vkDestroyRenderPass(swapchain.device.vkDevice, vkRenderPass, null);
+        vkDestroyRenderPass(swapchain.device().vkDevice(), vkRenderPass, null);
     }
 
     private boolean isDisposed = false;

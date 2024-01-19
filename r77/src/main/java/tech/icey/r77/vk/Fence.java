@@ -18,7 +18,7 @@ public final class Fence implements ManualDispose {
                     .flags(signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0);
 
             LongBuffer fenceBuf = stack.mallocLong(1);
-            int ret = vkCreateFence(device.vkDevice, fenceCreateInfo, null, fenceBuf);
+            int ret = vkCreateFence(device.vkDevice(), fenceCreateInfo, null, fenceBuf);
             if (ret != VK_SUCCESS) {
                 runtimeError("无法创建 Vulkan 栅栏对象");
             }
@@ -27,17 +27,24 @@ public final class Fence implements ManualDispose {
         }
     }
 
-    public final Device device;
-    public final long vkFence;
+    public Device device() {
+        assert !isDisposed;
+        return device;
+    }
+
+    public long vkFence() {
+        assert !isDisposed;
+        return vkFence;
+    }
 
     public void fenceWait() {
         assert !isDisposed;
-        vkWaitForFences(device.vkDevice, vkFence, true, Long.MAX_VALUE);
+        vkWaitForFences(device.vkDevice(), vkFence, true, Long.MAX_VALUE);
     }
 
     public void reset() {
         assert !isDisposed;
-        vkResetFences(device.vkDevice, vkFence);
+        vkResetFences(device.vkDevice(), vkFence);
     }
 
     @Override
@@ -52,8 +59,10 @@ public final class Fence implements ManualDispose {
         }
 
         isDisposed = true;
-        vkDestroyFence(device.vkDevice, vkFence, null);
+        vkDestroyFence(device.vkDevice(), vkFence, null);
     }
 
-    private boolean isDisposed = false;
+    private final Device device;
+    private final long vkFence;
+    private volatile boolean isDisposed = false;
 }

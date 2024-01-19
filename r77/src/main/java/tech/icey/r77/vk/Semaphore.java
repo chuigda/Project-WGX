@@ -17,7 +17,7 @@ public final class Semaphore implements ManualDispose {
                     .sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
 
             LongBuffer semaphoreBuf = stack.mallocLong(1);
-            int ret = vkCreateSemaphore(device.vkDevice, semaphoreCreateInfo, null, semaphoreBuf);
+            int ret = vkCreateSemaphore(device.vkDevice(), semaphoreCreateInfo, null, semaphoreBuf);
             if (ret != 0) {
                 runtimeError("无法创建 Vulkan 信号量对象");
             }
@@ -26,8 +26,15 @@ public final class Semaphore implements ManualDispose {
         }
     }
 
-    public final Device device;
-    public final long vkSemaphore;
+    public Device device() {
+        assert !isDisposed;
+        return device;
+    }
+
+    public long vkSemaphore() {
+        assert !isDisposed;
+        return vkSemaphore;
+    }
 
     @Override
     public boolean isManuallyDisposed() {
@@ -43,5 +50,7 @@ public final class Semaphore implements ManualDispose {
         isDisposed = true;
     }
 
-    private boolean isDisposed = false;
+    private final Device device;
+    private final long vkSemaphore;
+    private volatile boolean isDisposed = false;
 }

@@ -17,7 +17,7 @@ public final class PhysicalDevice {
     public final PhysicalDeviceProperties physicalDeviceProperties;
 
     public static List<PhysicalDevice> listPhysicalDevices(Instance instance) {
-        VkInstance vkInstance = instance.vkInstance;
+        VkInstance vkInstance = instance.vkInstance();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer numDevicesBuf = stack.mallocInt(1);

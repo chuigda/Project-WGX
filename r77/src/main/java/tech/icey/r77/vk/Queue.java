@@ -11,9 +11,9 @@ public abstract sealed class Queue permits GraphicsQueue {
     public Queue(Device device, int queueFamilyIndex, int queueIndex) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             PointerBuffer pQueue = stack.mallocPointer(1);
-            vkGetDeviceQueue(device.vkDevice, queueFamilyIndex, queueIndex, pQueue);
+            vkGetDeviceQueue(device.vkDevice(), queueFamilyIndex, queueIndex, pQueue);
             long queue = pQueue.get(0);
-            vkQueue = new VkQueue(queue, device.vkDevice);
+            vkQueue = new VkQueue(queue, device.vkDevice());
         }
     }
 

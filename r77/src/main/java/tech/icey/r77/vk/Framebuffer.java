@@ -22,7 +22,7 @@ public final class Framebuffer implements ManualDispose {
                     .renderPass(vkRenderPass);
 
             LongBuffer framebufferBuffer = stack.mallocLong(1);
-            int ret = vkCreateFramebuffer(device.vkDevice, framebufferCreateInfo, null, framebufferBuffer);
+            int ret = vkCreateFramebuffer(device.vkDevice(), framebufferCreateInfo, null, framebufferBuffer);
             if (ret != VK_SUCCESS) {
                 runtimeError("无法创建帧缓冲");
             }
@@ -31,8 +31,15 @@ public final class Framebuffer implements ManualDispose {
         }
     }
 
-    public final Device device;
-    public final long vkFramebuffer;
+    public Device device() {
+        assert !isDisposed;
+        return device;
+    }
+
+    public long vkFramebuffer() {
+        assert !isDisposed;
+        return vkFramebuffer;
+    }
 
     @Override
     public boolean isManuallyDisposed() {
@@ -46,8 +53,10 @@ public final class Framebuffer implements ManualDispose {
         }
 
         isDisposed = true;
-        vkDestroyFramebuffer(device.vkDevice, vkFramebuffer, null);
+        vkDestroyFramebuffer(device.vkDevice(), vkFramebuffer, null);
     }
 
-    private boolean isDisposed = false;
+    private final Device device;
+    private final long vkFramebuffer;
+    private volatile boolean isDisposed = false;
 }

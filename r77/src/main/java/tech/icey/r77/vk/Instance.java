@@ -129,8 +129,15 @@ public final class Instance implements ManualDispose {
         }
     }
 
-    public final VkInstance vkInstance;
-    public final boolean validation;
+    public VkInstance vkInstance() {
+        assert !isDisposed;
+        return vkInstance;
+    }
+
+    public boolean validation() {
+        assert !isDisposed;
+        return validation;
+    }
 
     @Override
     public boolean isManuallyDisposed() {
@@ -245,6 +252,8 @@ public final class Instance implements ManualDispose {
         return messageSeverityBitmask;
     }
 
+    private final VkInstance vkInstance;
+    private final boolean validation;
     private final long debugHandle;
     private final VkDebugUtilsMessengerCreateInfoEXT debugUtils;
     private volatile boolean isDisposed = false;

@@ -29,7 +29,7 @@ public final class ImageView implements ManualDispose {
                             .levelCount(imageViewData.mipLevels)
                     );
 
-            if (vkCreateImageView(device.vkDevice, imageViewCreateInfo, null, imageViewBuf) != VK_SUCCESS) {
+            if (vkCreateImageView(device.vkDevice(), imageViewCreateInfo, null, imageViewBuf) != VK_SUCCESS) {
                 runtimeError("创建 ImageView 失败");
             }
 
@@ -37,9 +37,20 @@ public final class ImageView implements ManualDispose {
         }
     }
 
-    public final Device device;
-    public final ImageViewData imageViewData;
-    public final long vkImageView;
+    public Device device() {
+        assert !isDisposed;
+        return device;
+    }
+
+    public ImageViewData imageViewData() {
+        assert !isDisposed;
+        return imageViewData;
+    }
+
+    public long vkImageView() {
+        assert !isDisposed;
+        return vkImageView;
+    }
 
     @Override
     public boolean isManuallyDisposed() {
@@ -49,10 +60,13 @@ public final class ImageView implements ManualDispose {
     @Override
     public void dispose() {
         if (!isDisposed) {
-            vkDestroyImageView(device.vkDevice, vkImageView, null);
+            vkDestroyImageView(device.vkDevice(), vkImageView, null);
             isDisposed = true;
         }
     }
 
+    private final Device device;
+    private final ImageViewData imageViewData;
+    private final long vkImageView;
     private volatile boolean isDisposed = false;
 }

@@ -14,7 +14,7 @@ public final class GraphicsQueue extends Queue {
 
     private static int getGraphicsQueueFamilyIndex(Device device) {
         int index = -1;
-        PhysicalDevice physicalDevice = device.physicalDevice;
+        PhysicalDevice physicalDevice = device.physicalDevice();
         List<VkQueueFamilyProperties> queueFamilyProperties =
                 physicalDevice.physicalDeviceProperties.graphicsQueueFamilies;
         for (int i = 0; i < queueFamilyProperties.size(); i++) {
