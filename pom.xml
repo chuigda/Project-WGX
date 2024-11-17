@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>tech.icey</groupId>
+    <artifactId>wgx</artifactId>
+    <version>0.1.0-alfa</version>
+
+    <properties>
+        <maven.compiler.release>23</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!--
+            till now this package is not published in the Maven Central
+            git clone from chuigda/xjbutil4j and install it to your local repository
+        -->
+        <dependency>
+            <groupId>tech.icey</groupId>
+            <artifactId>xjbutil</artifactId>
+            <version>0.1.0-alfa</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- vulkan4j components -->
+        <dependency>
+            <groupId>tech.icey</groupId>
+            <artifactId>panama-plus</artifactId>
+            <version>0.1.2</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>tech.icey</groupId>
+            <artifactId>vulkan4j</artifactId>
+            <version>0.2.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>tech.icey</groupId>
+            <artifactId>vma</artifactId>
+            <version>0.1.0-bravo</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>tech.icey</groupId>
+            <artifactId>gles2</artifactId>
+            <version>0.2.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>tech.icey</groupId>
+            <artifactId>glfw</artifactId>
+            <version>0.2.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- mathematics and model loader -->
+        <dependency>
+            <groupId>org.joml</groupId>
+            <artifactId>joml</artifactId>
+            <version>1.10.8</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.javagl</groupId>
+            <artifactId>obj</artifactId>
+            <version>0.4.0</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+</project>
