@@ -1,5 +1,6 @@
 package chr.wgx.main;
 
+import chr.wgx.render.RenderWindow;
 import chr.wgx.util.SharedObjectLoader;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
@@ -17,6 +18,10 @@ public final class RenderApplication {
         GLFW glfw = GLFWLoader.loadGLFW();
         if (glfw.glfwInit() != GLFWConstants.GLFW_TRUE) {
             throw new RuntimeException("GLFW 初始化失败");
+        }
+
+        try (RenderWindow w = RenderWindow.createVulkanWindow(glfw, "Zdravstvuyte, mir!", 640, 640)) {
+            System.err.println(w);
         }
     }
 

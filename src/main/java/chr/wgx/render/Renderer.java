@@ -1,4 +1,3 @@
 package chr.wgx.render;
 
-public final class Renderer {
-}
+public interface Renderer {}
