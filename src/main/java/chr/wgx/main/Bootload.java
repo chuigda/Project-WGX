@@ -7,20 +7,20 @@ import java.util.logging.Logger;
 
 public final class Bootload {
     public static void loadNativeLibraries() {
-        logger.fine("loading vulkan library using tech.icey.vk4j.VulkanLoader");
+        logger.fine("正使用 tech.icey.vk4j.VulkanLoader 加载 vulkan 本地库");
         VulkanLoader.loadVulkanLibrary();
 
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            logger.fine("loading resources/lib/glfw3.dll");
-            SharedObjectLoader.loadFromResources("/lib/glfw3.dll", ".dll");
-            logger.fine("loading resources/lib/vma.dll");
-            SharedObjectLoader.loadFromResources("/lib/vma.dll", ".dll");
+            logger.fine("从资源 /lib/glfw3.dll 中加载 glfw");
+            SharedObjectLoader.loadFromResources("/resources/lib/glfw3.dll", ".dll");
+            logger.fine("从资源 /lib/vma.dll 中加载 vma");
+            SharedObjectLoader.loadFromResources("/resources/lib/vma.dll", ".dll");
         }
         else {
-            logger.fine("loading system library glfw");
+            logger.fine("从系统环境中加载 glfw");
             System.loadLibrary("glfw");
-            logger.fine("loading resources/lib/libvma.so");
-            SharedObjectLoader.loadFromResources("/lib/libvma.so", ".so");
+            logger.fine("从资源 /lib/libvma.so 中加载 vma");
+            SharedObjectLoader.loadFromResources("/resources/lib/libvma.so", ".so");
         }
     }
 
