@@ -1,11 +1,25 @@
 package chr.wgx.main;
 
 import chr.wgx.util.SharedObjectLoader;
+import tech.icey.glfw.GLFW;
+import tech.icey.glfw.GLFWConstants;
+import tech.icey.glfw.GLFWLoader;
 import tech.icey.vk4j.VulkanLoader;
 
 import java.util.logging.Logger;
 
-public final class Bootload {
+public final class RenderApplication {
+    public static void applicationStart() {
+        logger.info("应用程序已启动");
+        loadNativeLibraries();
+        logger.info("本地库已加载完成");
+
+        GLFW glfw = GLFWLoader.loadGLFW();
+        if (glfw.glfwInit() != GLFWConstants.GLFW_TRUE) {
+            throw new RuntimeException("GLFW 初始化失败");
+        }
+    }
+
     public static void loadNativeLibraries() {
         logger.fine("正使用 tech.icey.vk4j.VulkanLoader 加载 vulkan 本地库");
         VulkanLoader.loadVulkanLibrary();
@@ -24,5 +38,5 @@ public final class Bootload {
         }
     }
 
-    private static final Logger logger = Logger.getLogger(Bootload.class.getName());
+    private static final Logger logger = Logger.getLogger(RenderApplication.class.getName());
 }

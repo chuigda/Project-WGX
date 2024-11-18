@@ -9,9 +9,20 @@ public final class Main {
         ControlWindow controlWindow = new ControlWindow();
         controlWindow.setVisible(true);
 
-        logger.info("应用程序已启动");
-        Bootload.loadNativeLibraries();
-        logger.info("本地库已加载完成");
+        try {
+            RenderApplication.applicationStart();
+        }
+        catch (RuntimeException e) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("应用程序遇到致命错误:\n");
+            sb.append(e.getClass().getCanonicalName())
+                    .append(": ")
+                    .append(e.getMessage());
+            for (StackTraceElement ste : e.getStackTrace()) {
+                sb.append("\n\tat ").append(ste.toString());
+            }
+            logger.severe(sb.toString());
+        }
     }
 
     static {

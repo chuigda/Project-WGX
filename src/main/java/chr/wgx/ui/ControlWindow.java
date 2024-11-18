@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
@@ -23,7 +24,7 @@ public final class ControlWindow extends JFrame {
 
         JMenuItem pluginManagementItem = new JMenuItem("插件管理");
         systemMenu.add(pluginManagementItem);
-        pluginManagementItem.addActionListener(e -> {
+        pluginManagementItem.addActionListener(_ -> {
             JOptionPane.showMessageDialog(
                     this,
                     "插件系统尚未加载，请稍等片刻",
@@ -36,13 +37,26 @@ public final class ControlWindow extends JFrame {
         systemMenu.add(logLevelSubMenu);
 
         JMenuItem logLevelDebugMenuItem = new JMenuItem("调试");
+        logLevelDebugMenuItem.addActionListener(_ -> JULUtil.setLogLevel(Level.FINE));
         logLevelSubMenu.add(logLevelDebugMenuItem);
         JMenuItem logLevelInfoMenuItem = new JMenuItem("信息");
+        logLevelInfoMenuItem.addActionListener(_ -> JULUtil.setLogLevel(Level.INFO));
         logLevelSubMenu.add(logLevelInfoMenuItem);
         JMenuItem logLevelWarnMenuItem = new JMenuItem("警告");
+        logLevelWarnMenuItem.addActionListener(_ -> JULUtil.setLogLevel(Level.WARNING));
         logLevelSubMenu.add(logLevelWarnMenuItem);
         JMenuItem logLevelErrorMenuItem = new JMenuItem("错误");
+        logLevelErrorMenuItem.addActionListener(_ -> JULUtil.setLogLevel(Level.SEVERE));
         logLevelSubMenu.add(logLevelErrorMenuItem);
+        logLevelSubMenu.addSeparator();
+        JMenuItem logLevelTest = new JMenuItem("测试日志等级");
+        logLevelTest.addActionListener(_ -> {
+            logger.fine("这是一条调试日志");
+            logger.info("这是一条信息日志");
+            logger.warning("这是一条警告日志");
+            logger.severe("这是一条错误日志");
+        });
+        logLevelSubMenu.add(logLevelTest);
 
         JMenuItem pauseOrResumeMenuItem = new JMenuItem("暂停日志") {
             @Override
@@ -98,7 +112,7 @@ public final class ControlWindow extends JFrame {
         c.gridy = 1;
         this.add(statusLabel, c);
 
-        this.setMinimumSize(new Dimension(480, 360));
+        this.setMinimumSize(new Dimension(640, 480));
         this.pack();
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
