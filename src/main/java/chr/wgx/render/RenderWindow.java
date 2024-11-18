@@ -6,6 +6,7 @@ import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.buffer.ByteBuffer;
 
 import java.lang.foreign.Arena;
+import java.util.logging.Logger;
 
 public final class RenderWindow implements AutoCloseable {
     private final GLFW glfw;
@@ -60,6 +61,9 @@ public final class RenderWindow implements AutoCloseable {
 
     @Override
     public void close() {
+        logger.info("关闭 GLFW 窗口");
         glfw.glfwDestroyWindow(rawWindow);
     }
+
+    private static final Logger logger = Logger.getLogger(RenderWindow.class.getName());
 }

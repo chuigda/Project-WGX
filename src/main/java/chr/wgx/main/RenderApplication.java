@@ -21,7 +21,7 @@ public final class RenderApplication {
         }
 
         try (RenderWindow w = RenderWindow.createVulkanWindow(glfw, "Zdravstvuyte, mir!", 640, 640)) {
-            System.err.println(w);
+            w.mainLoop();
         }
     }
 
