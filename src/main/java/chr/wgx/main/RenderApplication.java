@@ -1,6 +1,5 @@
 package chr.wgx.main;
 
-import chr.wgx.render.RenderWindow;
 import chr.wgx.util.SharedObjectLoader;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
