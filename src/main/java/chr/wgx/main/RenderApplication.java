@@ -1,5 +1,7 @@
 package chr.wgx.main;
 
+import chr.wgx.render.RenderException;
+import chr.wgx.render.vk.VulkanWindow;
 import chr.wgx.util.SharedObjectLoader;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
@@ -19,8 +21,10 @@ public final class RenderApplication {
             throw new RuntimeException("GLFW 初始化失败");
         }
 
-        try (RenderWindow w = RenderWindow.createVulkanWindow(glfw, "Zdravstvuyte, mir!", 640, 640)) {
-            w.mainLoop();
+        try (VulkanWindow w = new VulkanWindow(glfw, "Zdravstvuyte, mir!", 640, 640)) {
+            w.mainLoop(null);
+        } catch (RenderException e) {
+            throw new RuntimeException(e);
         }
     }
 

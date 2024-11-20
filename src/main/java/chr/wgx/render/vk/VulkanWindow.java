@@ -1,5 +1,6 @@
 package chr.wgx.render.vk;
 
+import chr.wgx.render.IRenderEngine;
 import chr.wgx.render.RenderException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,23 @@ public final class VulkanWindow implements AutoCloseable {
             }
             this.glfw = glfw;
             this.rawWindow = window;
+        }
+    }
+
+    public void mainLoop(@Nullable VulkanRenderEngine renderer) throws RenderException {
+        if (renderer != null) {
+            renderer.init();
+        }
+
+        while (glfw.glfwWindowShouldClose(rawWindow) != GLFWConstants.GLFW_TRUE) {
+            if (renderer != null) {
+                renderer.renderFrame();
+            }
+            glfw.glfwPollEvents();
+        }
+
+        if (renderer != null) {
+            renderer.close();
         }
     }
 
