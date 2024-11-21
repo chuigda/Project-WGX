@@ -21,7 +21,7 @@ public final class RenderApplication {
             throw new RuntimeException("GLFW 初始化失败");
         }
 
-        try (VulkanWindow w = new VulkanWindow(glfw, "Zdravstvuyte, mir!", 640, 640)) {
+        try (VulkanWindow w = new VulkanWindow(glfw, "Project-WGX 绘图输出窗口", 640, 640)) {
             w.mainLoop(null);
         } catch (RenderException e) {
             throw new RuntimeException(e);

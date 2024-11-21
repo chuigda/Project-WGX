@@ -1,6 +1,5 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.render.IRenderEngine;
 import chr.wgx.render.RenderException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
