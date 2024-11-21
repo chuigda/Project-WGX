@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.HashMap;
 
 public final class Config {
+    public String renderMode = "vulkan";
     public VulkanConfig vulkanConfig = new VulkanConfig();
     public GLES2Config gles2Config = new GLES2Config();
 
