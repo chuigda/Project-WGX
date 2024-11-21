@@ -12,7 +12,7 @@ public final class Main {
         try {
             RenderApplication.applicationStart();
         }
-        catch (RuntimeException e) {
+        catch (Throwable e) {
             StringBuilder sb = new StringBuilder();
             sb.append("应用程序遇到致命错误:\n");
             sb.append(e.getClass().getCanonicalName())
