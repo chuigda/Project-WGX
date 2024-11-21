@@ -7,6 +7,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.HashMap;
 
 public final class Config {
+    public String windowTitle = "Project-WGX 绘图输出窗口";
+    public int windowWidth = 640;
+    public int windowHeight = 640;
+
     public String renderMode = "vulkan";
     public VulkanConfig vulkanConfig = new VulkanConfig();
     public GLES2Config gles2Config = new GLES2Config();

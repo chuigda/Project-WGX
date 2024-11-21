@@ -1,9 +1,7 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.render.RenderConfig;
-
 /// Vulkan 渲染器配置
-public final class VulkanConfig extends RenderConfig {
+public final class VulkanConfig {
     /// 选定的物理设备 ID，为 0 则自动选择第一个可用物理设备
     public int physicalDeviceID = 0;
 
