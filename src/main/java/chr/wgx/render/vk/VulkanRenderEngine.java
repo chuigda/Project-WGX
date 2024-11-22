@@ -5,22 +5,34 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
 import tech.icey.xjbutil.container.Pair;
+import tech.icey.xjbutil.functional.Action0;
+import tech.icey.xjbutil.functional.Action2;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
-    @Override
-    public void init() throws RenderException {
+    public VulkanRenderEngine(
+            Action0 onInit,
+            Action2<Integer, Integer> onResize,
+            Action0 onBeforeRenderFrame,
+            Action0 onAfterRenderFrame,
+            Action0 onClose
+    ) {
+        super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
     }
 
     @Override
-    public void resize(int width, int height) throws RenderException {
+    protected void init() throws RenderException {
     }
 
     @Override
-    public void renderFrame() throws RenderException {
+    protected void resize(int width, int height) throws RenderException {
     }
 
     @Override
-    public void close() {
+    protected void renderFrame() throws RenderException {
+    }
+
+    @Override
+    protected void close() {
     }
 
     @Override
