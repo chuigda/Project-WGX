@@ -1,9 +1,7 @@
 package chr.wgx.render;
 
-import chr.wgx.render.handle.RenderTargetHandle;
-import chr.wgx.render.handle.TextureHandle;
-import chr.wgx.render.info.RenderTargetCreateInfo;
-import chr.wgx.render.info.TextureCreateInfo;
+import chr.wgx.render.handle.*;
+import chr.wgx.render.info.*;
 import tech.icey.xjbutil.container.Pair;
 
 public interface IRenderEngine {
@@ -14,4 +12,7 @@ public interface IRenderEngine {
 
     Pair<RenderTargetHandle, TextureHandle> createRenderTarget(RenderTargetCreateInfo info) throws RenderException;
     TextureHandle createTexture(TextureCreateInfo info) throws RenderException;
+    UniformHandle createUniform(UniformCreateInfo info) throws RenderException;
+    RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException;
+    RenderTaskHandle createTask(RenderTaskCreateInfo info) throws RenderException;
 }
