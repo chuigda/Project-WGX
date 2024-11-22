@@ -1,3 +1,5 @@
 package chr.wgx.render.info;
 
-public record UniformCreateInfo() {}
+import chr.wgx.render.common.UniformUpdateFrequency;
+
+public record UniformCreateInfo(DescriptorInfo descriptorInfo, UniformUpdateFrequency updateFrequency) {}

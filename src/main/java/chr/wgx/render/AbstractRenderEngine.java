@@ -19,7 +19,8 @@ public abstract class AbstractRenderEngine {
     public abstract void close();
 
     public abstract ObjectHandle createObject(ObjectCreateInfo info) throws RenderException;
-    public abstract Pair<RenderTargetHandle, TextureHandle> createRenderTarget(RenderTargetCreateInfo info) throws RenderException;
+    public abstract Pair<RenderTargetHandle, TextureHandle>
+    createRenderTarget(RenderTargetCreateInfo info) throws RenderException;
     public abstract TextureHandle createTexture(TextureCreateInfo info) throws RenderException;
     public abstract UniformHandle createUniform(UniformCreateInfo info) throws RenderException;
     public abstract RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException;
