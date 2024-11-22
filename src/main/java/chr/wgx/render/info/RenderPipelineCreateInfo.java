@@ -1,12 +1,13 @@
 package chr.wgx.render.info;
 
-import tech.icey.panama.buffer.ByteBuffer;
-import tech.icey.xjbutil.container.Either;
+import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
 
 public record RenderPipelineCreateInfo(
         List<DescriptorInfo> descriptorSetLayout,
-        Either<String, ByteBuffer> vertexShader,
-        Either<String, ByteBuffer> fragmentShader
-) {}
+        List<DescriptorInfo.UBO> pushConstantLayout,
+        Option<ShaderProgram.Vulkan> vulkanShaderProgram,
+        Option<ShaderProgram.GLES2> gles2ShaderProgram
+) {
+}
