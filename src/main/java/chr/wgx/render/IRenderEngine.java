@@ -10,6 +10,7 @@ public interface IRenderEngine {
     void renderFrame() throws RenderException;
     void close();
 
+    ObjectHandle createObject(ObjectCreateInfo info) throws RenderException;
     Pair<RenderTargetHandle, TextureHandle> createRenderTarget(RenderTargetCreateInfo info) throws RenderException;
     TextureHandle createTexture(TextureCreateInfo info) throws RenderException;
     UniformHandle createUniform(UniformCreateInfo info) throws RenderException;
