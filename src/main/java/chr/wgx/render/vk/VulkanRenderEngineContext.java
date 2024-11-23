@@ -12,7 +12,11 @@ import tech.icey.vma.VMA;
 import tech.icey.vma.handle.VmaAllocator;
 import tech.icey.xjbutil.container.Option;
 
-public final class VulkanRenderEngineState {
+import java.lang.foreign.Arena;
+
+public final class VulkanRenderEngineContext {
+    public final Arena autoArena = Arena.ofAuto();
+
     public final StaticCommands sCmd;
     public final EntryCommands eCmd;
     public final InstanceCommands iCmd;
@@ -39,7 +43,7 @@ public final class VulkanRenderEngineState {
     public final VkCommandBuffer[] commandBuffers;
     public final Option<VkCommandPool> transferCommandPool;
 
-    public VulkanRenderEngineState(
+    private VulkanRenderEngineContext(
             StaticCommands sCmd,
             EntryCommands eCmd,
             InstanceCommands iCmd,
@@ -93,7 +97,10 @@ public final class VulkanRenderEngineState {
         this.transferCommandPool = transferCommandPool;
     }
 
-    public static VulkanRenderEngineState init(GLFW glfw, GLFWwindow window) throws RenderException {
+    public static VulkanRenderEngineContext init(GLFW glfw, GLFWwindow window) throws RenderException {
         return new VREStateInitialiser().init(glfw, window);
+    }
+
+    public Swapchain createSwapchain(int width, int height) throws RenderException {
     }
 }
