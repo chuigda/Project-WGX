@@ -4,8 +4,10 @@ import chr.wgx.Config;
 import chr.wgx.render.RenderException;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
+import tech.icey.panama.Loader;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.ByteBuffer;
+import tech.icey.panama.buffer.FloatBuffer;
 import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.vk4j.Constants;
@@ -14,15 +16,19 @@ import tech.icey.vk4j.VulkanLoader;
 import tech.icey.vk4j.bitmask.VkDebugUtilsMessageSeverityFlagsEXT;
 import tech.icey.vk4j.bitmask.VkDebugUtilsMessageTypeFlagsEXT;
 import tech.icey.vk4j.bitmask.VkQueueFlags;
+import tech.icey.vk4j.command.DeviceCommands;
 import tech.icey.vk4j.command.EntryCommands;
 import tech.icey.vk4j.command.InstanceCommands;
 import tech.icey.vk4j.command.StaticCommands;
 import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.VkResult;
-import tech.icey.vk4j.handle.VkDebugUtilsMessengerEXT;
-import tech.icey.vk4j.handle.VkInstance;
-import tech.icey.vk4j.handle.VkPhysicalDevice;
-import tech.icey.vk4j.handle.VkSurfaceKHR;
+import tech.icey.vk4j.handle.*;
+import tech.icey.vma.VMA;
+import tech.icey.vma.VMAJavaTraceUtil;
+import tech.icey.vma.VMAUtil;
+import tech.icey.vma.datatype.VmaAllocatorCreateInfo;
+import tech.icey.vma.datatype.VmaVulkanFunctions;
+import tech.icey.vma.handle.VmaAllocator;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
@@ -43,6 +49,13 @@ public final class VulkanRenderEngineState {
         private int graphicsQueueFamilyIndex;
         private int presentQueueFamilyIndex;
         private Option<Integer> dedicatedTransferQueueFamilyIndex;
+        private VkDevice device;
+        private DeviceCommands dCmd;
+        private VkQueue graphicsQueue;
+        private VkQueue presentQueue;
+        private Option<VkQueue> dedicatedTransferQueue;
+        private VMA vma;
+        private VmaAllocator vmaAllocator;
 
         public VulkanRenderEngineState init(GLFW glfw, GLFWwindow window) throws RenderException {
             this.glfw = glfw;
@@ -56,6 +69,8 @@ public final class VulkanRenderEngineState {
             createSurface();
             pickPhysicalDevice();
             findQueueFamilyIndices();
+            createLogicalDevice();
+            createVMA();
 
             return null;
         }
@@ -70,9 +85,9 @@ public final class VulkanRenderEngineState {
 
             try (Arena arena = Arena.ofConfined()) {
                 VkApplicationInfo appInfo = VkApplicationInfo.allocate(arena);
-                appInfo.pApplicationName(ByteBuffer.allocateString(arena, "Project-WGX"));
+                appInfo.pApplicationName(APP_NAME_BUF);
                 appInfo.applicationVersion(Version.vkMakeAPIVersion(0, 1, 0, 0));
-                appInfo.pEngineName(ByteBuffer.allocateString(arena, "NG-ARACI : Neue Genesis Advanced Rendering And Computing Infrastructure"));
+                appInfo.pEngineName(ENGINE_NAME_BUF);
                 appInfo.engineVersion(Version.vkMakeAPIVersion(0, 1, 0, 0));
                 appInfo.apiVersion(Version.VK_API_VERSION_1_3);
 
@@ -92,10 +107,7 @@ public final class VulkanRenderEngineState {
                     for (int i = 0; i < glfwExtensionCount; i++) {
                         extensions.write(i, glfwExtensions.read(i));
                     }
-                    extensions.write(
-                            glfwExtensionCount,
-                            ByteBuffer.allocateString(arena, Constants.VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
-                    );
+                    extensions.write(glfwExtensionCount, VALIDATION_LAYER_EXTENSION_BUF);
                 }
 
                 VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.allocate(arena);
@@ -200,6 +212,183 @@ public final class VulkanRenderEngineState {
             }
         }
 
+        private void findQueueFamilyIndices() throws RenderException {
+            Option<Integer> graphicsFamilyIndexOpt = Option.none();
+            Option<Integer> presentFamilyIndexOpt = Option.none();
+            dedicatedTransferQueueFamilyIndex = Option.none();
+
+            try (Arena arena = Arena.ofConfined()) {
+                IntBuffer pQueueFamilyPropertyCount = IntBuffer.allocate(arena);
+                iCmd.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyPropertyCount, null);
+                int queueFamilyPropertyCount = pQueueFamilyPropertyCount.read();
+                VkQueueFamilyProperties[] queueFamilyProperties =
+                        VkQueueFamilyProperties.allocate(arena, queueFamilyPropertyCount);
+                iCmd.vkGetPhysicalDeviceQueueFamilyProperties(
+                        physicalDevice,
+                        pQueueFamilyPropertyCount,
+                        queueFamilyProperties[0]
+                );
+
+                for (int i = 0; i < queueFamilyPropertyCount; i++) {
+                    VkQueueFamilyProperties queueFamilyProperty = queueFamilyProperties[i];
+                    @enumtype(VkQueueFlags.class) int queueFlags = queueFamilyProperty.queueFlags();
+                    logger.fine("正在检查队列 " + i + ", 支持操作: " + VkQueueFlags.explain(queueFlags));
+
+                    if ((queueFlags & VkQueueFlags.VK_QUEUE_GRAPHICS_BIT) != 0 && graphicsFamilyIndexOpt.isNone()) {
+                        logger.info(
+                                "找到支持图形渲染的队列族: " + i +
+                                        ", 队列数量: " + queueFamilyProperty.queueCount() +
+                                        ", 支持的操作: " + VkQueueFlags.explain(queueFlags)
+                        );
+                        graphicsFamilyIndexOpt = Option.some(i);
+                    }
+
+                    IntBuffer pSupportsPresent = IntBuffer.allocate(arena);
+                    iCmd.vkGetPhysicalDeviceSurfaceSupportKHR(
+                            physicalDevice,
+                            i,
+                            surface,
+                            pSupportsPresent
+                    );
+                    int supportsPresent = pSupportsPresent.read();
+                    if (supportsPresent == Constants.VK_TRUE && presentFamilyIndexOpt.isNone()) {
+                        logger.info("找到支持窗口呈现的队列族: " + i);
+                        presentFamilyIndexOpt = Option.some(i);
+                    }
+
+                    @enumtype(VkQueueFlags.class) int prohibitedFlags =
+                            VkQueueFlags.VK_QUEUE_GRAPHICS_BIT |
+                                    VkQueueFlags.VK_QUEUE_COMPUTE_BIT;
+                    if ((queueFlags & VkQueueFlags.VK_QUEUE_TRANSFER_BIT) != 0 &&
+                            supportsPresent != Constants.VK_TRUE &&
+                            (queueFlags & prohibitedFlags) == 0 &&
+                            dedicatedTransferQueueFamilyIndex.isNone()) {
+                        logger.info(
+                                "找到专用传输队列族: " + i +
+                                        ", 队列数量: " + queueFamilyProperty.queueCount() +
+                                        ", 支持的操作: " + VkQueueFlags.explain(queueFlags)
+                        );
+                        dedicatedTransferQueueFamilyIndex = Option.some(i);
+                    }
+                }
+
+                if (!(graphicsFamilyIndexOpt instanceof Option.Some<Integer> someGraphicsFamilyIndex)) {
+                    throw new RenderException("未找到支持图形渲染的队列族");
+                }
+                if (!(presentFamilyIndexOpt instanceof Option.Some<Integer> somePresentFamilyIndex)) {
+                    throw new RenderException("未找到支持窗口呈现的队列族");
+                }
+                graphicsQueueFamilyIndex = someGraphicsFamilyIndex.value;
+                presentQueueFamilyIndex = somePresentFamilyIndex.value;
+
+                if (dedicatedTransferQueueFamilyIndex.isNone()) {
+                    logger.info("未找到专用传输队列族, 渲染器将不会使用多线程数据传输");
+                }
+            }
+        }
+
+        private void createLogicalDevice() throws RenderException {
+            VulkanConfig config = Config.config().vulkanConfig;
+
+            try (Arena arena = Arena.ofConfined()) {
+                VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.allocate(arena);
+                if (config.enableAnisotropy) {
+                    deviceFeatures.samplerAnisotropy(Constants.VK_TRUE);
+                }
+                if (config.enableMSAA) {
+                    deviceFeatures.sampleRateShading(Constants.VK_TRUE);
+                }
+
+                FloatBuffer pQueuePriorities = FloatBuffer.allocate(arena);
+                pQueuePriorities.write(1.0f);
+
+                int queueCreateInfoCount = graphicsQueueFamilyIndex != presentQueueFamilyIndex ? 2 : 1;
+                if (dedicatedTransferQueueFamilyIndex.isSome()) {
+                    queueCreateInfoCount++;
+                }
+                VkDeviceQueueCreateInfo[] queueCreateInfos = VkDeviceQueueCreateInfo.allocate(arena, queueCreateInfoCount);
+                queueCreateInfos[0].queueCount(1);
+                queueCreateInfos[0].queueFamilyIndex(graphicsQueueFamilyIndex);
+                queueCreateInfos[0].pQueuePriorities(pQueuePriorities);
+                if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
+                    queueCreateInfos[1].queueCount(1);
+                    queueCreateInfos[1].queueFamilyIndex(presentQueueFamilyIndex);
+                    queueCreateInfos[1].pQueuePriorities(pQueuePriorities);
+                }
+                if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> index) {
+                    queueCreateInfos[queueCreateInfoCount - 1].queueCount(1);
+                    queueCreateInfos[queueCreateInfoCount - 1].queueFamilyIndex(index.value);
+                    queueCreateInfos[queueCreateInfoCount - 1].pQueuePriorities(pQueuePriorities);
+                }
+
+                PointerBuffer ppDeviceExtensions = PointerBuffer.allocate(arena);
+                ppDeviceExtensions.write(VK_SWAPCHAIN_EXTENSION_BUF);
+
+                VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures =
+                        VkPhysicalDeviceDynamicRenderingFeatures.allocate(arena);
+                dynamicRenderingFeatures.dynamicRendering(Constants.VK_TRUE);
+
+                VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.allocate(arena);
+                deviceCreateInfo.pEnabledFeatures(deviceFeatures);
+                deviceCreateInfo.queueCreateInfoCount(queueCreateInfoCount);
+                deviceCreateInfo.pQueueCreateInfos(queueCreateInfos[0]);
+                deviceCreateInfo.enabledExtensionCount(1);
+                deviceCreateInfo.ppEnabledExtensionNames(ppDeviceExtensions);
+                if (enableValidationLayers) {
+                    PointerBuffer ppEnabledLayerNames = PointerBuffer.allocate(arena);
+                    ppEnabledLayerNames.write(VALIDATION_LAYER_NAME_BUF);
+                    deviceCreateInfo.enabledLayerCount(1);
+                    deviceCreateInfo.ppEnabledLayerNames(ppEnabledLayerNames);
+                }
+                deviceCreateInfo.pNext(dynamicRenderingFeatures);
+
+                VkDevice.Buffer pDevice = VkDevice.Buffer.allocate(arena);
+                @enumtype(VkResult.class) int result =
+                        iCmd.vkCreateDevice(physicalDevice, deviceCreateInfo, null, pDevice);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法创建 Vulkan 逻辑设备, 错误代码: " + VkResult.explain(result));
+                }
+                device = pDevice.read();
+                dCmd = VulkanLoader.loadDeviceCommands(instance, device, sCmd);
+
+                VkQueue.Buffer pQueue = VkQueue.Buffer.allocate(arena);
+                dCmd.vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, pQueue);
+                graphicsQueue = pQueue.read();
+                dCmd.vkGetDeviceQueue(device, presentQueueFamilyIndex, 0, pQueue);
+                presentQueue = pQueue.read();
+                if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> index) {
+                    dCmd.vkGetDeviceQueue(device, index.value, 0, pQueue);
+                    dedicatedTransferQueue = Option.some(pQueue.read());
+                } else {
+                    dedicatedTransferQueue = Option.none();
+                }
+            }
+        }
+
+        private void createVMA() throws RenderException {
+            vma = new VMA(Loader::loadFunction);
+            VMAJavaTraceUtil.enableJavaTraceForVMA();
+
+            try (Arena arena = Arena.ofConfined()) {
+                VmaVulkanFunctions vmaVulkanFunctions = VmaVulkanFunctions.allocate(arena);
+                VMAUtil.fillVulkanFunctions(vmaVulkanFunctions, sCmd, eCmd, iCmd, dCmd);
+
+                VmaAllocatorCreateInfo vmaCreateInfo = VmaAllocatorCreateInfo.allocate(arena);
+                vmaCreateInfo.instance(instance);
+                vmaCreateInfo.physicalDevice(physicalDevice);
+                vmaCreateInfo.device(device);
+                vmaCreateInfo.pVulkanFunctions(vmaVulkanFunctions);
+                vmaCreateInfo.vulkanApiVersion(Version.VK_API_VERSION_1_3);
+
+                VmaAllocator.Buffer pVmaAllocator = VmaAllocator.Buffer.allocate(arena);
+                @enumtype(VkResult.class) int result = vma.vmaCreateAllocator(vmaCreateInfo, pVmaAllocator);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法创建 Vulkan 内存分配器, 错误代码: " + VkResult.explain(result));
+                }
+                vmaAllocator = pVmaAllocator.read();
+            }
+        }
+
         private boolean checkValidationLayerSupport() {
             try (Arena arena = Arena.ofConfined()) {
                 IntBuffer pLayerCount = IntBuffer.allocate(arena);
@@ -246,84 +435,23 @@ public final class VulkanRenderEngineState {
             debugCreateInfo.pfnUserCallback(DebugMessengerUtil.DEBUG_CALLBACK_PTR);
         }
 
-        private void findQueueFamilyIndices() throws RenderException {
-            Option<Integer> graphicsFamilyIndexOpt = Option.none();
-            Option<Integer> presentFamilyIndexOpt = Option.none();
-
-            try (Arena arena = Arena.ofConfined()) {
-                IntBuffer pQueueFamilyPropertyCount = IntBuffer.allocate(arena);
-                iCmd.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyPropertyCount, null);
-                int queueFamilyPropertyCount = pQueueFamilyPropertyCount.read();
-                VkQueueFamilyProperties[] queueFamilyProperties =
-                        VkQueueFamilyProperties.allocate(arena, queueFamilyPropertyCount);
-                iCmd.vkGetPhysicalDeviceQueueFamilyProperties(
-                        physicalDevice,
-                        pQueueFamilyPropertyCount,
-                        queueFamilyProperties[0]
-                );
-
-                for (int i = 0; i < queueFamilyPropertyCount; i++) {
-                    VkQueueFamilyProperties queueFamilyProperty = queueFamilyProperties[i];
-                    @enumtype(VkQueueFlags.class) int queueFlags = queueFamilyProperty.queueFlags();
-                    logger.fine("正在检查队列 " + i + ", 支持操作: " + VkQueueFlags.explain(queueFlags));
-
-                    if ((queueFlags & VkQueueFlags.VK_QUEUE_GRAPHICS_BIT) != 0 && graphicsFamilyIndexOpt.isNone()) {
-                        logger.info(
-                                "找到支持图形渲染的队列族: " + i +
-                                ", 队列数量: " + queueFamilyProperty.queueCount() +
-                                ", 支持的操作: " + VkQueueFlags.explain(queueFlags)
-                        );
-                        graphicsFamilyIndexOpt = Option.some(i);
-                    }
-
-                    IntBuffer pSupportsPresent = IntBuffer.allocate(arena);
-                    iCmd.vkGetPhysicalDeviceSurfaceSupportKHR(
-                            physicalDevice,
-                            i,
-                            surface,
-                            pSupportsPresent
-                    );
-                    int supportsPresent = pSupportsPresent.read();
-                    if (supportsPresent == Constants.VK_TRUE && presentFamilyIndexOpt.isNone()) {
-                        logger.info("找到支持窗口呈现的队列族: " + i);
-                        presentFamilyIndexOpt = Option.some(i);
-                    }
-
-                    @enumtype(VkQueueFlags.class) int prohibitedFlags =
-                            VkQueueFlags.VK_QUEUE_GRAPHICS_BIT |
-                            VkQueueFlags.VK_QUEUE_COMPUTE_BIT;
-                    if ((queueFlags & VkQueueFlags.VK_QUEUE_TRANSFER_BIT) != 0 &&
-                        supportsPresent != Constants.VK_TRUE &&
-                        (queueFlags & prohibitedFlags) == 0 &&
-                        dedicatedTransferQueueFamilyIndex.isNone()) {
-                        logger.info(
-                                "找到专用传输队列族: " + i +
-                                ", 队列数量: " + queueFamilyProperty.queueCount() +
-                                ", 支持的操作: " + VkQueueFlags.explain(queueFlags)
-                        );
-                        dedicatedTransferQueueFamilyIndex = Option.some(i);
-                    }
-                }
-
-                if (!(graphicsFamilyIndexOpt instanceof Option.Some<Integer> someGraphicsFamilyIndex)) {
-                    throw new RenderException("未找到支持图形渲染的队列族");
-                }
-                if (!(presentFamilyIndexOpt instanceof Option.Some<Integer> somePresentFamilyIndex)) {
-                    throw new RenderException("未找到支持窗口呈现的队列族");
-                }
-                graphicsQueueFamilyIndex = someGraphicsFamilyIndex.value;
-                presentQueueFamilyIndex = somePresentFamilyIndex.value;
-            }
-        }
-
+        private static final ByteBuffer APP_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "Project-WGX");
+        private static final ByteBuffer ENGINE_NAME_BUF = ByteBuffer.allocateString(
+                Arena.global(),
+                "NG-ARACI : Neue Genesis Advanced Rendering And Computing Infrastructure"
+        );
+        private static final ByteBuffer VALIDATION_LAYER_EXTENSION_BUF =
+                ByteBuffer.allocateString(Arena.global(), Constants.VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         private static final String VALIDATION_LAYER_NAME = "VK_LAYER_KHRONOS_validation";
         private static final ByteBuffer VALIDATION_LAYER_NAME_BUF =
-                ByteBuffer.allocateString(Arena.ofAuto(), VALIDATION_LAYER_NAME);
+                ByteBuffer.allocateString(Arena.global(), VALIDATION_LAYER_NAME);
+        private static final ByteBuffer VK_SWAPCHAIN_EXTENSION_BUF =
+                ByteBuffer.allocateString(Arena.global(), Constants.VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+        private static final Logger logger = Logger.getLogger(Initialiser.class.getName());
     }
 
     public static VulkanRenderEngineState init(GLFW glfw, GLFWwindow window) throws RenderException {
         return new Initialiser().init(glfw, window);
     }
-
-    private static final Logger logger = Logger.getLogger(VulkanRenderEngineState.class.getName());
 }
