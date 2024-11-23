@@ -2,7 +2,8 @@ package chr.wgx.render;
 
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
-import tech.icey.xjbutil.container.Pair;
+import org.jetbrains.annotations.NotNull;
+import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action2;
 
@@ -34,8 +35,8 @@ public abstract class AbstractRenderEngine {
         return handleCounter.getAndIncrement();
     }
 
-    public final void initEngine() throws RenderException {
-        init();
+    public final void initEngine(GLFWwindow window) throws RenderException {
+        init(window);
         onInit.apply();
     }
 
@@ -55,15 +56,16 @@ public abstract class AbstractRenderEngine {
         onClose.apply();
     }
 
-    protected abstract void init() throws RenderException;
+    protected abstract void init(GLFWwindow window) throws RenderException;
     protected abstract void resize(int width, int height) throws RenderException;
     protected abstract void renderFrame() throws RenderException;
     protected abstract void close();
 
     public abstract ObjectHandle createObject(ObjectCreateInfo info) throws RenderException;
-    public abstract Pair<RenderTargetHandle, TextureHandle>
-    createRenderTarget(RenderTargetCreateInfo info) throws RenderException;
-    public abstract TextureHandle createTexture(TextureCreateInfo info) throws RenderException;
+    public abstract AttachmentHandle.Color createColorAttachment(AttachmentCreateInfo.Color i) throws RenderException;
+    public abstract AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth i) throws RenderException;
+
+    public abstract UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException;
     public abstract UniformHandle createUniform(UniformCreateInfo info) throws RenderException;
     public abstract RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException;
     public abstract RenderTaskHandle createTask(RenderTaskCreateInfo info) throws RenderException;

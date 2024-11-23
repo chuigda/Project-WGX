@@ -4,7 +4,7 @@ import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
-import tech.icey.xjbutil.container.Pair;
+import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action2;
 
@@ -20,7 +20,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    protected void init() throws RenderException {
+    protected void init(GLFWwindow window) throws RenderException {
     }
 
     @Override
@@ -41,12 +41,17 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public Pair<RenderTargetHandle, TextureHandle> createRenderTarget(RenderTargetCreateInfo info) throws RenderException {
+    public AttachmentHandle.Color createColorAttachment(AttachmentCreateInfo.Color info) throws RenderException {
         return null;
     }
 
     @Override
-    public TextureHandle createTexture(TextureCreateInfo info) throws RenderException {
+    public AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth info) throws RenderException {
+        return null;
+    }
+
+    @Override
+    public UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException {
         return null;
     }
 

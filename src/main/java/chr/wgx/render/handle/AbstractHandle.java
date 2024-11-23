@@ -3,9 +3,8 @@ package chr.wgx.render.handle;
 public abstract sealed class AbstractHandle permits
         ObjectHandle,
         RenderPipelineHandle,
-        RenderTargetHandle,
+        AttachmentHandle,
         RenderTaskHandle,
-        TextureHandle,
         UniformHandle
 {
     private final long handle;
