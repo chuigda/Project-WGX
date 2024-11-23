@@ -119,7 +119,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
             pCommandBuffer.write(commandBuffer);
             VkSemaphore.Buffer pSignalSemaphore = VkSemaphore.Buffer.allocate(arena);
-            pSignalSemaphore.write(renderFinishedSemaphore);;
+            pSignalSemaphore.write(renderFinishedSemaphore);
 
             VkSubmitInfo submitInfo = VkSubmitInfo.allocate(arena);
             submitInfo.waitSemaphoreCount(1);

@@ -32,7 +32,7 @@ import tech.icey.xjbutil.container.Option;
 import java.lang.foreign.Arena;
 import java.util.logging.Logger;
 
-final class VREStateInitialiser {
+final class VREContextInitialiser {
     private GLFW glfw;
     private GLFWwindow window;
     private StaticCommands sCmd;
@@ -611,5 +611,5 @@ final class VREStateInitialiser {
     private static final ByteBuffer VK_SWAPCHAIN_EXTENSION_BUF =
             ByteBuffer.allocateString(Arena.global(), Constants.VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    private static final Logger logger = Logger.getLogger(VREStateInitialiser.class.getName());
+    private static final Logger logger = Logger.getLogger(VREContextInitialiser.class.getName());
 }

@@ -103,6 +103,6 @@ public final class VulkanRenderEngineContext {
     }
 
     public static VulkanRenderEngineContext create(GLFW glfw, GLFWwindow window) throws RenderException {
-        return new VREStateInitialiser().init(glfw, window);
+        return new VREContextInitialiser().init(glfw, window);
     }
 }
