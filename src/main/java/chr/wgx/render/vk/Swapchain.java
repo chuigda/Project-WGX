@@ -19,7 +19,7 @@ public final class Swapchain {
     public final @enumtype(VkFormat.class) int swapChainImageFormat;
     public final VkExtent2D swapExtent;
 
-    public final VkSwapchainKHR swapchain;
+    public final VkSwapchainKHR vkSwapchain;
     public final Resource.SwapchainImage[] swapchainImages;
     public final Resource.Image depthImage;
     public final Option<Resource.Image> msaaColorImage;
@@ -103,7 +103,7 @@ public final class Swapchain {
         if (msaaColorImage instanceof Option.Some<Resource.Image> image) {
             image.value.dispose(cx);
         }
-        cx.dCmd.vkDestroySwapchainKHR(cx.device, swapchain, null);
+        cx.dCmd.vkDestroySwapchainKHR(cx.device, vkSwapchain, null);
     }
 
     private Swapchain(
@@ -116,7 +116,7 @@ public final class Swapchain {
     ) {
         this.swapChainImageFormat = swapChainImageFormat;
         this.swapExtent = swapExtent;
-        this.swapchain = swapchain;
+        this.vkSwapchain = swapchain;
         this.swapchainImages = swapchainImages;
         this.depthImage = depthImage;
         this.msaaColorImage = msaaColorImage;
