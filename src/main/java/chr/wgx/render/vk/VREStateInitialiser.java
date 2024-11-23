@@ -43,6 +43,7 @@ final class VREStateInitialiser {
     private Option<VkDebugUtilsMessengerEXT> debugMessenger;
     private VkSurfaceKHR surface;
     private VkPhysicalDevice physicalDevice;
+    private @enumtype(VkSampleCountFlags.class) int msaaSampleCountFlags;
     private int graphicsQueueFamilyIndex;
     private int presentQueueFamilyIndex;
     private Option<Integer> dedicatedTransferQueueFamilyIndex;
@@ -89,6 +90,7 @@ final class VREStateInitialiser {
                 graphicsQueueFamilyIndex,
                 presentQueueFamilyIndex,
                 dedicatedTransferQueueFamilyIndex,
+                msaaSampleCountFlags,
 
                 instance,
                 debugMessenger,
@@ -229,12 +231,14 @@ final class VREStateInitialiser {
                 throw new RenderException("无法获取 Vulkan 物理设备列表, 错误代码: " + VkResult.explain(result));
             }
 
-            VkPhysicalDeviceProperties pDeviceProperties = VkPhysicalDeviceProperties.allocate(arena);
+            VkPhysicalDeviceProperties deviceProperties = VkPhysicalDeviceProperties.allocate(arena);
             for (int i = 0; i < deviceCount; i++) {
                 VkPhysicalDevice device = pDevices.read(i);
-                iCmd.vkGetPhysicalDeviceProperties(device, pDeviceProperties);
-                if (physicalDeviceID == 0 || i == physicalDeviceID) {
+                iCmd.vkGetPhysicalDeviceProperties(device, deviceProperties);
+                if (physicalDeviceID == 0 || deviceProperties.deviceID() == physicalDeviceID) {
                     physicalDevice = device;
+                    msaaSampleCountFlags = pickMSAASampleCount(deviceProperties.limits().framebufferColorSampleCounts() &
+                                                          deviceProperties.limits().framebufferDepthSampleCounts());
                     break;
                 }
             }
@@ -557,6 +561,41 @@ final class VREStateInitialiser {
                         VkDebugUtilsMessageTypeFlagsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
         );
         debugCreateInfo.pfnUserCallback(DebugMessengerUtil.DEBUG_CALLBACK_PTR);
+    }
+
+    private @enumtype(VkSampleCountFlags.class) int pickMSAASampleCount(
+            @enumtype(VkSampleCountFlags.class) int supportedSampleCountFlags
+    ) {
+        VulkanConfig config = Config.config().vulkanConfig;
+        if (!config.enableMSAA) {
+            return VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT;
+        }
+
+        int sampleCount = config.msaaSampleCount;
+        @enumtype(VkSampleCountFlags.class) int sampleCountBits = sampleCountToBits(sampleCount);
+        if ((supportedSampleCountFlags & sampleCountBits) == 0) {
+            logger.warning("不支持的 MSAA 样本数: " + sampleCount + ", 将不使用 MSAA");
+            logger.info("设备支持的 MSAA 样本数有: " + VkSampleCountFlags.explain(supportedSampleCountFlags));
+            return VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT;
+        }
+
+        return sampleCountBits;
+    }
+
+    private static @enumtype(VkSampleCountFlags.class) int sampleCountToBits(int sampleCount) {
+        return switch (sampleCount) {
+            case 1 -> VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT;
+            case 2 -> VkSampleCountFlags.VK_SAMPLE_COUNT_2_BIT;
+            case 4 -> VkSampleCountFlags.VK_SAMPLE_COUNT_4_BIT;
+            case 8 -> VkSampleCountFlags.VK_SAMPLE_COUNT_8_BIT;
+            case 16 -> VkSampleCountFlags.VK_SAMPLE_COUNT_16_BIT;
+            case 32 -> VkSampleCountFlags.VK_SAMPLE_COUNT_32_BIT;
+            case 64 -> VkSampleCountFlags.VK_SAMPLE_COUNT_64_BIT;
+            default -> {
+                logger.warning("不支持的 MSAA 样本数: " + sampleCount + ", 将不使用 MSAA");
+                yield VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT;
+            }
+        };
     }
 
     private static final ByteBuffer APP_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "Project-WGX");

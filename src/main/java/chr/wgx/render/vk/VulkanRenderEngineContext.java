@@ -3,6 +3,8 @@ package chr.wgx.render.vk;
 import chr.wgx.render.RenderException;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
+import tech.icey.panama.annotation.enumtype;
+import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.command.DeviceCommands;
 import tech.icey.vk4j.command.EntryCommands;
 import tech.icey.vk4j.command.InstanceCommands;
@@ -27,6 +29,7 @@ public final class VulkanRenderEngineContext {
     public final int graphicsQueueFamilyIndex;
     public final int presentQueueFamilyIndex;
     public final Option<Integer> dedicatedTransferQueueFamilyIndex;
+    public final @enumtype(VkSampleCountFlags.class) int msaaSampleCountFlags;
 
     public final VkInstance instance;
     public final Option<VkDebugUtilsMessengerEXT> debugMessenger;
@@ -43,7 +46,7 @@ public final class VulkanRenderEngineContext {
     public final VkCommandBuffer[] commandBuffers;
     public final Option<VkCommandPool> transferCommandPool;
 
-    private VulkanRenderEngineContext(
+    VulkanRenderEngineContext(
             StaticCommands sCmd,
             EntryCommands eCmd,
             InstanceCommands iCmd,
@@ -54,6 +57,7 @@ public final class VulkanRenderEngineContext {
             int graphicsQueueFamilyIndex,
             int presentQueueFamilyIndex,
             Option<Integer> dedicatedTransferQueueFamilyIndex,
+            @enumtype(VkSampleCountFlags.class) int msaaSampleCount,
 
             VkInstance instance,
             Option<VkDebugUtilsMessengerEXT> debugMessenger,
@@ -80,6 +84,7 @@ public final class VulkanRenderEngineContext {
         this.graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
         this.presentQueueFamilyIndex = presentQueueFamilyIndex;
         this.dedicatedTransferQueueFamilyIndex = dedicatedTransferQueueFamilyIndex;
+        this.msaaSampleCountFlags = msaaSampleCount;
 
         this.instance = instance;
         this.debugMessenger = debugMessenger;
@@ -99,8 +104,5 @@ public final class VulkanRenderEngineContext {
 
     public static VulkanRenderEngineContext init(GLFW glfw, GLFWwindow window) throws RenderException {
         return new VREStateInitialiser().init(glfw, window);
-    }
-
-    public Swapchain createSwapchain(int width, int height) throws RenderException {
     }
 }

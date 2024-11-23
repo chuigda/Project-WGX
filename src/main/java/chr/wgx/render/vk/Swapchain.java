@@ -6,16 +6,10 @@ import tech.icey.panama.NativeLayout;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.VkCompositeAlphaFlagsKHR;
-import tech.icey.vk4j.bitmask.VkImageUsageFlags;
-import tech.icey.vk4j.bitmask.VkSurfaceTransformFlagsKHR;
-import tech.icey.vk4j.datatype.VkExtent2D;
-import tech.icey.vk4j.datatype.VkSurfaceCapabilitiesKHR;
-import tech.icey.vk4j.datatype.VkSurfaceFormatKHR;
-import tech.icey.vk4j.datatype.VkSwapchainCreateInfoKHR;
+import tech.icey.vk4j.bitmask.*;
+import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
 import tech.icey.vk4j.handle.VkImage;
-import tech.icey.vk4j.handle.VkImageView;
 import tech.icey.vk4j.handle.VkSwapchainKHR;
 import tech.icey.xjbutil.container.Option;
 
@@ -30,11 +24,7 @@ public final class Swapchain {
     public final Resource.Image depthImage;
     public final Option<Resource.Image> msaaColorImage;
 
-    public static Swapchain create(
-            VulkanRenderEngineContext cx,
-            int width,
-            int height
-    ) throws RenderException {
+    public static Swapchain create(VulkanRenderEngineContext cx, int width, int height) throws RenderException {
         try (Arena arena = Arena.ofConfined()) {
             SwapchainSupportDetails swapchainSupportDetails = querySwapchainSupportDetails(cx, arena);
 
@@ -63,7 +53,57 @@ public final class Swapchain {
             for (int i = 0; i < vkSwapchainImages.length; i++) {
                 swapchainImages[i] = Resource.SwapchainImage.create(cx, vkSwapchainImages[i], surfaceFormat.format());
             }
+
+            @enumtype(VkFormat.class) int depthFormat = findSupportedDepthFormat(cx);
+            Resource.Image depthImage = Resource.Image.create(
+                    cx,
+                    extent.width(),
+                    extent.height(),
+                    1,
+                    cx.msaaSampleCountFlags,
+                    depthFormat,
+                    VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+                    VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT
+            );
+
+            Option<Resource.Image> msaaColorImage;
+            if (cx.msaaSampleCountFlags != VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT) {
+                msaaColorImage = Option.some(Resource.Image.create(
+                        cx,
+                        extent.width(),
+                        extent.height(),
+                        1,
+                        cx.msaaSampleCountFlags,
+                        surfaceFormat.format(),
+                        VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+                        VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                        VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
+                ));
+            } else {
+                msaaColorImage = Option.none();
+            }
+
+            return new Swapchain(
+                    surfaceFormat.format(),
+                    extent,
+                    swapchain,
+                    swapchainImages,
+                    depthImage,
+                    msaaColorImage
+            );
         }
+    }
+
+    public void dispose(VulkanRenderEngineContext cx) {
+        for (Resource.SwapchainImage swapchainImage : swapchainImages) {
+            swapchainImage.dispose(cx);
+        }
+        depthImage.dispose(cx);
+        if (msaaColorImage instanceof Option.Some<Resource.Image> image) {
+            image.value.dispose(cx);
+        }
+        cx.dCmd.vkDestroySwapchainKHR(cx.device, swapchain, null);
     }
 
     private Swapchain(
@@ -274,5 +314,29 @@ public final class Swapchain {
             ));
         }
         return actualExtent;
+    }
+
+    @enumtype(VkFormat.class) static final int[] CANDIDATE_DEPTH_FORMATS = new int[] {
+            VkFormat.VK_FORMAT_D32_SFLOAT,
+            VkFormat.VK_FORMAT_D32_SFLOAT_S8_UINT,
+            VkFormat.VK_FORMAT_D24_UNORM_S8_UINT
+    };
+    @enumtype(VkFormatFeatureFlags.class) static final int DEPTH_IMAGE_FEATURES =
+            VkFormatFeatureFlags.VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    private static @enumtype(VkFormat.class) int findSupportedDepthFormat(
+            VulkanRenderEngineContext cx
+    ) throws RenderException {
+        try (Arena arena = Arena.ofConfined()) {
+            VkFormatProperties formatProperties = VkFormatProperties.allocate(arena);
+            for (@enumtype(VkFormat.class) int format : CANDIDATE_DEPTH_FORMATS) {
+                cx.iCmd.vkGetPhysicalDeviceFormatProperties(cx.physicalDevice, format, formatProperties);
+                if ((formatProperties.optimalTilingFeatures() & DEPTH_IMAGE_FEATURES) != 0) {
+                    return format;
+                }
+            }
+        }
+
+        throw new RenderException("没有可用的深度缓冲格式");
     }
 }
