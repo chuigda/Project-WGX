@@ -1,19 +1,20 @@
 import chr.wgx.Config;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 
 public final class Drill {
     public static void main(String[] args) {
         var config = new Config();
 
-        ObjectMapper mapper = new ObjectMapper();
+        Gson gson = new Gson();
         try {
-            String json = mapper.writeValueAsString(config);
-            System.out.println(json);
+            String configText = config.toPrettyJSON();
+            System.out.println(configText);
 
-            var neueVkConfig = mapper.readValue(json, Config.class);
-            System.out.println(neueVkConfig);
-        } catch (JsonProcessingException e) {
+            var newConfig = gson.fromJson(configText, Config.class);
+            System.out.println(newConfig.toPrettyJSON());
+
+            assert newConfig.toPrettyJSON().equals(configText);
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
