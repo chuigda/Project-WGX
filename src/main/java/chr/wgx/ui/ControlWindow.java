@@ -88,8 +88,6 @@ public final class ControlWindow extends JFrame {
         this.setContentPane(contentPanel);
 
         this.textArea = new JTextArea();
-        Font font = SwingUtil.defaultMonospaceFont;
-        this.textArea.setFont(font);
         this.textArea.setLineWrap(true);
         this.textArea.setEditable(false);
         SwingUtil.createTextAreaMenu(this.textArea);
@@ -104,7 +102,6 @@ public final class ControlWindow extends JFrame {
         this.add(scrollPane, c);
 
         JLabel statusLabel = new JLabel("就绪");
-        statusLabel.setFont(font);
         statusLabel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         c.fill = GridBagConstraints.HORIZONTAL;
