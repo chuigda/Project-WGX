@@ -21,23 +21,32 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
     }
 
-    private Option<VulkanRenderEngineState> engineState = Option.none();
+    private Option<VulkanRenderEngineState> engineStateOption = Option.none();
 
     @Override
     protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
-        engineState = Option.some(VulkanRenderEngineState.init(glfw, window));
+        engineStateOption = Option.some(VulkanRenderEngineState.init(glfw, window));
     }
 
     @Override
     protected void resize(int width, int height) throws RenderException {
+        if (!(engineStateOption instanceof Option.Some<VulkanRenderEngineState> engineState)) {
+            return;
+        }
     }
 
     @Override
     protected void renderFrame() throws RenderException {
+        if (!(engineStateOption instanceof Option.Some<VulkanRenderEngineState> engineState)) {
+            return;
+        }
     }
 
     @Override
     protected void close() {
+        if (!(engineStateOption instanceof Option.Some<VulkanRenderEngineState> engineState)) {
+            return;
+        }
     }
 
     @Override

@@ -54,7 +54,7 @@ public final class VulkanRenderEngineState {
     public final Option<VkQueue> dedicatedTransferQueue;
     public final VmaAllocator vmaAllocator;
 
-    public final Option<VkSwapchainKHR> swapchain = Option.none();
+    public Option<VkSwapchainKHR> swapchain = Option.none();
 
     public VulkanRenderEngineState(
             StaticCommands sCmd,

@@ -15,6 +15,9 @@ public final class VulkanConfig {
     /// - `2`: 强制启用垂直同步
     public int vsync = 1;
 
+    /// 最多允许同时渲染的帧数
+    public int maxFramesInFlight = 2;
+
     /// 是否启用多重采样抗锯齿
     public boolean enableMSAA = false;
     /// 多重采样抗锯齿层级
