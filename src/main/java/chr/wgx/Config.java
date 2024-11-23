@@ -2,8 +2,10 @@ package chr.wgx;
 
 import chr.wgx.render.gles2.GLES2Config;
 import chr.wgx.render.vk.VulkanConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import tech.icey.xjbutil.container.Option;
 
 import java.io.IOException;
@@ -25,7 +27,12 @@ public final class Config {
     public VulkanConfig vulkanConfig = new VulkanConfig();
     public GLES2Config gles2Config = new GLES2Config();
 
-    public HashMap<String, ObjectNode> pluginConfigs = new HashMap<>();
+    public HashMap<String, JsonObject> pluginConfigs = new HashMap<>();
+
+    public String toPrettyJSON() {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        return gson.toJson(this);
+    }
 
     public static Option<Config> GLOBAL_CONFIG = Option.none();
 
@@ -34,9 +41,9 @@ public final class Config {
             Config newConfig;
             try {
                 String configText = Files.readString(Paths.get("config.json"));
-                ObjectMapper mapper = new ObjectMapper();
-                newConfig = mapper.readValue(configText, Config.class);
-            } catch (IOException e) {
+                Gson gson = new Gson();
+                newConfig = gson.fromJson(configText, Config.class);
+            } catch (IOException | JsonSyntaxException e) {
                 logger.info(String.format("无法读取配置文件: %s, 使用默认配置", e.getMessage()));
                 newConfig = new Config();
             }

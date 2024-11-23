@@ -3,8 +3,6 @@ package chr.wgx.main;
 import chr.wgx.Config;
 import chr.wgx.ui.ControlWindow;
 import chr.wgx.util.JULUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
 import java.util.logging.Level;
@@ -31,14 +29,7 @@ public final class Main {
             }
         });
 
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String text = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(config);
-            logger.info(String.format("配置文件内容:\n%s", text));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            // do nothing, we don't mind if the config file content was not printed
-        }
+        logger.info(String.format("配置文件内容:\n%s", config.toPrettyJSON()));
 
         try {
             RenderApplication.applicationStart();
