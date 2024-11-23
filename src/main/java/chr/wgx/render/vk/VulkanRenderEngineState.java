@@ -34,6 +34,70 @@ import java.lang.foreign.Arena;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngineState {
+    public final StaticCommands sCmd;
+    public final EntryCommands eCmd;
+    public final InstanceCommands iCmd;
+    public final DeviceCommands dCmd;
+    public final VMA vma;
+
+    public final VkPhysicalDevice physicalDevice;
+    public final int graphicsQueueFamilyIndex;
+    public final int presentQueueFamilyIndex;
+    public final Option<Integer> dedicatedTransferQueueFamilyIndex;
+
+    public final VkInstance instance;
+    public final Option<VkDebugUtilsMessengerEXT> debugMessenger;
+    public final VkSurfaceKHR surface;
+    public final VkDevice device;
+    public final VkQueue graphicsQueue;
+    public final VkQueue presentQueue;
+    public final Option<VkQueue> dedicatedTransferQueue;
+    public final VmaAllocator vmaAllocator;
+
+    public final Option<VkSwapchainKHR> swapchain = Option.none();
+
+    public VulkanRenderEngineState(
+            StaticCommands sCmd,
+            EntryCommands eCmd,
+            InstanceCommands iCmd,
+            DeviceCommands dCmd,
+            VMA vma,
+
+            VkPhysicalDevice physicalDevice,
+            int graphicsQueueFamilyIndex,
+            int presentQueueFamilyIndex,
+            Option<Integer> dedicatedTransferQueueFamilyIndex,
+
+            VkInstance instance,
+            Option<VkDebugUtilsMessengerEXT> debugMessenger,
+            VkSurfaceKHR surface,
+            VkDevice device,
+            VkQueue graphicsQueue,
+            VkQueue presentQueue,
+            Option<VkQueue> dedicatedTransferQueue,
+            VmaAllocator vmaAllocator
+    ) {
+        this.sCmd = sCmd;
+        this.eCmd = eCmd;
+        this.iCmd = iCmd;
+        this.dCmd = dCmd;
+        this.vma = vma;
+
+        this.physicalDevice = physicalDevice;
+        this.graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
+        this.presentQueueFamilyIndex = presentQueueFamilyIndex;
+        this.dedicatedTransferQueueFamilyIndex = dedicatedTransferQueueFamilyIndex;
+
+        this.instance = instance;
+        this.debugMessenger = debugMessenger;
+        this.surface = surface;
+        this.device = device;
+        this.graphicsQueue = graphicsQueue;
+        this.presentQueue = presentQueue;
+        this.dedicatedTransferQueue = dedicatedTransferQueue;
+        this.vmaAllocator = vmaAllocator;
+    }
+
     private static final class Initialiser {
         private GLFW glfw;
         private GLFWwindow window;
@@ -72,7 +136,27 @@ public final class VulkanRenderEngineState {
             createVMA();
             createSwapchain();
 
-            return null;
+            return new VulkanRenderEngineState(
+                    sCmd,
+                    eCmd,
+                    iCmd,
+                    dCmd,
+                    vma,
+
+                    physicalDevice,
+                    graphicsQueueFamilyIndex,
+                    presentQueueFamilyIndex,
+                    dedicatedTransferQueueFamilyIndex,
+
+                    instance,
+                    debugMessenger,
+                    surface,
+                    device,
+                    graphicsQueue,
+                    presentQueue,
+                    dedicatedTransferQueue,
+                    vmaAllocator
+            );
         }
 
         private void createInstance() throws RenderException {
