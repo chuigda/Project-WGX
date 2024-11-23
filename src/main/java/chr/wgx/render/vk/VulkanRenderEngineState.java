@@ -5,6 +5,7 @@ import chr.wgx.render.RenderException;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.Loader;
+import tech.icey.panama.NativeLayout;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.panama.buffer.FloatBuffer;
@@ -13,15 +14,13 @@ import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.Version;
 import tech.icey.vk4j.VulkanLoader;
-import tech.icey.vk4j.bitmask.VkDebugUtilsMessageSeverityFlagsEXT;
-import tech.icey.vk4j.bitmask.VkDebugUtilsMessageTypeFlagsEXT;
-import tech.icey.vk4j.bitmask.VkQueueFlags;
+import tech.icey.vk4j.bitmask.*;
 import tech.icey.vk4j.command.DeviceCommands;
 import tech.icey.vk4j.command.EntryCommands;
 import tech.icey.vk4j.command.InstanceCommands;
 import tech.icey.vk4j.command.StaticCommands;
 import tech.icey.vk4j.datatype.*;
-import tech.icey.vk4j.enumtype.VkResult;
+import tech.icey.vk4j.enumtype.*;
 import tech.icey.vk4j.handle.*;
 import tech.icey.vma.VMA;
 import tech.icey.vma.VMAJavaTraceUtil;
@@ -71,6 +70,7 @@ public final class VulkanRenderEngineState {
             findQueueFamilyIndices();
             createLogicalDevice();
             createVMA();
+            createSwapchain();
 
             return null;
         }
@@ -389,6 +389,52 @@ public final class VulkanRenderEngineState {
             }
         }
 
+        private void createSwapchain() throws RenderException {
+            try (Arena arena = Arena.ofConfined()) {
+                SwapchainSupportDetails swapchainSupportDetails = querySwapchainSupportDetails(arena);
+
+                VkSurfaceFormatKHR surfaceFormat = chooseSwapchainSurfaceFormat(swapchainSupportDetails.formats());
+                @enumtype(VkPresentModeKHR.class) int presentMode =
+                        chooseSwapchainPresentMode(swapchainSupportDetails.presentModes());
+                VkExtent2D extent = chooseSwapExtent(swapchainSupportDetails.capabilities(), arena);
+
+                int imageCount = swapchainSupportDetails.capabilities().minImageCount() + 1;
+                if (swapchainSupportDetails.capabilities().maxImageCount() > 0 &&
+                    imageCount > swapchainSupportDetails.capabilities().maxImageCount()) {
+                    imageCount = swapchainSupportDetails.capabilities().maxImageCount();
+                }
+
+                VkSwapchainCreateInfoKHR swapchainCreateInfo = VkSwapchainCreateInfoKHR.allocate(arena);
+                swapchainCreateInfo.surface(surface);
+                swapchainCreateInfo.minImageCount(imageCount);
+                swapchainCreateInfo.imageFormat(surfaceFormat.format());
+                swapchainCreateInfo.imageColorSpace(surfaceFormat.colorSpace());
+                swapchainCreateInfo.imageExtent(extent);
+                swapchainCreateInfo.imageArrayLayers(1);
+                swapchainCreateInfo.imageUsage(VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+                if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
+                    swapchainCreateInfo.imageSharingMode(VkSharingMode.VK_SHARING_MODE_CONCURRENT);
+                    IntBuffer pQueueFamilyIndices = IntBuffer.allocate(arena, 2);
+                    pQueueFamilyIndices.write(0, graphicsQueueFamilyIndex);
+                    pQueueFamilyIndices.write(1, presentQueueFamilyIndex);
+                    swapchainCreateInfo.pQueueFamilyIndices(pQueueFamilyIndices);
+                } else {
+                    swapchainCreateInfo.imageSharingMode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
+                }
+                swapchainCreateInfo.preTransform(swapchainSupportDetails.capabilities().currentTransform());
+                swapchainCreateInfo.compositeAlpha(VkCompositeAlphaFlagsKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+                swapchainCreateInfo.presentMode(presentMode);
+                swapchainCreateInfo.clipped(Constants.VK_TRUE);
+
+                VkSwapchainKHR.Buffer pSwapchain = VkSwapchainKHR.Buffer.allocate(arena);
+                @enumtype(VkResult.class) int result = dCmd.vkCreateSwapchainKHR(device, swapchainCreateInfo, null, pSwapchain);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法创建 Vulkan 交换链, 错误代码: " + VkResult.explain(result));
+                }
+                VkSwapchainKHR swapchain = pSwapchain.read();
+            }
+        }
+
         private boolean checkValidationLayerSupport() {
             try (Arena arena = Arena.ofConfined()) {
                 IntBuffer pLayerCount = IntBuffer.allocate(arena);
@@ -433,6 +479,118 @@ public final class VulkanRenderEngineState {
                     VkDebugUtilsMessageTypeFlagsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
             );
             debugCreateInfo.pfnUserCallback(DebugMessengerUtil.DEBUG_CALLBACK_PTR);
+        }
+
+        private record SwapchainSupportDetails(
+                VkSurfaceCapabilitiesKHR capabilities,
+                VkSurfaceFormatKHR[] formats,
+                @enumtype(VkPresentModeKHR.class) IntBuffer presentModes
+        ) {}
+
+        private SwapchainSupportDetails querySwapchainSupportDetails(Arena arena) throws RenderException {
+            VkSurfaceCapabilitiesKHR surfaceCapabilities = VkSurfaceCapabilitiesKHR.allocate(arena);
+            @enumtype(VkResult.class) int result = iCmd.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+                    physicalDevice,
+                    surface,
+                    surfaceCapabilities
+            );
+            if (result != VkResult.VK_SUCCESS) {
+                throw new RenderException("无法获取 Vulkan 表面能力, 错误代码: " + VkResult.explain(result));
+            }
+
+            try (Arena localArena = Arena.ofConfined()) {
+                IntBuffer pCount = IntBuffer.allocate(localArena);
+                result = iCmd.vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, pCount, null);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法获取 Vulkan 表面格式, 错误代码: " + VkResult.explain(result));
+                }
+
+                int formatCount = pCount.read();
+                VkSurfaceFormatKHR[] surfaceFormats = VkSurfaceFormatKHR.allocate(arena, formatCount);
+                result = iCmd.vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, pCount, surfaceFormats[0]);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法获取 Vulkan 表面格式, 错误代码: " + VkResult.explain(result));
+                }
+
+                result = iCmd.vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, pCount, null);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法获取 Vulkan 表面呈现模式, 错误代码: " + VkResult.explain(result));
+                }
+
+                int presentModeCount = pCount.read();
+                IntBuffer presentModes = IntBuffer.allocate(arena, presentModeCount);
+                result = iCmd.vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, pCount, presentModes);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法获取 Vulkan 表面呈现模式, 错误代码: " + VkResult.explain(result));
+                }
+
+                return new SwapchainSupportDetails(surfaceCapabilities, surfaceFormats, presentModes);
+            }
+        }
+
+        private VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(VkSurfaceFormatKHR[] formats) {
+            @enumtype(VkFormat.class) int preferredFormat = Config.config().vulkanConfig.forceUNORM ?
+                    VkFormat.VK_FORMAT_B8G8R8A8_UNORM :
+                    VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
+            for (VkSurfaceFormatKHR format : formats) {
+                if (format.format() == preferredFormat &&
+                    format.colorSpace() == VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                    return format;
+                }
+            }
+            return formats[0];
+        }
+
+        private @enumtype(VkPresentModeKHR.class) int chooseSwapchainPresentMode(
+                @enumtype(VkPresentModeKHR.class) IntBuffer presentModes
+        ) {
+            if (Config.config().vulkanConfig.vsync == 2) {
+                return VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
+            }
+
+            for (int i = 0; i < presentModes.size(); i++) {
+                @enumtype(VkPresentModeKHR.class) int presentMode = presentModes.read(i);
+                if (presentMode == VkPresentModeKHR.VK_PRESENT_MODE_MAILBOX_KHR) {
+                    return presentMode;
+                }
+            }
+
+            if (Config.config().vulkanConfig.vsync == 0) {
+                for (int i = 0; i < presentModes.size(); i++) {
+                    @enumtype(VkPresentModeKHR.class) int presentMode = presentModes.read(i);
+                    if (presentMode == VkPresentModeKHR.VK_PRESENT_MODE_IMMEDIATE_KHR) {
+                        return presentMode;
+                    }
+                }
+            }
+
+            return VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
+        }
+
+        private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, Arena arena) {
+            if (capabilities.currentExtent().width() != NativeLayout.UINT32_MAX) {
+                return capabilities.currentExtent();
+            }
+
+            try (Arena localArena = Arena.ofConfined()) {
+                IntBuffer pWidth = IntBuffer.allocate(localArena);
+                IntBuffer pHeight = IntBuffer.allocate(localArena);
+                glfw.glfwGetFramebufferSize(window, pWidth, pHeight);
+
+                int width = pWidth.read();
+                int height = pHeight.read();
+
+                VkExtent2D actualExtent = VkExtent2D.allocate(arena);
+                actualExtent.width(Math.max(
+                        capabilities.minImageExtent().width(),
+                        Math.min(capabilities.maxImageExtent().width(), width)
+                ));
+                actualExtent.height(Math.max(
+                        capabilities.minImageExtent().height(),
+                        Math.min(capabilities.maxImageExtent().height(), height)
+                ));
+                return actualExtent;
+            }
         }
 
         private static final ByteBuffer APP_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "Project-WGX");
