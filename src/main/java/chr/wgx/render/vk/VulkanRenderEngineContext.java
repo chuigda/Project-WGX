@@ -102,7 +102,7 @@ public final class VulkanRenderEngineContext {
         this.transferCommandPool = transferCommandPool;
     }
 
-    public static VulkanRenderEngineContext init(GLFW glfw, GLFWwindow window) throws RenderException {
+    public static VulkanRenderEngineContext create(GLFW glfw, GLFWwindow window) throws RenderException {
         return new VREStateInitialiser().init(glfw, window);
     }
 }
