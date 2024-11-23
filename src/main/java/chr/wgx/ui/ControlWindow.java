@@ -139,6 +139,15 @@ public final class ControlWindow extends JFrame {
         JULUtil.addLogHandler(new Handler() {
             @Override
             public void publish(LogRecord record) {
+                // 过滤 AWT 和 Swing 的日志，以免用户在操作用户界面时产生大量日志把用户真正关心的日志淹没
+                // 控制台？淹了就淹了
+                if (record.getLoggerName().contains("java.awt") ||
+                    record.getLoggerName().contains("sun.awt") ||
+                    record.getMessage().contains("java.awt") ||
+                    record.getMessage().contains("java.swing")) {
+                    return;
+                }
+
                 addLogText(String.format(
                         "[%s] [%s] %s : %s%n",
                         record.getInstant(),

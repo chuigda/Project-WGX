@@ -4,7 +4,9 @@ import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
+import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
+import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action2;
 
@@ -19,8 +21,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
     }
 
+    private Option<VulkanRenderEngineState> engineState = Option.none();
+
     @Override
-    protected void init(GLFWwindow window) throws RenderException {
+    protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
+        engineState = Option.some(VulkanRenderEngineState.init(glfw, window));
     }
 
     @Override

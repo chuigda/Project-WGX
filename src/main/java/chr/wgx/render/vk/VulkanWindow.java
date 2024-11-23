@@ -32,21 +32,13 @@ public final class VulkanWindow implements AutoCloseable {
         }
     }
 
-    public void mainLoop(@Nullable VulkanRenderEngine renderer) throws RenderException {
-        if (renderer != null) {
-            renderer.init();
-        }
-
+    public void mainLoop(VulkanRenderEngine renderer) throws RenderException {
+        renderer.initEngine(glfw, rawWindow);
         while (glfw.glfwWindowShouldClose(rawWindow) != GLFWConstants.GLFW_TRUE) {
-            if (renderer != null) {
-                renderer.renderFrame();
-            }
+            renderer.renderFrameEngine();
             glfw.glfwPollEvents();
         }
-
-        if (renderer != null) {
-            renderer.close();
-        }
+        renderer.closeEngine();
     }
 
     @Override

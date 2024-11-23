@@ -1,6 +1,7 @@
 package chr.wgx.main;
 
 import chr.wgx.render.RenderException;
+import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.render.vk.VulkanWindow;
 import chr.wgx.util.SharedObjectLoader;
 import tech.icey.glfw.GLFW;
@@ -22,7 +23,13 @@ public final class RenderApplication {
         }
 
         try (VulkanWindow w = new VulkanWindow(glfw, "Project-WGX 绘图输出窗口", 640, 640)) {
-            w.mainLoop(null);
+            w.mainLoop(new VulkanRenderEngine(
+                    () -> logger.info("Vulkan 渲染引擎已初始化"),
+                    (width, height) -> logger.info("帧缓冲尺寸已调整至 " + width + "x" + height),
+                    () -> {},
+                    () -> {},
+                    () -> logger.info("Vulkan 渲染引擎已关闭")
+            ));
         } catch (RenderException e) {
             throw new RuntimeException(e);
         }

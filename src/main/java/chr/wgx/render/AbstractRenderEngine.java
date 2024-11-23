@@ -3,6 +3,7 @@ package chr.wgx.render;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
 import org.jetbrains.annotations.NotNull;
+import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action2;
@@ -35,8 +36,8 @@ public abstract class AbstractRenderEngine {
         return handleCounter.getAndIncrement();
     }
 
-    public final void initEngine(GLFWwindow window) throws RenderException {
-        init(window);
+    public final void initEngine(GLFW glfw, GLFWwindow window) throws RenderException {
+        init(glfw, window);
         onInit.apply();
     }
 
@@ -56,7 +57,7 @@ public abstract class AbstractRenderEngine {
         onClose.apply();
     }
 
-    protected abstract void init(GLFWwindow window) throws RenderException;
+    protected abstract void init(GLFW glfw, GLFWwindow window) throws RenderException;
     protected abstract void resize(int width, int height) throws RenderException;
     protected abstract void renderFrame() throws RenderException;
     protected abstract void close();
