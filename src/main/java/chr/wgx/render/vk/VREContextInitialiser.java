@@ -351,9 +351,9 @@ final class VREContextInitialiser {
                 queueCreateInfos[1].queueFamilyIndex(presentQueueFamilyIndex);
                 queueCreateInfos[1].pQueuePriorities(pQueuePriorities);
             }
-            if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> index) {
+            if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> someIndex) {
                 queueCreateInfos[queueCreateInfoCount - 1].queueCount(1);
-                queueCreateInfos[queueCreateInfoCount - 1].queueFamilyIndex(index.value);
+                queueCreateInfos[queueCreateInfoCount - 1].queueFamilyIndex(someIndex.value);
                 queueCreateInfos[queueCreateInfoCount - 1].pQueuePriorities(pQueuePriorities);
             }
 
@@ -392,8 +392,8 @@ final class VREContextInitialiser {
             graphicsQueue = pQueue.read();
             dCmd.vkGetDeviceQueue(device, presentQueueFamilyIndex, 0, pQueue);
             presentQueue = pQueue.read();
-            if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> index) {
-                dCmd.vkGetDeviceQueue(device, index.value, 0, pQueue);
+            if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> someIndex) {
+                dCmd.vkGetDeviceQueue(device, someIndex.value, 0, pQueue);
                 dedicatedTransferQueue = Option.some(pQueue.read());
             } else {
                 dedicatedTransferQueue = Option.none();
@@ -477,9 +477,9 @@ final class VREContextInitialiser {
             }
             commandPool = pCommandPool.read();
 
-            if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> index) {
+            if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> someIndex) {
                 VkCommandPoolCreateInfo transferCommandPoolCreateInfo = VkCommandPoolCreateInfo.allocate(arena);
-                transferCommandPoolCreateInfo.queueFamilyIndex(index.value);
+                transferCommandPoolCreateInfo.queueFamilyIndex(someIndex.value);
                 transferCommandPoolCreateInfo.flags(VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
                 VkCommandPool.Buffer pTransferCommandPool = VkCommandPool.Buffer.allocate(arena);

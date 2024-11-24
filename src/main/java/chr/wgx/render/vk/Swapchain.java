@@ -100,8 +100,8 @@ public final class Swapchain {
             swapchainImage.dispose(cx);
         }
         depthImage.dispose(cx);
-        if (msaaColorImage instanceof Option.Some<Resource.Image> image) {
-            image.value.dispose(cx);
+        if (msaaColorImage instanceof Option.Some<Resource.Image> someImage) {
+            someImage.value.dispose(cx);
         }
         cx.dCmd.vkDestroySwapchainKHR(cx.device, vkSwapchain, null);
     }
