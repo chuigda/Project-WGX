@@ -350,67 +350,63 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             unacquiredObjects.value = new ArrayList<>();
         }
 
-        VkFence.Buffer pFence = VkFence.Buffer.allocate(cx.autoArena);
-        VkFence fence = null;
-        try (Arena arena = Arena.ofConfined()) {
-            VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
-            @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
-            if (result != VkResult.VK_SUCCESS) {
-                throw new RenderException("无法创建围栏, 错误代码: " + VkResult.explain(result));
-            }
-            fence = pFence.read();
-
-            Option<VkCommandBuffer> acquireCommandBuffer = cx.executeGraphicsCommand(cmd -> {
-                for (UnacquiredObject object : objectsToAcquire) {
-                    VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
-                    barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-                    barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
-                    barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
-                    barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
-                    barrier.buffer(object.buffer.buffer);
-                    barrier.offset(0);
-                    barrier.size(object.bufferSize);
-                    cx.dCmd.vkCmdPipelineBarrier(
-                            cmd,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                            0,
-                            0, null,
-                            1, barrier,
-                            0, null
-                    );
+        new Thread(() -> {
+            VkFence.Buffer pFence = VkFence.Buffer.allocate(cx.autoArena);
+            VkFence fence = null;
+            try (Arena arena = Arena.ofConfined()) {
+                VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
+                @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法创建围栏, 错误代码: " + VkResult.explain(result));
                 }
-            }, Option.none(), Option.none(), Option.some(fence), false);
+                fence = pFence.read();
 
-            VkFence fence1 = fence;
-            new Thread(() -> {
+                Option<VkCommandBuffer> acquireCommandBuffer = cx.executeGraphicsCommand(cmd -> {
+                    for (UnacquiredObject object : objectsToAcquire) {
+                        VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
+                        barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
+                        barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+                        barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
+                        barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
+                        barrier.buffer(object.buffer.buffer);
+                        barrier.offset(0);
+                        barrier.size(object.bufferSize);
+                        cx.dCmd.vkCmdPipelineBarrier(
+                                cmd,
+                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                0,
+                                0, null,
+                                1, barrier,
+                                0, null
+                        );
+                    }
+                }, Option.none(), Option.none(), Option.some(fence), false);
+
                 // TODO handle VK_DEVICE_LOST?
                 cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
                 for (UnacquiredObject object : objectsToAcquire) {
                     object.onTransferComplete.send(true);
                 }
-                cx.dCmd.vkDestroyFence(cx.device, fence1, null);
-
-                try (Arena arena1 = Arena.ofConfined()) {
-                    VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena1);
-                    pCommandBuffer.write(acquireCommandBuffer.get());
-
-                    synchronized (cx.commandPool) {
-                        cx.dCmd.vkFreeCommandBuffers(cx.device, cx.commandPool, 1, pCommandBuffer);
-                    }
-                }
-            }).start();
-        } catch (RenderException e) {
-            logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
-            for (UnacquiredObject object : objectsToAcquire) {
-                object.onTransferComplete.send(false);
-                object.buffer.dispose(cx);
-            }
-
-            if (fence != null) {
                 cx.dCmd.vkDestroyFence(cx.device, fence, null);
+
+                VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
+                pCommandBuffer.write(acquireCommandBuffer.get());
+                synchronized (cx.commandPool) {
+                    cx.dCmd.vkFreeCommandBuffers(cx.device, cx.commandPool, 1, pCommandBuffer);
+                }
+            } catch (RenderException e) {
+                logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
+                for (UnacquiredObject object : objectsToAcquire) {
+                    object.onTransferComplete.send(false);
+                    object.buffer.dispose(cx);
+                }
+
+                if (fence != null) {
+                    cx.dCmd.vkDestroyFence(cx.device, fence, null);
+                }
             }
-        }
+        }).start();
     }
 
     private void resetAndRecordCommandBuffer(
