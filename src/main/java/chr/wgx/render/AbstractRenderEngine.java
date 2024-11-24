@@ -2,24 +2,26 @@ package chr.wgx.render;
 
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
+import chr.wgx.render.vk.VulkanRenderEngine;
 import org.jetbrains.annotations.NotNull;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.xjbutil.functional.Action0;
+import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractRenderEngine {
-    private final AtomicLong handleCounter = new AtomicLong(0);
-    private final Action0 onInit;
+    private final AtomicLong handleCounter = new AtomicLong(1024); // 保留一些低位用于内置对象
+    private final Action1<AbstractRenderEngine> onInit;
     private final Action2<Integer, Integer> onResize;
     private final Action0 onBeforeRenderFrame;
     private final Action0 onAfterRenderFrame;
     private final Action0 onClose;
 
     public AbstractRenderEngine(
-            Action0 onInit,
+            Action1<AbstractRenderEngine> onInit,
             Action2<Integer, Integer> onResize,
             Action0 onBeforeRenderFrame,
             Action0 onAfterRenderFrame,
@@ -38,7 +40,7 @@ public abstract class AbstractRenderEngine {
 
     public final void initEngine(GLFW glfw, GLFWwindow window) throws RenderException {
         init(glfw, window);
-        onInit.apply();
+        onInit.apply(this);
     }
 
     public final void resizeEngine(int width, int height) throws RenderException {

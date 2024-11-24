@@ -26,6 +26,7 @@ import tech.icey.vk4j.handle.VkSwapchainKHR;
 import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action0;
+import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
 import java.lang.foreign.Arena;
@@ -35,7 +36,7 @@ import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
     public VulkanRenderEngine(
-            Action0 onInit,
+            Action1<AbstractRenderEngine> onInit,
             Action2<Integer, Integer> onResize,
             Action0 onBeforeRenderFrame,
             Action0 onAfterRenderFrame,
@@ -262,10 +263,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 barrier.buffer(vertexBuffer.buffer);
                 barrier.offset(0);
                 barrier.size(bufferSize);
+                // TODO according to https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-queue-transfers only doing this is inadequate. Need another pipeline barrier at the beginning of the rendering command buffer on the graphics queue.
                 cx.dCmd.vkCmdPipelineBarrier(
                         cmd,
-                        VkPipelineStageFlags.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                        VkPipelineStageFlags.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                        VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                        VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                         0,
                         0, null,
                         1, barrier,

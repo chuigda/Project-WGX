@@ -1,6 +1,7 @@
 package chr.wgx.main;
 
 import chr.wgx.Config;
+import chr.wgx.drill.DrillCreateObject;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.render.vk.VulkanWindow;
@@ -25,13 +26,14 @@ public final class RenderApplication {
 
         Config config = Config.config();
         try (VulkanWindow w = new VulkanWindow(glfw, config.windowTitle, config.windowWidth, config.windowHeight)) {
-            w.mainLoop(new VulkanRenderEngine(
-                    () -> logger.info("Vulkan 渲染引擎已初始化"),
+            VulkanRenderEngine engine = new VulkanRenderEngine(
+                    DrillCreateObject::createObjectInThread,
                     (width, height) -> logger.info("帧缓冲尺寸已调整至 " + width + "x" + height),
                     () -> {},
                     () -> {},
                     () -> logger.info("Vulkan 渲染引擎已关闭")
-            ));
+            );
+            w.mainLoop(engine);
         } catch (RenderException e) {
             throw new RuntimeException(e);
         }
