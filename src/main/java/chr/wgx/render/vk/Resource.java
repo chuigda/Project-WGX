@@ -153,6 +153,10 @@ public final class Resource {
             this.buffer = buffer;
             this.attributeInfo = attributeInfo;
         }
+
+        public void dispose(VulkanRenderEngineContext cx) {
+            buffer.dispose(cx);
+        }
     }
 
     private static Pair<VkImage, VmaAllocation> createImage(

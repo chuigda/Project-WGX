@@ -199,6 +199,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             someSwapchain.value.dispose(someCx.value);
         }
 
+        for (Resource.Object object : objects.values()) {
+            object.dispose(cx);
+        }
+
         cx.dispose();
     }
 
