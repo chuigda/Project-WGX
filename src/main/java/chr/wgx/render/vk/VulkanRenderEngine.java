@@ -189,12 +189,12 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
             return;
         }
+        VulkanRenderEngineContext cx = someCx.value;
 
         if (swapchainOption instanceof Option.Some<Swapchain> someSwapchain) {
             someSwapchain.value.dispose(someCx.value);
         }
 
-        VulkanRenderEngineContext cx = someCx.value;
         cx.dispose();
     }
 
