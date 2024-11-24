@@ -45,6 +45,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private Option<VulkanRenderEngineContext> engineContextOption = Option.none();
     private Option<Swapchain> swapchainOption = Option.none();
     private int currentFrameIndex = 0;
+    private boolean pauseRender = false;
 
     @Override
     protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
@@ -66,9 +67,30 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    protected void resize(int width, int height) throws RenderException {
-        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> cx)) {
+    protected void resize(int width, int height) {
+        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
             return;
+        }
+        VulkanRenderEngineContext cx = someCx.value;
+
+        if (width == 0 || height == 0) {
+            pauseRender = true;
+            return;
+        }
+        pauseRender = false;
+
+        cx.dCmd.vkDeviceWaitIdle(cx.device);
+        if (swapchainOption instanceof Option.Some<Swapchain> someSwapchain) {
+            someSwapchain.value.dispose(cx);
+        }
+
+        try {
+            swapchainOption = Option.some(Swapchain.create(cx, width, height));
+            logger.info("交换链已重新创建");
+        } catch (RenderException e) {
+            logger.severe("无法重新创建交换链: " + e.getMessage());
+            logger.warning("程序会继续运行, 但渲染结果将不会被输出");
+            swapchainOption = Option.none();
         }
     }
 
@@ -80,6 +102,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         VulkanRenderEngineContext cx = someCx.value;
 
         if (!(swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
+            return;
+        }
+
+        if (pauseRender) {
             return;
         }
 
@@ -103,9 +129,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                     null,
                     pImageIndex
             );
-            if (result != VkResult.VK_SUCCESS) {
-                // TODO: 处理 VK_SUBOPTIMAL_KHR 和 VK_ERROR_OUT_OF_DATE_KHR
-                throw new RenderException("无法获取下一张交换链图像");
+            if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR) {
+                return;
+            }
+            if (result != VkResult.VK_SUCCESS && result != VkResult.VK_SUBOPTIMAL_KHR) {
+                throw new RenderException("无法获取交换链图像, 错误代码: " + VkResult.explain(result));
             }
             cx.dCmd.vkResetFences(cx.device, 1, pFence);
 
@@ -146,7 +174,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             presentInfo.pImageIndices(pImageIndex);
 
             result = cx.dCmd.vkQueuePresentKHR(cx.presentQueue, presentInfo);
-            if (result != VkResult.VK_SUCCESS) {
+            if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR) {
+                return;
+            } else if (result != VkResult.VK_SUCCESS && result != VkResult.VK_SUBOPTIMAL_KHR) {
                 throw new RenderException("无法提交交换链图像到队列, 错误代码: " + VkResult.explain(result));
             }
         }
@@ -156,9 +186,16 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     protected void close() {
-        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> cx)) {
+        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
             return;
         }
+
+        if (swapchainOption instanceof Option.Some<Swapchain> someSwapchain) {
+            someSwapchain.value.dispose(someCx.value);
+        }
+
+        VulkanRenderEngineContext cx = someCx.value;
+        cx.dispose();
     }
 
     @Override

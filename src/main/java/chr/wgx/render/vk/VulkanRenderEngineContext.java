@@ -105,4 +105,29 @@ public final class VulkanRenderEngineContext {
     public static VulkanRenderEngineContext create(GLFW glfw, GLFWwindow window) throws RenderException {
         return new VREContextInitialiser().init(glfw, window);
     }
+
+    public void dispose() {
+        dCmd.vkDeviceWaitIdle(device);
+
+        vma.vmaDestroyAllocator(vmaAllocator);
+        if (transferCommandPool instanceof Option.Some<VkCommandPool> someTransferCommandPool) {
+            dCmd.vkDestroyCommandPool(device, someTransferCommandPool.value, null);
+        }
+        dCmd.vkDestroyCommandPool(device, commandPool, null);
+        for (VkFence fence : inFlightFences) {
+            dCmd.vkDestroyFence(device, fence, null);
+        }
+        for (VkSemaphore semaphore : renderFinishedSemaphores) {
+            dCmd.vkDestroySemaphore(device, semaphore, null);
+        }
+        for (VkSemaphore semaphore : imageAvailableSemaphores) {
+            dCmd.vkDestroySemaphore(device, semaphore, null);
+        }
+        dCmd.vkDestroyDevice(device, null);
+        if (debugMessenger instanceof Option.Some<VkDebugUtilsMessengerEXT> someDebugMessenger) {
+            iCmd.vkDestroyDebugUtilsMessengerEXT(instance, someDebugMessenger.value, null);
+        }
+        iCmd.vkDestroySurfaceKHR(instance, surface, null);
+        iCmd.vkDestroyInstance(instance, null);
+    }
 }
