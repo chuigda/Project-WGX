@@ -5,6 +5,7 @@ import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
+import org.jetbrains.annotations.Nullable;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.NativeLayout;
@@ -25,13 +26,19 @@ import tech.icey.vk4j.handle.VkSemaphore;
 import tech.icey.vk4j.handle.VkSwapchainKHR;
 import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
 import tech.icey.xjbutil.container.Option;
+import tech.icey.xjbutil.container.Pair;
+import tech.icey.xjbutil.container.Ref;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
+import tech.icey.xjbutil.sync.Oneshot;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
@@ -44,13 +51,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     ) {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
     }
-
-    private Option<VulkanRenderEngineContext> engineContextOption = Option.none();
-    private Option<Swapchain> swapchainOption = Option.none();
-    private int currentFrameIndex = 0;
-    private boolean pauseRender = false;
-
-    private final HashMap<Long, Resource.Object> objects = new HashMap<>();
 
     @Override
     protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
@@ -105,6 +105,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             return;
         }
         VulkanRenderEngineContext cx = someCx.value;
+
+        queueTransferAcquireObjects(cx);
 
         if (!(swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
             return;
@@ -249,7 +251,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                     null
             );
 
-            // TODO: handle the case that there's no dedicated transfer queue
             cx.executeTransferCommand(cmd -> {
                 VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
                 copyRegion.size(bufferSize);
@@ -263,7 +264,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 barrier.buffer(vertexBuffer.buffer);
                 barrier.offset(0);
                 barrier.size(bufferSize);
-                // TODO according to https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-queue-transfers only doing this is inadequate. Need another pipeline barrier at the beginning of the rendering command buffer on the graphics queue.
                 cx.dCmd.vkCmdPipelineBarrier(
                         cmd,
                         VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -273,9 +273,22 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                         1, barrier,
                         0, null
                 );
-            });
+            }, Option.none(), Option.none(), Option.none(), true);
 
+            Pair<Oneshot.Sender<Boolean>, Oneshot.Receiver<Boolean>> channel = Oneshot.create();
+            synchronized (unacquiredObjects) {
+                unacquiredObjects.value.add(new UnacquiredObject(
+                        vertexBuffer,
+                        bufferSize,
+                        channel.first()
+                ));
+            }
+
+            if (!channel.second().recv()) {
+                throw new RenderException("缓冲区传输失败");
+            }
             stagingBuffer.dispose(cx);
+
             long handle = nextHandle();
             synchronized (objects) {
                 objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo));
@@ -312,6 +325,93 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     @Override
     public RenderTaskHandle createTask(RenderTaskCreateInfo info) throws RenderException {
         return null;
+    }
+
+    private void handleObjectUploading(VulkanRenderEngineContext cx) {
+        if (cx.dedicatedTransferQueue.isSome()) {
+            queueTransferAcquireObjects(cx);
+        }
+        else {
+            throw new RuntimeException("此功能尚未实现");
+        }
+    }
+
+    private void queueTransferAcquireObjects(VulkanRenderEngineContext cx) {
+        if (hasTransferAcquireJob.getAndSet(true)) {
+            return;
+        }
+
+        List<UnacquiredObject> objectsToAcquire;
+        synchronized (unacquiredObjects) {
+            objectsToAcquire = unacquiredObjects.value;
+            if (objectsToAcquire.isEmpty()) {
+                hasTransferAcquireJob.set(false);
+                return;
+            }
+            unacquiredObjects.value = new ArrayList<>();
+        }
+
+        VkFence.Buffer pFence = VkFence.Buffer.allocate(cx.autoArena);
+        VkFence fence = null;
+        try (Arena arena = Arena.ofConfined()) {
+            VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
+            @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
+            if (result != VkResult.VK_SUCCESS) {
+                throw new RenderException("无法创建围栏, 错误代码: " + VkResult.explain(result));
+            }
+            fence = pFence.read();
+
+            Option<VkCommandBuffer> acquireCommandBuffer = cx.executeGraphicsCommand(cmd -> {
+                for (UnacquiredObject object : objectsToAcquire) {
+                    VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
+                    barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
+                    barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+                    barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
+                    barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
+                    barrier.buffer(object.buffer.buffer);
+                    barrier.offset(0);
+                    barrier.size(object.bufferSize);
+                    cx.dCmd.vkCmdPipelineBarrier(
+                            cmd,
+                            VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                            VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                            0,
+                            0, null,
+                            1, barrier,
+                            0, null
+                    );
+                }
+            }, Option.none(), Option.none(), Option.some(fence), false);
+
+            VkFence fence1 = fence;
+            new Thread(() -> {
+                // TODO handle VK_DEVICE_LOST?
+                cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
+                for (UnacquiredObject object : objectsToAcquire) {
+                    object.onTransferComplete.send(true);
+                }
+                cx.dCmd.vkDestroyFence(cx.device, fence1, null);
+
+                try (Arena arena1 = Arena.ofConfined()) {
+                    VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena1);
+                    pCommandBuffer.write(acquireCommandBuffer.get());
+
+                    synchronized (cx.commandPool) {
+                        cx.dCmd.vkFreeCommandBuffers(cx.device, cx.commandPool, 1, pCommandBuffer);
+                    }
+                }
+            }).start();
+        } catch (RenderException e) {
+            logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
+            for (UnacquiredObject object : objectsToAcquire) {
+                object.onTransferComplete.send(false);
+                object.buffer.dispose(cx);
+            }
+
+            if (fence != null) {
+                cx.dCmd.vkDestroyFence(cx.device, fence, null);
+            }
+        }
     }
 
     private void resetAndRecordCommandBuffer(
@@ -378,6 +478,32 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             }
         }
     }
+
+    private Option<VulkanRenderEngineContext> engineContextOption = Option.none();
+    private Option<Swapchain> swapchainOption = Option.none();
+    private int currentFrameIndex = 0;
+    private boolean pauseRender = false;
+
+    @SuppressWarnings("ClassCanBeRecord")
+    private static final class UnacquiredObject {
+        public final Resource.Buffer buffer;
+        public final long bufferSize;
+        public final Oneshot.Sender<Boolean> onTransferComplete;
+
+        UnacquiredObject(
+                Resource.Buffer buffer,
+                long bufferSize,
+                Oneshot.Sender<Boolean> onTransferComplete
+        ) {
+            this.buffer = buffer;
+            this.bufferSize = bufferSize;
+            this.onTransferComplete = onTransferComplete;
+        }
+    }
+
+    private final Ref<List<UnacquiredObject>> unacquiredObjects = new Ref<>(new ArrayList<>());
+    private final AtomicBoolean hasTransferAcquireJob = new AtomicBoolean(false);
+    private final HashMap<Long, Resource.Object> objects = new HashMap<>();
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }
