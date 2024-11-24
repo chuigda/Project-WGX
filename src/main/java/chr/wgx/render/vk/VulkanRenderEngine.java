@@ -10,25 +10,27 @@ import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.NativeLayout;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.IntBuffer;
+import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.bitmask.VkAccessFlags;
+import tech.icey.vk4j.bitmask.VkBufferUsageFlags;
 import tech.icey.vk4j.bitmask.VkImageAspectFlags;
 import tech.icey.vk4j.bitmask.VkPipelineStageFlags;
-import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
-import tech.icey.vk4j.datatype.VkImageMemoryBarrier;
-import tech.icey.vk4j.datatype.VkPresentInfoKHR;
-import tech.icey.vk4j.datatype.VkSubmitInfo;
+import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.vk4j.enumtype.VkResult;
 import tech.icey.vk4j.handle.VkCommandBuffer;
 import tech.icey.vk4j.handle.VkFence;
 import tech.icey.vk4j.handle.VkSemaphore;
 import tech.icey.vk4j.handle.VkSwapchainKHR;
+import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action2;
 
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
@@ -46,6 +48,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private Option<Swapchain> swapchainOption = Option.none();
     private int currentFrameIndex = 0;
     private boolean pauseRender = false;
+
+    private final HashMap<Long, Resource.Object> objects = new HashMap<>();
 
     @Override
     protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
@@ -200,7 +204,78 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
-        return null;
+        long bufferSize = info.pData.segment().byteSize();
+        assert bufferSize % info.vertexInputInfo.stride == 0;
+
+        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
+            throw new RenderException("渲染引擎未初始化");
+        }
+        VulkanRenderEngineContext cx = someCx.value;
+
+        try (Arena arena = Arena.ofConfined()) {
+            Resource.Buffer stagingBuffer = Resource.Buffer.create(
+                    cx,
+                    bufferSize,
+                    VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                    VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                    null
+            );
+
+            PointerBuffer ppData = PointerBuffer.allocate(arena);
+            @enumtype(VkResult.class) int result = cx.vma.vmaMapMemory(
+                    cx.vmaAllocator,
+                    stagingBuffer.allocation,
+                    ppData
+            );
+            if (result != VkResult.VK_SUCCESS) {
+                stagingBuffer.dispose(cx);
+                throw new RenderException("无法映射缓冲区内存, 错误代码: " + VkResult.explain(result));
+            }
+            MemorySegment pData = ppData.read().reinterpret(bufferSize);
+            pData.copyFrom(info.pData.segment());
+            cx.vma.vmaUnmapMemory(cx.vmaAllocator, stagingBuffer.allocation);
+
+            Resource.Buffer vertexBuffer = Resource.Buffer.create(
+                    cx,
+                    bufferSize,
+                    VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT
+                    | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                    0,
+                    null
+            );
+
+            // TODO: handle the case that there's no dedicated transfer queue
+            cx.executeTransferCommand(cmd -> {
+                VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
+                copyRegion.size(bufferSize);
+                cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, vertexBuffer.buffer, 1, copyRegion);
+
+                VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
+                barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
+                barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+                barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
+                barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
+                barrier.buffer(vertexBuffer.buffer);
+                barrier.offset(0);
+                barrier.size(bufferSize);
+                cx.dCmd.vkCmdPipelineBarrier(
+                        cmd,
+                        VkPipelineStageFlags.VK_PIPELINE_STAGE_TRANSFER_BIT,
+                        VkPipelineStageFlags.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                        0,
+                        0, null,
+                        1, barrier,
+                        0, null
+                );
+            });
+
+            stagingBuffer.dispose(cx);
+            long handle = nextHandle();
+            synchronized (objects) {
+                objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo));
+            }
+            return new ObjectHandle(handle);
+        }
     }
 
     @Override
@@ -244,7 +319,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.allocate(arena);
             @enumtype(VkResult.class) int result = cx.dCmd.vkBeginCommandBuffer(commandBuffer, beginInfo);
             if (result != VkResult.VK_SUCCESS) {
-                throw new RenderException("无法开始录制指令缓冲, 错误代码: " + VkResult.explain(result));
+                throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));
             }
 
             VkImageMemoryBarrier presentToDrawBarrier = VkImageMemoryBarrier.allocate(arena);
@@ -293,7 +368,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
             result = cx.dCmd.vkEndCommandBuffer(commandBuffer);
             if (result != VkResult.VK_SUCCESS) {
-                throw new RenderException("无法结束录制指令缓冲, 错误代码: " + VkResult.explain(result));
+                throw new RenderException("无法结束指令缓冲记录, 错误代码: " + VkResult.explain(result));
             }
         }
     }

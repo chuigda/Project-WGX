@@ -1,17 +1,25 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
+import chr.wgx.render.info.VertexInputInfo;
+import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.annotation.enumtype;
+import tech.icey.panama.annotation.pointer;
+import tech.icey.vk4j.bitmask.VkBufferUsageFlags;
 import tech.icey.vk4j.bitmask.VkImageAspectFlags;
 import tech.icey.vk4j.bitmask.VkImageUsageFlags;
 import tech.icey.vk4j.bitmask.VkSampleCountFlags;
+import tech.icey.vk4j.datatype.VkBufferCreateInfo;
 import tech.icey.vk4j.datatype.VkImageCreateInfo;
 import tech.icey.vk4j.datatype.VkImageSubresourceRange;
 import tech.icey.vk4j.datatype.VkImageViewCreateInfo;
 import tech.icey.vk4j.enumtype.*;
+import tech.icey.vk4j.handle.VkBuffer;
 import tech.icey.vk4j.handle.VkImage;
 import tech.icey.vk4j.handle.VkImageView;
+import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
 import tech.icey.vma.datatype.VmaAllocationCreateInfo;
+import tech.icey.vma.datatype.VmaAllocationInfo;
 import tech.icey.vma.enumtype.VmaMemoryUsage;
 import tech.icey.vma.handle.VmaAllocation;
 import tech.icey.xjbutil.container.Pair;
@@ -87,6 +95,66 @@ public final class Resource {
         }
     }
 
+    public static final class Buffer {
+        public final VkBuffer buffer;
+        public final VmaAllocation allocation;
+
+        private Buffer(VkBuffer buffer, VmaAllocation allocation) {
+            this.buffer = buffer;
+            this.allocation = allocation;
+        }
+
+        public static Buffer create(
+                VulkanRenderEngineContext cx,
+                long size,
+                @enumtype(VkBufferUsageFlags.class) int usage,
+                @enumtype(VmaAllocationCreateFlags.class) int allocationFlags,
+                @Nullable @pointer VmaAllocationInfo allocationInfo
+        ) throws RenderException {
+            try (Arena arena = Arena.ofConfined()) {
+                VkBufferCreateInfo createInfo = VkBufferCreateInfo.allocate(arena);
+                createInfo.size(size);
+                createInfo.usage(usage);
+                createInfo.sharingMode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
+
+                VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.allocate(arena);
+                allocationCreateInfo.usage(VmaMemoryUsage.VMA_MEMORY_USAGE_AUTO);
+                allocationCreateInfo.flags(allocationFlags);
+
+                VkBuffer.Buffer pBuffer = VkBuffer.Buffer.allocate(arena);
+                VmaAllocation.Buffer pAllocation = VmaAllocation.Buffer.allocate(arena);
+                @enumtype(VkResult.class) int result = cx.vma.vmaCreateBuffer(
+                        cx.vmaAllocator,
+                        createInfo,
+                        allocationCreateInfo,
+                        pBuffer,
+                        pAllocation,
+                        allocationInfo
+                );
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法分配 Vulkan 缓冲区, 错误代码: " + result);
+                }
+
+                return new Buffer(pBuffer.read(), pAllocation.read());
+            }
+        }
+
+        public void dispose(VulkanRenderEngineContext cx) {
+            cx.vma.vmaDestroyBuffer(cx.vmaAllocator, buffer, allocation);
+        }
+    }
+
+    @SuppressWarnings("ClassCanBeRecord")
+    public static final class Object {
+        public final Buffer buffer;
+        public final VertexInputInfo attributeInfo;
+
+        public Object(Buffer buffer, VertexInputInfo attributeInfo) {
+            this.buffer = buffer;
+            this.attributeInfo = attributeInfo;
+        }
+    }
+
     private static Pair<VkImage, VmaAllocation> createImage(
             VulkanRenderEngineContext cx,
             int width,
@@ -97,7 +165,7 @@ public final class Resource {
             @enumtype(VkImageTiling.class) int tiling,
             @enumtype(VkImageUsageFlags.class) int usage
     ) throws RenderException {
-        try (var arena = Arena.ofConfined()) {
+        try (Arena arena = Arena.ofConfined()) {
             VkImageCreateInfo createInfo = VkImageCreateInfo.allocate(arena);
             createInfo.imageType(VkImageType.VK_IMAGE_TYPE_2D);
             createInfo.extent().width(width);

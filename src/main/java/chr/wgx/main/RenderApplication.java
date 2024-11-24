@@ -1,5 +1,6 @@
 package chr.wgx.main;
 
+import chr.wgx.Config;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.render.vk.VulkanWindow;
@@ -22,7 +23,8 @@ public final class RenderApplication {
             throw new RuntimeException("GLFW 初始化失败");
         }
 
-        try (VulkanWindow w = new VulkanWindow(glfw, "Project-WGX 绘图输出窗口", 640, 640)) {
+        Config config = Config.config();
+        try (VulkanWindow w = new VulkanWindow(glfw, config.windowTitle, config.windowWidth, config.windowHeight)) {
             w.mainLoop(new VulkanRenderEngine(
                     () -> logger.info("Vulkan 渲染引擎已初始化"),
                     (width, height) -> logger.info("帧缓冲尺寸已调整至 " + width + "x" + height),

@@ -4,15 +4,22 @@ import chr.wgx.render.RenderException;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.annotation.enumtype;
+import tech.icey.vk4j.bitmask.VkCommandBufferUsageFlags;
 import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.command.DeviceCommands;
 import tech.icey.vk4j.command.EntryCommands;
 import tech.icey.vk4j.command.InstanceCommands;
 import tech.icey.vk4j.command.StaticCommands;
+import tech.icey.vk4j.datatype.VkCommandBufferAllocateInfo;
+import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
+import tech.icey.vk4j.datatype.VkSubmitInfo;
+import tech.icey.vk4j.enumtype.VkCommandBufferLevel;
+import tech.icey.vk4j.enumtype.VkResult;
 import tech.icey.vk4j.handle.*;
 import tech.icey.vma.VMA;
 import tech.icey.vma.handle.VmaAllocator;
 import tech.icey.xjbutil.container.Option;
+import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.Arena;
 
@@ -104,6 +111,66 @@ public final class VulkanRenderEngineContext {
 
     public static VulkanRenderEngineContext create(GLFW glfw, GLFWwindow window) throws RenderException {
         return new VREContextInitialiser().init(glfw, window);
+    }
+
+    public void executeTransferCommand(
+            Action1<VkCommandBuffer> recordCommandBuffer
+    ) throws RenderException {
+        if (!(transferCommandPool instanceof Option.Some<VkCommandPool> someCommandPool)) {
+            throw new IllegalStateException("未启用专用传输队列");
+        }
+
+        VkCommandPool commandPool1 = someCommandPool.value;
+        try (Arena arena = Arena.ofConfined()) {
+            VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.allocate(arena);
+            allocateInfo.commandPool(commandPool1);
+            allocateInfo.level(VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+            allocateInfo.commandBufferCount(1);
+
+            VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
+            VkCommandBuffer commandBuffer;
+            @enumtype(VkResult.class) int result;
+
+            synchronized (transferCommandPool) {
+                result = dCmd.vkAllocateCommandBuffers(device, allocateInfo, pCommandBuffer);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法为传输操作分配指令缓冲, 错误代码: " + VkResult.explain(result));
+                }
+                commandBuffer = pCommandBuffer.read();
+
+                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.allocate(arena);
+                beginInfo.flags(VkCommandBufferUsageFlags.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+                result = dCmd.vkBeginCommandBuffer(commandBuffer, beginInfo);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法开始记录传输操作指令缓冲, 错误代码: " + VkResult.explain(result));
+                }
+
+                recordCommandBuffer.apply(commandBuffer);
+
+                result = dCmd.vkEndCommandBuffer(commandBuffer);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法结束传输操作指令缓冲记录, 错误代码: " + VkResult.explain(result));
+                }
+            }
+
+            VkSubmitInfo submitInfo = VkSubmitInfo.allocate(arena);
+            submitInfo.commandBufferCount(1);
+            submitInfo.pCommandBuffers(pCommandBuffer);
+
+            synchronized (dedicatedTransferQueue) {
+                VkQueue queue = dedicatedTransferQueue.get();
+
+                result = dCmd.vkQueueSubmit(queue, 1, submitInfo, null);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法提交传输操作指令缓冲, 错误代码: " + VkResult.explain(result));
+                }
+                dCmd.vkQueueWaitIdle(queue);
+            }
+
+            synchronized (transferCommandPool) {
+                dCmd.vkFreeCommandBuffers(device, commandPool1, 1, pCommandBuffer);
+            }
+        }
     }
 
     public void dispose() {
