@@ -105,8 +105,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             return;
         }
         VulkanRenderEngineContext cx = someCx.value;
-
-        queueTransferAcquireObjects(cx);
+        handleObjectUploading(cx);
 
         if (!(swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
             return;
