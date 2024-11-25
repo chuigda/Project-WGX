@@ -405,11 +405,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                     object.onTransferComplete.send(false);
                     object.buffer.dispose(cx);
                 }
-
+            } finally {
                 if (fence != null) {
                     cx.dCmd.vkDestroyFence(cx.device, fence, null);
                 }
-            } finally {
                 hasTransferAcquireJob.set(false);
             }
         }).start();
