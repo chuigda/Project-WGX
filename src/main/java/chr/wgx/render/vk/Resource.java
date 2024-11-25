@@ -1,6 +1,7 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
+import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.VertexInputInfo;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.annotation.enumtype;
@@ -14,9 +15,7 @@ import tech.icey.vk4j.datatype.VkImageCreateInfo;
 import tech.icey.vk4j.datatype.VkImageSubresourceRange;
 import tech.icey.vk4j.datatype.VkImageViewCreateInfo;
 import tech.icey.vk4j.enumtype.*;
-import tech.icey.vk4j.handle.VkBuffer;
-import tech.icey.vk4j.handle.VkImage;
-import tech.icey.vk4j.handle.VkImageView;
+import tech.icey.vk4j.handle.*;
 import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
 import tech.icey.vma.datatype.VmaAllocationCreateInfo;
 import tech.icey.vma.datatype.VmaAllocationInfo;
@@ -156,6 +155,24 @@ public final class Resource {
 
         public void dispose(VulkanRenderEngineContext cx) {
             buffer.dispose(cx);
+        }
+    }
+
+    @SuppressWarnings("ClassCanBeRecord")
+    public static final class Pipeline {
+        public final RenderPipelineCreateInfo createInfo;
+        public final VkPipelineLayout layout;
+        public final VkPipeline pipeline;
+
+        public Pipeline(RenderPipelineCreateInfo createInfo, VkPipelineLayout layout, VkPipeline pipeline) {
+            this.createInfo = createInfo;
+            this.layout = layout;
+            this.pipeline = pipeline;
+        }
+
+        public void dispose(VulkanRenderEngineContext cx) {
+            cx.dCmd.vkDestroyPipeline(cx.device, pipeline, null);
+            cx.dCmd.vkDestroyPipelineLayout(cx.device, layout, null);
         }
     }
 

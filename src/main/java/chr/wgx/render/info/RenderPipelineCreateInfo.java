@@ -5,14 +5,34 @@ import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
 
-public record RenderPipelineCreateInfo(
-        VertexInputInfo vertexInputInfo,
-        List<DescriptorInfo> descriptorSetLayout,
-        List<DescriptorInfo.UBO> pushConstantLayout,
-        Option<ShaderProgram.Vulkan> vulkanShaderProgram,
-        Option<ShaderProgram.GLES2> gles2ShaderProgram,
-        int colorAttachmentCount,
-        boolean multisampling,
-        boolean depthTest,
-        List<Color> clearColors
-) {}
+@SuppressWarnings("ClassCanBeRecord")
+public final class RenderPipelineCreateInfo {
+    public final VertexInputInfo vertexInputInfo;
+    public final List<DescriptorInfo> descriptorSetLayout;
+    public final List<DescriptorInfo.UBO> pushConstantLayout;
+    public final Option<ShaderProgram.Vulkan> vulkanShaderProgram;
+    public final Option<ShaderProgram.GLES2> gles2ShaderProgram;
+    public final int colorAttachmentCount;
+    public final boolean depthTest;
+    public final List<Color> clearColors;
+
+    public RenderPipelineCreateInfo(
+            VertexInputInfo vertexInputInfo,
+            List<DescriptorInfo> descriptorSetLayout,
+            List<DescriptorInfo.UBO> pushConstantLayout,
+            Option<ShaderProgram.Vulkan> vulkanShaderProgram,
+            Option<ShaderProgram.GLES2> gles2ShaderProgram,
+            int colorAttachmentCount,
+            boolean depthTest,
+            List<Color> clearColors
+    ) {
+        this.vertexInputInfo = vertexInputInfo;
+        this.descriptorSetLayout = descriptorSetLayout;
+        this.pushConstantLayout = pushConstantLayout;
+        this.vulkanShaderProgram = vulkanShaderProgram;
+        this.gles2ShaderProgram = gles2ShaderProgram;
+        this.colorAttachmentCount = colorAttachmentCount;
+        this.depthTest = depthTest;
+        this.clearColors = clearColors;
+    }
+}

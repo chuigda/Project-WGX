@@ -4,6 +4,7 @@ import chr.wgx.render.RenderException;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.annotation.enumtype;
+import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.vk4j.bitmask.VkCommandBufferUsageFlags;
 import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.command.DeviceCommands;
@@ -12,6 +13,7 @@ import tech.icey.vk4j.command.InstanceCommands;
 import tech.icey.vk4j.command.StaticCommands;
 import tech.icey.vk4j.datatype.VkCommandBufferAllocateInfo;
 import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
+import tech.icey.vk4j.datatype.VkShaderModuleCreateInfo;
 import tech.icey.vk4j.datatype.VkSubmitInfo;
 import tech.icey.vk4j.enumtype.VkCommandBufferLevel;
 import tech.icey.vk4j.enumtype.VkResult;
@@ -114,6 +116,24 @@ public final class VulkanRenderEngineContext {
 
     public static VulkanRenderEngineContext create(GLFW glfw, GLFWwindow window) throws RenderException {
         return new VREContextInitialiser().init(glfw, window);
+    }
+
+    public VkShaderModule createShaderModule(byte[] code) throws RenderException {
+        assert code.length % Integer.BYTES == 0;
+        try (Arena arena = Arena.ofConfined()) {
+            IntBuffer buffer = IntBuffer.allocate(arena, code);
+
+            VkShaderModuleCreateInfo createInfo = VkShaderModuleCreateInfo.allocate(arena);
+            createInfo.codeSize(buffer.size() * Integer.BYTES);
+            createInfo.pCode(buffer);
+
+            VkShaderModule.Buffer pShaderModule = VkShaderModule.Buffer.allocate(arena);
+            @enumtype(VkResult.class) int result = dCmd.vkCreateShaderModule(device, createInfo, null, pShaderModule);
+            if (result != VkResult.VK_SUCCESS) {
+                throw new RenderException("无法创建着色器模块, 错误代码: " + VkResult.explain(result));
+            }
+            return pShaderModule.read();
+        }
     }
 
     public void executeTransferCommand(

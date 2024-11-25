@@ -17,6 +17,7 @@ import java.lang.foreign.Arena;
 
 public final class Swapchain {
     public final @enumtype(VkFormat.class) int swapChainImageFormat;
+    public final @enumtype(VkFormat.class) int depthFormat;
     public final VkExtent2D swapExtent;
 
     public final VkSwapchainKHR vkSwapchain;
@@ -86,6 +87,7 @@ public final class Swapchain {
 
             return new Swapchain(
                     surfaceFormat.format(),
+                    depthFormat,
                     extent,
                     swapchain,
                     swapchainImages,
@@ -108,6 +110,7 @@ public final class Swapchain {
 
     private Swapchain(
             @enumtype(VkFormat.class) int swapChainImageFormat,
+            @enumtype(VkFormat.class) int depthFormat,
             VkExtent2D swapExtent,
             VkSwapchainKHR swapchain,
             Resource.SwapchainImage[] swapchainImages,
@@ -115,6 +118,7 @@ public final class Swapchain {
             Option<Resource.Image> msaaColorImage
     ) {
         this.swapChainImageFormat = swapChainImageFormat;
+        this.depthFormat = depthFormat;
         this.swapExtent = swapExtent;
         this.vkSwapchain = swapchain;
         this.swapchainImages = swapchainImages;
