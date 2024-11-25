@@ -164,7 +164,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             submitInfo.signalSemaphoreCount(1);
             submitInfo.pSignalSemaphores(pSignalSemaphore);
 
-            result = cx.dCmd.vkQueueSubmit(cx.graphicsQueue, 1, submitInfo, inFlightFence);
+            synchronized (cx.graphicsQueue) {
+                result = cx.dCmd.vkQueueSubmit(cx.graphicsQueue, 1, submitInfo, inFlightFence);
+            }
             if (result != VkResult.VK_SUCCESS) {
                 throw new RenderException("无法提交指令缓冲到队列, 错误代码: " + VkResult.explain(result));
             }
@@ -179,7 +181,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             presentInfo.pSwapchains(pSwapchain);
             presentInfo.pImageIndices(pImageIndex);
 
-            result = cx.dCmd.vkQueuePresentKHR(cx.presentQueue, presentInfo);
+            synchronized (cx.presentQueue) {
+                result = cx.dCmd.vkQueuePresentKHR(cx.presentQueue, presentInfo);
+            }
             if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR) {
                 return;
             } else if (result != VkResult.VK_SUCCESS && result != VkResult.VK_SUBOPTIMAL_KHR) {
