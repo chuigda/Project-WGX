@@ -1,6 +1,7 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
+import chr.wgx.render.info.ObjectCreateInfo;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.VertexInputInfo;
 import org.jetbrains.annotations.Nullable;
@@ -147,10 +148,12 @@ public final class Resource {
     public static final class Object {
         public final Buffer buffer;
         public final VertexInputInfo attributeInfo;
+        public final long vertexCount;
 
-        public Object(Buffer buffer, VertexInputInfo attributeInfo) {
+        public Object(Buffer buffer, VertexInputInfo attributeInfo, long vertexCount) {
             this.buffer = buffer;
             this.attributeInfo = attributeInfo;
+            this.vertexCount = vertexCount;
         }
 
         public void dispose(VulkanRenderEngineContext cx) {

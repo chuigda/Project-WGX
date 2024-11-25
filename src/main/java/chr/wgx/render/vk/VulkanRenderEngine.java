@@ -11,6 +11,7 @@ import tech.icey.panama.NativeLayout;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.panama.buffer.IntBuffer;
+import tech.icey.panama.buffer.LongBuffer;
 import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.bitmask.*;
@@ -31,6 +32,7 @@ import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
@@ -194,8 +196,13 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
         VulkanRenderEngineContext cx = someCx.value;
 
+        cx.dCmd.vkDeviceWaitIdle(cx.device);
         if (swapchainOption instanceof Option.Some<Swapchain> someSwapchain) {
             someSwapchain.value.dispose(someCx.value);
+        }
+
+        for (Resource.Pipeline pipeline : pipelines.values()) {
+            pipeline.dispose(cx);
         }
 
         for (Resource.Object object : objects.values()) {
@@ -209,6 +216,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
         long bufferSize = info.pData.segment().byteSize();
         assert bufferSize % info.vertexInputInfo.stride == 0;
+        long vertexCount = bufferSize / info.vertexInputInfo.stride;
 
         if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
             throw new RenderException("渲染引擎未初始化");
@@ -287,7 +295,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
             long handle = nextHandle();
             synchronized (objects) {
-                objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo));
+                objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo, vertexCount));
             }
             return new ObjectHandle(handle);
         }
@@ -384,7 +392,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             rasterizer.rasterizerDiscardEnable(Constants.VK_FALSE);
             rasterizer.polygonMode(VkPolygonMode.VK_POLYGON_MODE_FILL);
             rasterizer.lineWidth(1.0f);
-            rasterizer.cullMode(VkCullModeFlags.VK_CULL_MODE_BACK_BIT);
+            rasterizer.cullMode(VkCullModeFlags.VK_CULL_MODE_NONE);
             rasterizer.frontFace(VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE);
             rasterizer.depthBiasEnable(Constants.VK_FALSE);
             rasterizer.depthBiasConstantFactor(0.0f);
@@ -497,8 +505,12 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public RenderTaskHandle createTask(RenderTaskCreateInfo info) throws RenderException {
-        return null;
+    public RenderTaskHandle createTask(RenderTaskInfo info) throws RenderException {
+        long handle = nextHandle();
+        synchronized (tasks) {
+            tasks.put(handle, info);
+        }
+        return new RenderTaskHandle(handle);
     }
 
     private void handleObjectUploading(VulkanRenderEngineContext cx) {
@@ -619,7 +631,49 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                     1, presentToDrawBarrier
             );
 
-            // TODO: insert rendering command here
+            // TODO: just very premature and temporary implementation, we need to implement task sorting and dependency resolution in further development
+            VkRenderingAttachmentInfo attachmentInfo = VkRenderingAttachmentInfo.allocate(arena);
+            attachmentInfo.imageView(swapchainImage.imageView);
+            attachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+            attachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
+            attachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE);
+            VkRenderingInfo renderingInfo = VkRenderingInfo.allocate(arena);
+            renderingInfo.renderArea().extent(swapchainOption.get().swapExtent);
+            renderingInfo.layerCount(1);
+            renderingInfo.colorAttachmentCount(1);
+            renderingInfo.pColorAttachments(attachmentInfo);
+            VkViewport viewport = VkViewport.allocate(arena);
+            viewport.x(0.0f);
+            viewport.y(0.0f);
+            viewport.width(swapchainOption.get().swapExtent.width());
+            viewport.height(swapchainOption.get().swapExtent.height());
+            viewport.minDepth(0.0f);
+            viewport.maxDepth(1.0f);
+            VkRect2D scissor = VkRect2D.allocate(arena);
+            scissor.offset().x(0);
+            scissor.offset().y(0);
+            scissor.extent(swapchainOption.get().swapExtent);
+
+            for (RenderTaskInfo task : tasks.values()) {
+                Resource.Pipeline pipeline = Objects.requireNonNull(pipelines.get(task.pipelineHandle.getId()));
+
+                cx.dCmd.vkCmdBeginRendering(commandBuffer, renderingInfo);
+                cx.dCmd.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+                cx.dCmd.vkCmdSetViewport(commandBuffer, 0, 1, viewport);
+                cx.dCmd.vkCmdSetScissor(commandBuffer, 0, 1, scissor);
+
+                VkBuffer.Buffer pVertexBuffer = VkBuffer.Buffer.allocate(arena);
+                LongBuffer pOffsets = LongBuffer.allocate(arena);
+                for (int i = 0; i < task.objectHandles.size(); i++) {
+                    Resource.Object object = Objects.requireNonNull(objects.get(task.objectHandles.get(i).getId()));
+
+                    pVertexBuffer.write(object.buffer.buffer);
+                    cx.dCmd.vkCmdBindVertexBuffers(commandBuffer, 0, 1, pVertexBuffer, pOffsets);
+                    cx.dCmd.vkCmdDraw(commandBuffer, (int) object.vertexCount, 1, 0, 0);
+                }
+
+                cx.dCmd.vkCmdEndRendering(commandBuffer);
+            }
 
             VkImageMemoryBarrier drawToPresentBarrier = VkImageMemoryBarrier.allocate(arena);
             drawToPresentBarrier.srcAccessMask(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
@@ -675,6 +729,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private final AtomicBoolean hasTransferAcquireJob = new AtomicBoolean(false);
     private final HashMap<Long, Resource.Object> objects = new HashMap<>();
     private final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
+    // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
+    private final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
 
     private static final ByteBuffer MAIN_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "main");
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());

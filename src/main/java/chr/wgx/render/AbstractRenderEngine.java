@@ -2,8 +2,6 @@ package chr.wgx.render;
 
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
-import chr.wgx.render.vk.VulkanRenderEngine;
-import org.jetbrains.annotations.NotNull;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.xjbutil.functional.Action0;
@@ -71,5 +69,5 @@ public abstract class AbstractRenderEngine {
     public abstract UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException;
     public abstract UniformHandle createUniform(UniformCreateInfo info) throws RenderException;
     public abstract RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException;
-    public abstract RenderTaskHandle createTask(RenderTaskCreateInfo info) throws RenderException;
+    public abstract RenderTaskHandle createTask(RenderTaskInfo info) throws RenderException;
 }

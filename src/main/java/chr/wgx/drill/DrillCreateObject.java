@@ -3,13 +3,10 @@ package chr.wgx.drill;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.CGType;
-import chr.wgx.render.common.Color;
 import chr.wgx.render.handle.ObjectHandle;
 import chr.wgx.render.handle.RenderPipelineHandle;
-import chr.wgx.render.info.ObjectCreateInfo;
-import chr.wgx.render.info.RenderPipelineCreateInfo;
-import chr.wgx.render.info.ShaderProgram;
-import chr.wgx.render.info.VertexInputInfo;
+import chr.wgx.render.handle.RenderTaskHandle;
+import chr.wgx.render.info.*;
 import tech.icey.panama.buffer.FloatBuffer;
 import tech.icey.xjbutil.container.Option;
 
@@ -24,8 +21,8 @@ public class DrillCreateObject {
         new Thread(() -> {
             try (Arena arena = Arena.ofConfined()) {
                 VertexInputInfo vii = new VertexInputInfo(List.of(
-                        new VertexInputInfo.AttributeIn("position", CGType.Vec3),
-                        new VertexInputInfo.AttributeIn("color", CGType.Vec2)
+                        new VertexInputInfo.AttributeIn("position", CGType.Vec2),
+                        new VertexInputInfo.AttributeIn("color", CGType.Vec3)
                 ));
 
                 logger.info("运行测试项目: 在线程中创建对象");
@@ -55,6 +52,10 @@ public class DrillCreateObject {
                 );
                 RenderPipelineHandle pipelineHandle = engine.createPipeline(rpci);
                 logger.info("渲染管线已创建: " + pipelineHandle);
+
+                RenderTaskInfo rti = new RenderTaskInfo(pipelineHandle, List.of(handle));
+                RenderTaskHandle renderTaskHandle = engine.createTask(rti);
+                logger.info("渲染任务已创建: " + renderTaskHandle);
             } catch (RenderException e) {
                 logger.severe("创建对象失败: " + e.getMessage());
             }
@@ -76,8 +77,8 @@ public class DrillCreateObject {
     private static final float[] VERTICES = {
             // vec2 position, vec3 color
             -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-            0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-            0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+            0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+            0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
     };
 
     private static final Logger logger = Logger.getLogger(DrillCreateObject.class.getName());
