@@ -14,7 +14,6 @@ public final class RenderPipelineCreateInfo {
     public final Option<ShaderProgram.GLES2> gles2ShaderProgram;
     public final int colorAttachmentCount;
     public final boolean depthTest;
-    public final List<Color> clearColors;
 
     public RenderPipelineCreateInfo(
             VertexInputInfo vertexInputInfo,
@@ -23,8 +22,7 @@ public final class RenderPipelineCreateInfo {
             Option<ShaderProgram.Vulkan> vulkanShaderProgram,
             Option<ShaderProgram.GLES2> gles2ShaderProgram,
             int colorAttachmentCount,
-            boolean depthTest,
-            List<Color> clearColors
+            boolean depthTest
     ) {
         this.vertexInputInfo = vertexInputInfo;
         this.descriptorSetLayout = descriptorSetLayout;
@@ -33,6 +31,5 @@ public final class RenderPipelineCreateInfo {
         this.gles2ShaderProgram = gles2ShaderProgram;
         this.colorAttachmentCount = colorAttachmentCount;
         this.depthTest = depthTest;
-        this.clearColors = clearColors;
     }
 }
