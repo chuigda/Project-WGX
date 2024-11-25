@@ -53,6 +53,7 @@ public class DrillCreateObject {
                 RenderPipelineHandle pipelineHandle = engine.createPipeline(rpci);
                 logger.info("渲染管线已创建: " + pipelineHandle);
 
+                logger.info("运行测试项目: 创建渲染任务");
                 RenderTaskInfo rti = new RenderTaskInfo(pipelineHandle, List.of(handle));
                 RenderTaskHandle renderTaskHandle = engine.createTask(rti);
                 logger.info("渲染任务已创建: " + renderTaskHandle);
