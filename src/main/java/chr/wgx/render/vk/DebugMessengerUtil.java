@@ -32,15 +32,15 @@ public final class DebugMessengerUtil {
         Action1<String> action = getSeverityLoggingFunction(messageSeverity);
         action.accept(message);
 
-//        if (messageSeverity >= VkDebugUtilsMessageSeverityFlagsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-//            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-//            StringBuilder sb = new StringBuilder();
-//            sb.append("JVM 调用栈:\n");
-//            for (StackTraceElement stackTraceElement : stackTrace) {
-//                sb.append("\t").append(stackTraceElement).append("\n");
-//            }
-//            action.accept(sb.toString());
-//        }
+        if (messageSeverity >= VkDebugUtilsMessageSeverityFlagsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            StringBuilder sb = new StringBuilder();
+            sb.append("JVM 调用栈:\n");
+            for (StackTraceElement stackTraceElement : stackTrace) {
+                sb.append("\t").append(stackTraceElement).append("\n");
+            }
+            action.accept(sb.toString());
+        }
 
         return Constants.VK_FALSE;
     }

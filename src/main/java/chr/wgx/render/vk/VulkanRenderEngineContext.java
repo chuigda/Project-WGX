@@ -51,6 +51,7 @@ public final class VulkanRenderEngineContext {
     public final VkFence[] inFlightFences;
     public final VkCommandPool commandPool;
     public final VkCommandBuffer[] commandBuffers;
+    public final VkCommandPool graphicsOnceCommandPool;
     public final Option<VkCommandPool> transferCommandPool;
 
     VulkanRenderEngineContext(
@@ -78,6 +79,7 @@ public final class VulkanRenderEngineContext {
             VkSemaphore[] renderFinishedSemaphores,
             VkFence[] inFlightFences,
             VkCommandPool commandPool,
+            VkCommandPool graphicsOnceCommandPool,
             VkCommandBuffer[] commandBuffers,
             Option<VkCommandPool> transferCommandPool
     ) {
@@ -105,6 +107,7 @@ public final class VulkanRenderEngineContext {
         this.renderFinishedSemaphores = renderFinishedSemaphores;
         this.inFlightFences = inFlightFences;
         this.commandPool = commandPool;
+        this.graphicsOnceCommandPool = graphicsOnceCommandPool;
         this.commandBuffers = commandBuffers;
         this.transferCommandPool = transferCommandPool;
     }
@@ -146,7 +149,7 @@ public final class VulkanRenderEngineContext {
             boolean waitQueueIdle
     ) throws RenderException {
         return executeOnceCommand(
-                commandPool,
+                graphicsOnceCommandPool,
                 graphicsQueue,
                 recordCommandBuffer,
                 pWaitSemaphores,
@@ -164,6 +167,7 @@ public final class VulkanRenderEngineContext {
             dCmd.vkDestroyCommandPool(device, someTransferCommandPool.value, null);
         }
         dCmd.vkDestroyCommandPool(device, commandPool, null);
+        dCmd.vkDestroyCommandPool(device, graphicsOnceCommandPool, null);
         for (VkFence fence : inFlightFences) {
             dCmd.vkDestroyFence(device, fence, null);
         }

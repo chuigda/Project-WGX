@@ -59,6 +59,7 @@ final class VREContextInitialiser {
     private VkFence[] inFlightFences;
     private VkCommandPool commandPool;
     private VkCommandBuffer[] commandBuffers;
+    private VkCommandPool graphicsOnceCommandPool;
     private Option<VkCommandPool> transferCommandPool;
 
     public VulkanRenderEngineContext init(GLFW glfw, GLFWwindow window) throws RenderException {
@@ -104,6 +105,7 @@ final class VREContextInitialiser {
                 renderFinishedSemaphores,
                 inFlightFences,
                 commandPool,
+                graphicsOnceCommandPool,
                 commandBuffers,
                 transferCommandPool
         );
@@ -477,10 +479,17 @@ final class VREContextInitialiser {
             }
             commandPool = pCommandPool.read();
 
+            commandPoolCreateInfo.flags(VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+            result = dCmd.vkCreateCommandPool(device, commandPoolCreateInfo, null, pCommandPool);
+            if (result != VkResult.VK_SUCCESS) {
+                throw new RenderException("无法创建 Vulkan 一次性命令池, 错误代码: " + VkResult.explain(result));
+            }
+            graphicsOnceCommandPool = pCommandPool.read();
+
             if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> someIndex) {
                 VkCommandPoolCreateInfo transferCommandPoolCreateInfo = VkCommandPoolCreateInfo.allocate(arena);
                 transferCommandPoolCreateInfo.queueFamilyIndex(someIndex.value);
-                transferCommandPoolCreateInfo.flags(VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+                transferCommandPoolCreateInfo.flags(VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 
                 VkCommandPool.Buffer pTransferCommandPool = VkCommandPool.Buffer.allocate(arena);
                 result = dCmd.vkCreateCommandPool(device, transferCommandPoolCreateInfo, null, pTransferCommandPool);

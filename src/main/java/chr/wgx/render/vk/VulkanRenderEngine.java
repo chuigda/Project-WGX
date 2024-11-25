@@ -5,7 +5,6 @@ import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
-import org.jetbrains.annotations.Nullable;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.NativeLayout;
@@ -355,9 +354,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
 
         new Thread(() -> {
-            VkFence.Buffer pFence = VkFence.Buffer.allocate(cx.autoArena);
             VkFence fence = null;
             try (Arena arena = Arena.ofConfined()) {
+                VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
                 VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
                 @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
                 if (result != VkResult.VK_SUCCESS) {
@@ -392,12 +391,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 for (UnacquiredObject object : objectsToAcquire) {
                     object.onTransferComplete.send(true);
                 }
-                cx.dCmd.vkDestroyFence(cx.device, fence, null);
 
                 VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
                 pCommandBuffer.write(acquireCommandBuffer.get());
-                synchronized (cx.commandPool) {
-                    cx.dCmd.vkFreeCommandBuffers(cx.device, cx.commandPool, 1, pCommandBuffer);
+                synchronized (cx.graphicsOnceCommandPool) {
+                    cx.dCmd.vkFreeCommandBuffers(cx.device, cx.graphicsOnceCommandPool, 1, pCommandBuffer);
                 }
             } catch (RenderException e) {
                 logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
