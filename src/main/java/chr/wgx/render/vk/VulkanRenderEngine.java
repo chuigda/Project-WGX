@@ -409,6 +409,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 if (fence != null) {
                     cx.dCmd.vkDestroyFence(cx.device, fence, null);
                 }
+            } finally {
+                hasTransferAcquireJob.set(false);
             }
         }).start();
     }
