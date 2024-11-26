@@ -814,12 +814,12 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
         UnUploadedObject(
                 Resource.Buffer stagingBuffer,
-                Resource.Buffer targetBuffer,
+                Resource.Buffer vertexBuffer,
                 long bufferSize,
                 Oneshot.Sender<Boolean> onUploadComplete
         ) {
             this.stagingBuffer = stagingBuffer;
-            this.vertexBuffer = targetBuffer;
+            this.vertexBuffer = vertexBuffer;
             this.bufferSize = bufferSize;
             this.onUploadComplete = onUploadComplete;
         }
