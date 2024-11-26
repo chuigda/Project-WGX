@@ -300,8 +300,7 @@ final class VREContextInitialiser {
                 }
 
                 @enumtype(VkQueueFlags.class) int prohibitedFlags =
-                        VkQueueFlags.VK_QUEUE_GRAPHICS_BIT |
-                                VkQueueFlags.VK_QUEUE_COMPUTE_BIT;
+                        VkQueueFlags.VK_QUEUE_GRAPHICS_BIT | VkQueueFlags.VK_QUEUE_COMPUTE_BIT;
                 if ((queueFlags & VkQueueFlags.VK_QUEUE_TRANSFER_BIT) != 0 &&
                         supportsPresent != Constants.VK_TRUE &&
                         (queueFlags & prohibitedFlags) == 0 &&
