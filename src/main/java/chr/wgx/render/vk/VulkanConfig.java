@@ -15,6 +15,9 @@ public final class VulkanConfig {
     /// - `2`: 强制启用垂直同步
     public int vsync = 1;
 
+    /// 帧率上限
+    public int maxFPS = 0;
+
     /// 最多允许同时渲染的帧数
     public int maxFramesInFlight = 2;
 
@@ -32,4 +35,7 @@ public final class VulkanConfig {
     ///
     /// 启用这一选项可以解决 AMD 驱动引起的一个 bug，该 bug 导致在多重采样启用时整个场景偏暗
     public boolean forceUNORM = false;
+
+    /// 是否总是使用图形队列进行传输操作（即使专门的传输队列可用）
+    public boolean alwaysUploadWithGraphicsQueue = false;
 }

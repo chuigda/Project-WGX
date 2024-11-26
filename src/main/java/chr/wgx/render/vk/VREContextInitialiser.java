@@ -251,6 +251,7 @@ final class VREContextInitialiser {
     }
 
     private void findQueueFamilyIndices() throws RenderException {
+        Config config = Config.config();
         Option<Integer> graphicsFamilyIndexOpt = Option.none();
         Option<Integer> presentFamilyIndexOpt = Option.none();
         dedicatedTransferQueueFamilyIndex = Option.none();
@@ -292,6 +293,10 @@ final class VREContextInitialiser {
                 if (supportsPresent == Constants.VK_TRUE && presentFamilyIndexOpt.isNone()) {
                     logger.info("找到支持窗口呈现的队列族: " + i);
                     presentFamilyIndexOpt = Option.some(i);
+                }
+
+                if (config.vulkanConfig.alwaysUploadWithGraphicsQueue) {
+                    continue;
                 }
 
                 @enumtype(VkQueueFlags.class) int prohibitedFlags =
