@@ -32,8 +32,8 @@ public class DrillCreateObject {
                 }
 
                 ObjectCreateInfo oci = new ObjectCreateInfo(vii, buffer);
-                List<ObjectHandle> handles = engine.createObject(List.of(oci));
-                logger.info("对象已创建: " + handles.getFirst());
+                ObjectHandle handle = engine.createObject(oci);
+                logger.info("对象已创建: " + handle);
 
                 logger.info("运行测试项目: 创建渲染管线");
                 ShaderProgram.Vulkan shaderProgram = new ShaderProgram.Vulkan(
@@ -54,7 +54,7 @@ public class DrillCreateObject {
                 logger.info("渲染管线已创建: " + pipelineHandle);
 
                 logger.info("运行测试项目: 创建渲染任务");
-                RenderTaskInfo rti = new RenderTaskInfo(pipelineHandle, handles);
+                RenderTaskInfo rti = new RenderTaskInfo(pipelineHandle, List.of(handle));
                 RenderTaskHandle renderTaskHandle = engine.createTask(rti);
                 logger.info("渲染任务已创建: " + renderTaskHandle);
             } catch (RenderException e) {
