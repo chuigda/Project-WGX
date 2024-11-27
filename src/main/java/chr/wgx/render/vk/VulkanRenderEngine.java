@@ -9,31 +9,22 @@ import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.NativeLayout;
 import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.panama.buffer.LongBuffer;
-import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.bitmask.*;
 import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
 import tech.icey.vk4j.handle.*;
-import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
-import tech.icey.xjbutil.container.Ref;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
-import tech.icey.xjbutil.sync.Oneshot;
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
@@ -45,11 +36,14 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             Action0 onClose
     ) {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
+        objectCreate = new ObjectCreate(this);
+        pipelineCreate = new PipelineCreate(this);
     }
 
     @Override
     protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
         cx = VulkanRenderEngineContext.create(glfw, window);
+
         try (Arena arena = Arena.ofConfined()) {
             IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
             glfw.glfwGetFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));
@@ -89,7 +83,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     protected void renderFrame() throws RenderException {
-        handleObjectUploading(cx);
+        objectCreate.handleObjectUploading();
 
         if (!(swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
             return;
@@ -198,110 +192,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
-        long bufferSize = info.pData.segment().byteSize();
-        assert bufferSize % info.vertexInputInfo.stride == 0;
-        long vertexCount = bufferSize / info.vertexInputInfo.stride;
-
-        try (Arena arena = Arena.ofConfined()) {
-            Resource.Buffer stagingBuffer = Resource.Buffer.create(
-                    cx,
-                    bufferSize,
-                    VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                    VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
-                    null
-            );
-
-            PointerBuffer ppData = PointerBuffer.allocate(arena);
-            @enumtype(VkResult.class) int result = cx.vma.vmaMapMemory(
-                    cx.vmaAllocator,
-                    stagingBuffer.allocation,
-                    ppData
-            );
-            if (result != VkResult.VK_SUCCESS) {
-                stagingBuffer.dispose(cx);
-                throw new RenderException("无法映射缓冲区内存, 错误代码: " + VkResult.explain(result));
-            }
-            MemorySegment pData = ppData.read().reinterpret(bufferSize);
-            pData.copyFrom(info.pData.segment());
-            cx.vma.vmaUnmapMemory(cx.vmaAllocator, stagingBuffer.allocation);
-
-            Resource.Buffer vertexBuffer = Resource.Buffer.create(
-                    cx,
-                    bufferSize,
-                    VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT
-                            | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                    0,
-                    null
-            );
-
-            if (cx.dedicatedTransferQueue.isSome()) {
-                cx.executeTransferCommand(cmd -> {
-                    VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
-                    copyRegion.size(bufferSize);
-                    cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, vertexBuffer.buffer, 1, copyRegion);
-
-                    VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
-                    barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-                    barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
-                    barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
-                    barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
-                    barrier.buffer(vertexBuffer.buffer);
-                    barrier.offset(0);
-                    barrier.size(bufferSize);
-                    cx.dCmd.vkCmdPipelineBarrier(
-                            cmd,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                            0,
-                            0, null,
-                            1, barrier,
-                            0, null
-                    );
-                }, Option.none(), Option.none(), Option.none(), true);
-
-                Pair<Oneshot.Sender<Boolean>, Oneshot.Receiver<Boolean>> channel = Oneshot.create();
-                synchronized (unAcquiredObjects) {
-                    unAcquiredObjects.value.add(new UnacquiredObject(
-                            vertexBuffer,
-                            bufferSize,
-                            channel.first()
-                    ));
-                }
-
-                if (!channel.second().recv()) {
-                    throw new RenderException("缓冲区传输失败");
-                }
-                stagingBuffer.dispose(cx);
-
-                long handle = nextHandle();
-                synchronized (objects) {
-                    objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo, vertexCount));
-                }
-                return new ObjectHandle(handle);
-            }
-            else {
-                Pair<Oneshot.Sender<Boolean>, Oneshot.Receiver<Boolean>> channel = Oneshot.create();
-                synchronized (unUploadedObjects) {
-                    unUploadedObjects.value.add(new UnUploadedObject(
-                            stagingBuffer,
-                            vertexBuffer,
-                            bufferSize,
-                            channel.first()
-                    ));
-                }
-
-                if (!channel.second().recv()) {
-                    throw new RenderException("缓冲区传输失败");
-                }
-                stagingBuffer.dispose(cx);
-
-                long handle = nextHandle();
-                synchronized (objects) {
-                    objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo, vertexCount));
-                }
-                return new ObjectHandle(handle);
-            }
-        }
+        return objectCreate.createObjectImpl(info);
     }
 
     @Override
@@ -331,180 +222,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException {
-        if (!(info.vulkanShaderProgram instanceof Option.Some<ShaderProgram.Vulkan> someProgram)) {
-            throw new RenderException("未提供 Vulkan 渲染器所需的着色器程序");
-        }
-        ShaderProgram.Vulkan program = someProgram.value;
-
-        if (!(swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
-            throw new RenderException("交换链未初始化");
-        }
-        Swapchain swapchain = someSwapchain.value;
-
-        VkShaderModule vertexShaderModule = null;
-        VkShaderModule fragmentShaderModule = null;
-        try (Arena arena = Arena.ofConfined()) {
-            vertexShaderModule = cx.createShaderModule(program.vertexShader);
-            fragmentShaderModule = cx.createShaderModule(program.fragmentShader);
-
-            VkPipelineShaderStageCreateInfo[] shaderStages = VkPipelineShaderStageCreateInfo.allocate(arena, 2);
-            shaderStages[0].stage(VkShaderStageFlags.VK_SHADER_STAGE_VERTEX_BIT);
-            shaderStages[0].module(vertexShaderModule);
-            shaderStages[0].pName(MAIN_NAME_BUF);
-            shaderStages[1].stage(VkShaderStageFlags.VK_SHADER_STAGE_FRAGMENT_BIT);
-            shaderStages[1].module(fragmentShaderModule);
-            shaderStages[1].pName(MAIN_NAME_BUF);
-
-            VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.allocate(arena);
-            VkVertexInputBindingDescription bindingDescription = VkVertexInputBindingDescription.allocate(arena);
-            bindingDescription.binding(0);
-            bindingDescription.stride(info.vertexInputInfo.stride);
-            bindingDescription.inputRate(VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX);
-            VkVertexInputAttributeDescription[] attributeDescriptions =
-                    VkVertexInputAttributeDescription.allocate(arena, info.vertexInputInfo.attributes.size());
-            for (int i = 0; i < attributeDescriptions.length; i++) {
-                VertexInputInfo.Attribute attribute = info.vertexInputInfo.attributes.get(i);
-
-                attributeDescriptions[i].binding(0);
-                attributeDescriptions[i].location(attribute.location);
-                attributeDescriptions[i].format(attribute.type.vkFormat);
-                attributeDescriptions[i].offset(attribute.byteOffset);
-            }
-            vertexInputInfo.vertexBindingDescriptionCount(1);
-            vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
-            vertexInputInfo.vertexAttributeDescriptionCount(attributeDescriptions.length);
-            vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions[0]);
-
-            VkPipelineInputAssemblyStateCreateInfo inputAssembly =
-                    VkPipelineInputAssemblyStateCreateInfo.allocate(arena);
-            inputAssembly.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-
-            IntBuffer dynamicStates = IntBuffer.allocate(arena, 2);
-            dynamicStates.write(0, VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT);
-            dynamicStates.write(1, VkDynamicState.VK_DYNAMIC_STATE_SCISSOR);
-            VkPipelineDynamicStateCreateInfo dynamicStateInfo = VkPipelineDynamicStateCreateInfo.allocate(arena);
-            dynamicStateInfo.dynamicStateCount(2);
-            dynamicStateInfo.pDynamicStates(dynamicStates);
-
-            VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.allocate(arena);
-            viewportState.viewportCount(1);
-            viewportState.scissorCount(1);
-
-            VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.allocate(arena);
-            rasterizer.depthClampEnable(Constants.VK_FALSE);
-            rasterizer.rasterizerDiscardEnable(Constants.VK_FALSE);
-            rasterizer.polygonMode(VkPolygonMode.VK_POLYGON_MODE_FILL);
-            rasterizer.lineWidth(1.0f);
-            rasterizer.cullMode(VkCullModeFlags.VK_CULL_MODE_NONE);
-            rasterizer.frontFace(VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE);
-            rasterizer.depthBiasEnable(Constants.VK_FALSE);
-            rasterizer.depthBiasConstantFactor(0.0f);
-            rasterizer.depthBiasClamp(0.0f);
-            rasterizer.depthBiasSlopeFactor(0.0f);
-
-            VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.allocate(arena);
-            multisampling.sampleShadingEnable(cx.msaaSampleCountFlags != VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT ?
-                    Constants.VK_TRUE :
-                    Constants.VK_FALSE);
-            multisampling.rasterizationSamples(cx.msaaSampleCountFlags);
-            multisampling.minSampleShading(cx.msaaSampleCountFlags != VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT ?
-                    0.2f :
-                    1.0f);
-            multisampling.pSampleMask(null);
-
-            VkPipelineColorBlendAttachmentState colorBlendAttachment =
-                    VkPipelineColorBlendAttachmentState.allocate(arena);
-            colorBlendAttachment.colorWriteMask(
-                    VkColorComponentFlags.VK_COLOR_COMPONENT_R_BIT |
-                    VkColorComponentFlags.VK_COLOR_COMPONENT_G_BIT |
-                    VkColorComponentFlags.VK_COLOR_COMPONENT_B_BIT |
-                    VkColorComponentFlags.VK_COLOR_COMPONENT_A_BIT
-            );
-            // TODO make these parameters of PipelineCreateInfo
-            colorBlendAttachment.blendEnable(Constants.VK_FALSE);
-            colorBlendAttachment.srcColorBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_ONE);
-            colorBlendAttachment.dstColorBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_ZERO);
-            colorBlendAttachment.colorBlendOp(VkBlendOp.VK_BLEND_OP_ADD);
-            colorBlendAttachment.srcAlphaBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_ONE);
-            colorBlendAttachment.dstAlphaBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_ZERO);
-            colorBlendAttachment.alphaBlendOp(VkBlendOp.VK_BLEND_OP_ADD);
-
-            VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.allocate(arena);
-            colorBlending.logicOpEnable(Constants.VK_FALSE);
-            colorBlending.logicOp(VkLogicOp.VK_LOGIC_OP_COPY);
-            colorBlending.attachmentCount(1);
-            colorBlending.pAttachments(colorBlendAttachment);
-
-            VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.allocate(arena);
-            if (info.depthTest) {
-                depthStencil.depthTestEnable(Constants.VK_TRUE);
-                depthStencil.depthWriteEnable(Constants.VK_TRUE);
-                depthStencil.depthCompareOp(VkCompareOp.VK_COMPARE_OP_LESS);
-                depthStencil.minDepthBounds(0.0f);
-                depthStencil.maxDepthBounds(1.0f);
-            }
-
-            VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.allocate(arena);
-            // TODO add push constant and descriptor set layout then
-            VkPipelineLayout.Buffer pPipelineLayout = VkPipelineLayout.Buffer.allocate(arena);
-            @enumtype(VkResult.class) int result = cx.dCmd.vkCreatePipelineLayout(
-                    cx.device,
-                    pipelineLayoutInfo,
-                    null,
-                    pPipelineLayout
-            );
-            if (result != VkResult.VK_SUCCESS) {
-                throw new RenderException("无法创建管线布局, 错误代码: " + VkResult.explain(result));
-            }
-            VkPipelineLayout pipelineLayout = pPipelineLayout.read();
-
-            VkGraphicsPipelineCreateInfo pipelineInfo = VkGraphicsPipelineCreateInfo.allocate(arena);
-            pipelineInfo.stageCount(2);
-            pipelineInfo.pStages(shaderStages[0]);
-            pipelineInfo.pVertexInputState(vertexInputInfo);
-            pipelineInfo.pInputAssemblyState(inputAssembly);
-            pipelineInfo.pViewportState(viewportState);
-            pipelineInfo.pRasterizationState(rasterizer);
-            pipelineInfo.pMultisampleState(multisampling);
-            pipelineInfo.pDepthStencilState(depthStencil);
-            pipelineInfo.pColorBlendState(colorBlending);
-            pipelineInfo.pDynamicState(dynamicStateInfo);
-            pipelineInfo.layout(pipelineLayout);
-            pipelineInfo.basePipelineHandle(null);
-            pipelineInfo.basePipelineIndex(-1);
-
-            VkPipelineRenderingCreateInfo pipelineRenderingCreateInfo = VkPipelineRenderingCreateInfo.allocate(arena);
-            pipelineRenderingCreateInfo.colorAttachmentCount(info.colorAttachmentCount);
-            IntBuffer pColorAttachmentFormats = IntBuffer.allocate(arena, info.colorAttachmentCount);
-            for (int i = 0; i < info.colorAttachmentCount; i++) {
-                pColorAttachmentFormats.write(i, swapchain.swapChainImageFormat);
-            }
-            pipelineRenderingCreateInfo.pColorAttachmentFormats(pColorAttachmentFormats);
-            if (info.depthTest) {
-                pipelineRenderingCreateInfo.depthAttachmentFormat(swapchain.depthFormat);
-            }
-            pipelineInfo.pNext(pipelineRenderingCreateInfo);
-
-            VkPipeline.Buffer pPipeline = VkPipeline.Buffer.allocate(arena);
-            result = cx.dCmd.vkCreateGraphicsPipelines(cx.device, null, 1, pipelineInfo, null, pPipeline);
-            if (result != VkResult.VK_SUCCESS) {
-                throw new RenderException("无法创建图形管线, 错误代码: " + VkResult.explain(result));
-            }
-            VkPipeline pipeline = pPipeline.read();
-
-            long handle = nextHandle();
-            synchronized (pipelines) {
-                pipelines.put(handle, new Resource.Pipeline(info, pipelineLayout, pipeline));
-            }
-            return new RenderPipelineHandle(handle);
-        } finally {
-            if (vertexShaderModule != null) {
-                cx.dCmd.vkDestroyShaderModule(cx.device, vertexShaderModule, null);
-            }
-            if (fragmentShaderModule != null) {
-                cx.dCmd.vkDestroyShaderModule(cx.device, fragmentShaderModule, null);
-            }
-        }
+        return pipelineCreate.createPipelineImpl(info);
     }
 
     @Override
@@ -514,150 +232,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             tasks.put(handle, info);
         }
         return new RenderTaskHandle(handle);
-    }
-
-    private void handleObjectUploading(VulkanRenderEngineContext cx) {
-        if (cx.dedicatedTransferQueue.isSome()) {
-            queueTransferAcquireObjects(cx);
-        }
-        else {
-            uploadPendingObjects(cx);
-        }
-    }
-
-    private void queueTransferAcquireObjects(VulkanRenderEngineContext cx) {
-        if (hasAcquireOrUploadJob.getAndSet(true)) {
-            return;
-        }
-
-        List<UnacquiredObject> objectsToAcquire;
-        synchronized (unAcquiredObjects) {
-            objectsToAcquire = unAcquiredObjects.value;
-            if (objectsToAcquire.isEmpty()) {
-                hasAcquireOrUploadJob.set(false);
-                return;
-            }
-            unAcquiredObjects.value = new ArrayList<>();
-        }
-
-        new Thread(() -> {
-            VkFence fence = null;
-            try (Arena arena = Arena.ofConfined()) {
-                VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
-                VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
-                @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
-                if (result != VkResult.VK_SUCCESS) {
-                    throw new RenderException("无法创建围栏, 错误代码: " + VkResult.explain(result));
-                }
-                fence = pFence.read();
-
-                VkCommandBuffer acquireCommandBuffer = cx.executeGraphicsCommand(cmd -> {
-                    for (UnacquiredObject object : objectsToAcquire) {
-                        VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
-                        barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-                        barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
-                        barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
-                        barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
-                        barrier.buffer(object.buffer.buffer);
-                        barrier.offset(0);
-                        barrier.size(object.bufferSize);
-                        cx.dCmd.vkCmdPipelineBarrier(
-                                cmd,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                0,
-                                0, null,
-                                1, barrier,
-                                0, null
-                        );
-                    }
-                }, Option.none(), Option.none(), Option.some(fence), false).get();
-
-                // TODO handle VK_DEVICE_LOST?
-                cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
-                for (UnacquiredObject object : objectsToAcquire) {
-                    object.onTransferComplete.send(true);
-                }
-
-                VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
-                pCommandBuffer.write(acquireCommandBuffer);
-                synchronized (cx.graphicsOnceCommandPool) {
-                    cx.dCmd.vkFreeCommandBuffers(cx.device, cx.graphicsOnceCommandPool, 1, pCommandBuffer);
-                }
-            } catch (RenderException e) {
-                logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
-                for (UnacquiredObject object : objectsToAcquire) {
-                    object.onTransferComplete.send(false);
-                    object.buffer.dispose(cx);
-                }
-            } finally {
-                if (fence != null) {
-                    cx.dCmd.vkDestroyFence(cx.device, fence, null);
-                }
-                hasAcquireOrUploadJob.set(false);
-            }
-        }).start();
-    }
-
-    private void uploadPendingObjects(VulkanRenderEngineContext cx) {
-        if (hasAcquireOrUploadJob.getAndSet(true)) {
-            return;
-        }
-
-        List<UnUploadedObject> objectsToUpload;
-        synchronized (unUploadedObjects) {
-            objectsToUpload = unUploadedObjects.value;
-            if (objectsToUpload.isEmpty()) {
-                hasAcquireOrUploadJob.set(false);
-                return;
-            }
-            unUploadedObjects.value = new ArrayList<>();
-        }
-
-        new Thread(() -> {
-            VkFence fence = null;
-            try (Arena arena = Arena.ofConfined()) {
-                VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
-                VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
-                @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
-                if (result != VkResult.VK_SUCCESS) {
-                    throw new RenderException("无法创建围栏, 错误代码: " + VkResult.explain(result));
-                }
-                fence = pFence.read();
-
-                VkCommandBuffer uploadCommandBuffer = cx.executeGraphicsCommand(cmd -> {
-                    for (UnUploadedObject object : objectsToUpload) {
-                        VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
-                        copyRegion.size(object.bufferSize);
-                        cx.dCmd.vkCmdCopyBuffer(cmd, object.stagingBuffer.buffer, object.vertexBuffer.buffer, 1, copyRegion);
-                    }
-                }, Option.none(), Option.none(), Option.some(fence), false).get();
-
-                // TODO handle VK_DEVICE_LOST?
-                cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
-                for (UnUploadedObject object : objectsToUpload) {
-                    object.onUploadComplete.send(true);
-                }
-
-                VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
-                pCommandBuffer.write(uploadCommandBuffer);
-                synchronized (cx.graphicsOnceCommandPool) {
-                    cx.dCmd.vkFreeCommandBuffers(cx.device, cx.graphicsOnceCommandPool, 1, pCommandBuffer);
-                }
-            } catch (RenderException e) {
-                logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
-                for (UnUploadedObject object : objectsToUpload) {
-                    object.onUploadComplete.send(false);
-                    // staging buffer 在另一边 dispose
-                    object.vertexBuffer.dispose(cx);
-                }
-            } finally {
-                if (fence != null) {
-                    cx.dCmd.vkDestroyFence(cx.device, fence, null);
-                }
-                hasAcquireOrUploadJob.set(false);
-            }
-        }).start();
     }
 
     private void resetAndRecordCommandBuffer(
@@ -767,62 +341,21 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
     }
 
-    @SuppressWarnings("ClassCanBeRecord")
-    private static final class UnacquiredObject {
-        public final Resource.Buffer buffer;
-        public final long bufferSize;
-        public final Oneshot.Sender<Boolean> onTransferComplete;
+    private final ObjectCreate objectCreate;
+    private final PipelineCreate pipelineCreate;
 
-        UnacquiredObject(
-                Resource.Buffer buffer,
-                long bufferSize,
-                Oneshot.Sender<Boolean> onTransferComplete
-        ) {
-            this.buffer = buffer;
-            this.bufferSize = bufferSize;
-            this.onTransferComplete = onTransferComplete;
-        }
-    }
+    VulkanRenderEngineContext cx;
+    Option<Swapchain> swapchainOption = Option.none();
+    int currentFrameIndex = 0;
+    boolean pauseRender = false;
 
-    @SuppressWarnings("ClassCanBeRecord")
-    private static final class UnUploadedObject {
-        public final Resource.Buffer stagingBuffer;
-        public final Resource.Buffer vertexBuffer;
-        public final long bufferSize;
-        public final Oneshot.Sender<Boolean> onUploadComplete;
-
-        UnUploadedObject(
-                Resource.Buffer stagingBuffer,
-                Resource.Buffer vertexBuffer,
-                long bufferSize,
-                Oneshot.Sender<Boolean> onUploadComplete
-        ) {
-            this.stagingBuffer = stagingBuffer;
-            this.vertexBuffer = vertexBuffer;
-            this.bufferSize = bufferSize;
-            this.onUploadComplete = onUploadComplete;
-        }
-    }
-
-    private VulkanRenderEngineContext cx;
-    private Option<Swapchain> swapchainOption = Option.none();
-    private int currentFrameIndex = 0;
-    private boolean pauseRender = false;
-
-    // object management fields
-    private final Ref<List<UnacquiredObject>> unAcquiredObjects = new Ref<>(new ArrayList<>());
-    private final Ref<List<UnUploadedObject>> unUploadedObjects = new Ref<>(new ArrayList<>());
-    private final AtomicBoolean hasAcquireOrUploadJob = new AtomicBoolean(false);
-    private final HashMap<Long, Resource.Object> objects = new HashMap<>();
-
-    // pipelines
-    private final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
-
+    final HashMap<Long, Resource.Object> objects = new HashMap<>();
+    final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
     // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
-    private final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
+    final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
 
-    private static final ByteBuffer MAIN_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "main");
-    private static final AttachmentHandle.Color DEFAULT_COLOR_ATTACHMENT = new AttachmentHandle.Color(0L);
-    private static final AttachmentHandle.Depth DEFAULT_DEPTH_ATTACHMENT = new AttachmentHandle.Depth(1L);
+    static final AttachmentHandle.Color DEFAULT_COLOR_ATTACHMENT = new AttachmentHandle.Color(0L);
+    static final AttachmentHandle.Depth DEFAULT_DEPTH_ATTACHMENT = new AttachmentHandle.Depth(1L);
+
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }
