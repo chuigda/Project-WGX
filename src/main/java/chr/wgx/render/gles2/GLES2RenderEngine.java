@@ -10,6 +10,7 @@ import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.xjbutil.container.Option;
+import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
@@ -76,6 +77,11 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
 
     @Override
     public AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth i) throws RenderException {
+        return null;
+    }
+
+    @Override
+    public Pair<AttachmentHandle.Color, AttachmentHandle.Depth> getDefaultAttachments() {
         return null;
     }
 

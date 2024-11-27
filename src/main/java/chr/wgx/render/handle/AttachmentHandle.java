@@ -6,15 +6,8 @@ public abstract sealed class AttachmentHandle extends AbstractHandle {
     }
 
     public static final class Color extends AttachmentHandle {
-        private final UniformHandle.Sampler2D textureHandle;
-
-        public Color(long handle, UniformHandle.Sampler2D textureHandle) {
+        public Color(long handle) {
             super(handle);
-            this.textureHandle = textureHandle;
-        }
-
-        public UniformHandle.Sampler2D textureHandle() {
-            return textureHandle;
         }
     }
 

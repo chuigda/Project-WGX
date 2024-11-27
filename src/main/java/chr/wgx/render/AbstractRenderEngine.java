@@ -4,6 +4,7 @@ import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
+import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
@@ -65,6 +66,7 @@ public abstract class AbstractRenderEngine {
     public abstract ObjectHandle createObject(ObjectCreateInfo info) throws RenderException;
     public abstract AttachmentHandle.Color createColorAttachment(AttachmentCreateInfo.Color i) throws RenderException;
     public abstract AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth i) throws RenderException;
+    public abstract Pair<AttachmentHandle.Color, AttachmentHandle.Depth> getDefaultAttachments();
 
     public abstract UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException;
     public abstract UniformHandle createUniform(UniformCreateInfo info) throws RenderException;

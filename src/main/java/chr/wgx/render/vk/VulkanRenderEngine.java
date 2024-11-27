@@ -336,6 +336,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
+    public Pair<AttachmentHandle.Color, AttachmentHandle.Depth> getDefaultAttachments() {
+        return new Pair<>(DEFAULT_COLOR_ATTACHMENT, DEFAULT_DEPTH_ATTACHMENT);
+    }
+
+    @Override
     public UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException {
         return null;
     }
@@ -839,5 +844,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
 
     private static final ByteBuffer MAIN_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "main");
+    private static final AttachmentHandle.Color DEFAULT_COLOR_ATTACHMENT = new AttachmentHandle.Color(0L);
+    private static final AttachmentHandle.Depth DEFAULT_DEPTH_ATTACHMENT = new AttachmentHandle.Depth(1L);
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }
