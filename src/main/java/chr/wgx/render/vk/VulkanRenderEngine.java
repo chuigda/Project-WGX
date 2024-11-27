@@ -250,54 +250,78 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                     cx,
                     bufferSize,
                     VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT
-                    | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                            | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                     0,
                     null
             );
 
-            cx.executeTransferCommand(cmd -> {
-                VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
-                copyRegion.size(bufferSize);
-                cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, vertexBuffer.buffer, 1, copyRegion);
+            if (cx.dedicatedTransferQueue.isSome()) {
+                cx.executeTransferCommand(cmd -> {
+                    VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
+                    copyRegion.size(bufferSize);
+                    cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, vertexBuffer.buffer, 1, copyRegion);
 
-                VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
-                barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-                barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
-                barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
-                barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
-                barrier.buffer(vertexBuffer.buffer);
-                barrier.offset(0);
-                barrier.size(bufferSize);
-                cx.dCmd.vkCmdPipelineBarrier(
-                        cmd,
-                        VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                        VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                        0,
-                        0, null,
-                        1, barrier,
-                        0, null
-                );
-            }, Option.none(), Option.none(), Option.none(), true);
+                    VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
+                    barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
+                    barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+                    barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
+                    barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
+                    barrier.buffer(vertexBuffer.buffer);
+                    barrier.offset(0);
+                    barrier.size(bufferSize);
+                    cx.dCmd.vkCmdPipelineBarrier(
+                            cmd,
+                            VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                            VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                            0,
+                            0, null,
+                            1, barrier,
+                            0, null
+                    );
+                }, Option.none(), Option.none(), Option.none(), true);
 
-            Pair<Oneshot.Sender<Boolean>, Oneshot.Receiver<Boolean>> channel = Oneshot.create();
-            synchronized (unacquiredObjects) {
-                unacquiredObjects.value.add(new UnacquiredObject(
-                        vertexBuffer,
-                        bufferSize,
-                        channel.first()
-                ));
+                Pair<Oneshot.Sender<Boolean>, Oneshot.Receiver<Boolean>> channel = Oneshot.create();
+                synchronized (unAcquiredObjects) {
+                    unAcquiredObjects.value.add(new UnacquiredObject(
+                            vertexBuffer,
+                            bufferSize,
+                            channel.first()
+                    ));
+                }
+
+                if (!channel.second().recv()) {
+                    throw new RenderException("缓冲区传输失败");
+                }
+                stagingBuffer.dispose(cx);
+
+                long handle = nextHandle();
+                synchronized (objects) {
+                    objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo, vertexCount));
+                }
+                return new ObjectHandle(handle);
             }
+            else {
+                Pair<Oneshot.Sender<Boolean>, Oneshot.Receiver<Boolean>> channel = Oneshot.create();
+                synchronized (unUploadedObjects) {
+                    unUploadedObjects.value.add(new UnUploadedObject(
+                            stagingBuffer,
+                            vertexBuffer,
+                            bufferSize,
+                            channel.first()
+                    ));
+                }
 
-            if (!channel.second().recv()) {
-                throw new RenderException("缓冲区传输失败");
-            }
-            stagingBuffer.dispose(cx);
+                if (!channel.second().recv()) {
+                    throw new RenderException("缓冲区传输失败");
+                }
+                stagingBuffer.dispose(cx);
 
-            long handle = nextHandle();
-            synchronized (objects) {
-                objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo, vertexCount));
+                long handle = nextHandle();
+                synchronized (objects) {
+                    objects.put(handle, new Resource.Object(vertexBuffer, info.vertexInputInfo, vertexCount));
+                }
+                return new ObjectHandle(handle);
             }
-            return new ObjectHandle(handle);
         }
     }
 
@@ -518,23 +542,23 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             queueTransferAcquireObjects(cx);
         }
         else {
-            throw new RuntimeException("此功能尚未实现");
+            uploadPendingObjects(cx);
         }
     }
 
     private void queueTransferAcquireObjects(VulkanRenderEngineContext cx) {
-        if (hasTransferAcquireJob.getAndSet(true)) {
+        if (hasAcquireOrUploadJob.getAndSet(true)) {
             return;
         }
 
         List<UnacquiredObject> objectsToAcquire;
-        synchronized (unacquiredObjects) {
-            objectsToAcquire = unacquiredObjects.value;
+        synchronized (unAcquiredObjects) {
+            objectsToAcquire = unAcquiredObjects.value;
             if (objectsToAcquire.isEmpty()) {
-                hasTransferAcquireJob.set(false);
+                hasAcquireOrUploadJob.set(false);
                 return;
             }
-            unacquiredObjects.value = new ArrayList<>();
+            unAcquiredObjects.value = new ArrayList<>();
         }
 
         new Thread(() -> {
@@ -548,7 +572,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 }
                 fence = pFence.read();
 
-                Option<VkCommandBuffer> acquireCommandBuffer = cx.executeGraphicsCommand(cmd -> {
+                VkCommandBuffer acquireCommandBuffer = cx.executeGraphicsCommand(cmd -> {
                     for (UnacquiredObject object : objectsToAcquire) {
                         VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
                         barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
@@ -568,7 +592,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                                 0, null
                         );
                     }
-                }, Option.none(), Option.none(), Option.some(fence), false);
+                }, Option.none(), Option.none(), Option.some(fence), false).get();
 
                 // TODO handle VK_DEVICE_LOST?
                 cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
@@ -577,7 +601,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 }
 
                 VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
-                pCommandBuffer.write(acquireCommandBuffer.get());
+                pCommandBuffer.write(acquireCommandBuffer);
                 synchronized (cx.graphicsOnceCommandPool) {
                     cx.dCmd.vkFreeCommandBuffers(cx.device, cx.graphicsOnceCommandPool, 1, pCommandBuffer);
                 }
@@ -591,7 +615,68 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 if (fence != null) {
                     cx.dCmd.vkDestroyFence(cx.device, fence, null);
                 }
-                hasTransferAcquireJob.set(false);
+                hasAcquireOrUploadJob.set(false);
+            }
+        }).start();
+    }
+
+    private void uploadPendingObjects(VulkanRenderEngineContext cx) {
+        if (hasAcquireOrUploadJob.getAndSet(true)) {
+            return;
+        }
+
+        List<UnUploadedObject> objectsToUpload;
+        synchronized (unUploadedObjects) {
+            objectsToUpload = unUploadedObjects.value;
+            if (objectsToUpload.isEmpty()) {
+                hasAcquireOrUploadJob.set(false);
+                return;
+            }
+            unUploadedObjects.value = new ArrayList<>();
+        }
+
+        new Thread(() -> {
+            VkFence fence = null;
+            try (Arena arena = Arena.ofConfined()) {
+                VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
+                VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
+                @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
+                if (result != VkResult.VK_SUCCESS) {
+                    throw new RenderException("无法创建围栏, 错误代码: " + VkResult.explain(result));
+                }
+                fence = pFence.read();
+
+                VkCommandBuffer uploadCommandBuffer = cx.executeGraphicsCommand(cmd -> {
+                    for (UnUploadedObject object : objectsToUpload) {
+                        VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
+                        copyRegion.size(object.bufferSize);
+                        cx.dCmd.vkCmdCopyBuffer(cmd, object.stagingBuffer.buffer, object.vertexBuffer.buffer, 1, copyRegion);
+                    }
+                }, Option.none(), Option.none(), Option.some(fence), false).get();
+
+                // TODO handle VK_DEVICE_LOST?
+                cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
+                for (UnUploadedObject object : objectsToUpload) {
+                    object.onUploadComplete.send(true);
+                }
+
+                VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
+                pCommandBuffer.write(uploadCommandBuffer);
+                synchronized (cx.graphicsOnceCommandPool) {
+                    cx.dCmd.vkFreeCommandBuffers(cx.device, cx.graphicsOnceCommandPool, 1, pCommandBuffer);
+                }
+            } catch (RenderException e) {
+                logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
+                for (UnUploadedObject object : objectsToUpload) {
+                    object.onUploadComplete.send(false);
+                    // staging buffer 在另一边 dispose
+                    object.vertexBuffer.dispose(cx);
+                }
+            } finally {
+                if (fence != null) {
+                    cx.dCmd.vkDestroyFence(cx.device, fence, null);
+                }
+                hasAcquireOrUploadJob.set(false);
             }
         }).start();
     }
@@ -703,11 +788,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
     }
 
-    private Option<VulkanRenderEngineContext> engineContextOption = Option.none();
-    private Option<Swapchain> swapchainOption = Option.none();
-    private int currentFrameIndex = 0;
-    private boolean pauseRender = false;
-
     @SuppressWarnings("ClassCanBeRecord")
     private static final class UnacquiredObject {
         public final Resource.Buffer buffer;
@@ -725,8 +805,34 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
     }
 
-    private final Ref<List<UnacquiredObject>> unacquiredObjects = new Ref<>(new ArrayList<>());
-    private final AtomicBoolean hasTransferAcquireJob = new AtomicBoolean(false);
+    @SuppressWarnings("ClassCanBeRecord")
+    private static final class UnUploadedObject {
+        public final Resource.Buffer stagingBuffer;
+        public final Resource.Buffer vertexBuffer;
+        public final long bufferSize;
+        public final Oneshot.Sender<Boolean> onUploadComplete;
+
+        UnUploadedObject(
+                Resource.Buffer stagingBuffer,
+                Resource.Buffer vertexBuffer,
+                long bufferSize,
+                Oneshot.Sender<Boolean> onUploadComplete
+        ) {
+            this.stagingBuffer = stagingBuffer;
+            this.vertexBuffer = vertexBuffer;
+            this.bufferSize = bufferSize;
+            this.onUploadComplete = onUploadComplete;
+        }
+    }
+
+    private Option<VulkanRenderEngineContext> engineContextOption = Option.none();
+    private Option<Swapchain> swapchainOption = Option.none();
+    private int currentFrameIndex = 0;
+    private boolean pauseRender = false;
+
+    private final Ref<List<UnacquiredObject>> unAcquiredObjects = new Ref<>(new ArrayList<>());
+    private final Ref<List<UnUploadedObject>> unUploadedObjects = new Ref<>(new ArrayList<>());
+    private final AtomicBoolean hasAcquireOrUploadJob = new AtomicBoolean(false);
     private final HashMap<Long, Resource.Object> objects = new HashMap<>();
     private final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
     // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development

@@ -251,6 +251,7 @@ final class VREContextInitialiser {
     }
 
     private void findQueueFamilyIndices() throws RenderException {
+        Config config = Config.config();
         Option<Integer> graphicsFamilyIndexOpt = Option.none();
         Option<Integer> presentFamilyIndexOpt = Option.none();
         dedicatedTransferQueueFamilyIndex = Option.none();
@@ -294,9 +295,12 @@ final class VREContextInitialiser {
                     presentFamilyIndexOpt = Option.some(i);
                 }
 
+                if (config.vulkanConfig.alwaysUploadWithGraphicsQueue) {
+                    continue;
+                }
+
                 @enumtype(VkQueueFlags.class) int prohibitedFlags =
-                        VkQueueFlags.VK_QUEUE_GRAPHICS_BIT |
-                                VkQueueFlags.VK_QUEUE_COMPUTE_BIT;
+                        VkQueueFlags.VK_QUEUE_GRAPHICS_BIT | VkQueueFlags.VK_QUEUE_COMPUTE_BIT;
                 if ((queueFlags & VkQueueFlags.VK_QUEUE_TRANSFER_BIT) != 0 &&
                         supportsPresent != Constants.VK_TRUE &&
                         (queueFlags & prohibitedFlags) == 0 &&

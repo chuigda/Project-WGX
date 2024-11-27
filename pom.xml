@@ -14,14 +14,10 @@
     </properties>
 
     <dependencies>
-        <!--
-            till now this package is not published in the Maven Central
-            git clone from chuigda/xjbutil4j and install it to your local repository
-        -->
         <dependency>
             <groupId>tech.icey</groupId>
             <artifactId>xjbutil</artifactId>
-            <version>0.1.0-alfa</version>
+            <version>0.1.0-bravo</version>
             <scope>compile</scope>
         </dependency>
 

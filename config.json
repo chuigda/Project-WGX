@@ -9,7 +9,7 @@
    "vulkanConfig": {
       "physicalDeviceID": 0,
       "validationLayers": true,
-      "vsync": 1,
+      "vsync": 2,
       "enableMSAA": false,
       "msaaSampleCount": 4,
       "enableAnisotropy": false,
