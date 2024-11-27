@@ -141,20 +141,11 @@ public final class VulkanRenderEngineContext {
 
         VkCommandPool commandPool1 = someCommandPool.value;
         VkQueue queue = dedicatedTransferQueue.get();
-
-        executeOnceCommand(
-                commandPool1,
-                queue,
-                recordCommandBuffer
-        );
+        executeOnceCommand(commandPool1, queue, recordCommandBuffer);
     }
 
     public void executeGraphicsCommand(Action1<VkCommandBuffer> recordCommandBuffer) throws RenderException {
-        executeOnceCommand(
-                graphicsOnceCommandPool,
-                graphicsQueue,
-                recordCommandBuffer
-        );
+        executeOnceCommand(graphicsOnceCommandPool, graphicsQueue, recordCommandBuffer);
     }
 
     public void dispose() {
