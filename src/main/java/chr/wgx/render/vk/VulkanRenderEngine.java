@@ -49,9 +49,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
-        VulkanRenderEngineContext cx = VulkanRenderEngineContext.create(glfw, window);
-        engineContextOption = Option.some(cx);
-
+        cx = VulkanRenderEngineContext.create(glfw, window);
         try (Arena arena = Arena.ofConfined()) {
             IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
             glfw.glfwGetFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));
@@ -68,11 +66,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     protected void resize(int width, int height) {
-        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
-            return;
-        }
-        VulkanRenderEngineContext cx = someCx.value;
-
         if (width == 0 || height == 0) {
             pauseRender = true;
             return;
@@ -96,10 +89,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     protected void renderFrame() throws RenderException {
-        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
-            return;
-        }
-        VulkanRenderEngineContext cx = someCx.value;
         handleObjectUploading(cx);
 
         if (!(swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
@@ -191,14 +180,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     protected void close() {
-        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
-            return;
-        }
-        VulkanRenderEngineContext cx = someCx.value;
-
         cx.dCmd.vkDeviceWaitIdle(cx.device);
         if (swapchainOption instanceof Option.Some<Swapchain> someSwapchain) {
-            someSwapchain.value.dispose(someCx.value);
+            someSwapchain.value.dispose(cx);
         }
 
         for (Resource.Pipeline pipeline : pipelines.values()) {
@@ -217,11 +201,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         long bufferSize = info.pData.segment().byteSize();
         assert bufferSize % info.vertexInputInfo.stride == 0;
         long vertexCount = bufferSize / info.vertexInputInfo.stride;
-
-        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
-            throw new RenderException("渲染引擎未初始化");
-        }
-        VulkanRenderEngineContext cx = someCx.value;
 
         try (Arena arena = Arena.ofConfined()) {
             Resource.Buffer stagingBuffer = Resource.Buffer.create(
@@ -356,11 +335,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             throw new RenderException("未提供 Vulkan 渲染器所需的着色器程序");
         }
         ShaderProgram.Vulkan program = someProgram.value;
-
-        if (!(engineContextOption instanceof Option.Some<VulkanRenderEngineContext> someCx)) {
-            throw new RenderException("渲染引擎未初始化");
-        }
-        VulkanRenderEngineContext cx = someCx.value;
 
         if (!(swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
             throw new RenderException("交换链未初始化");
@@ -830,16 +804,20 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
     }
 
-    private Option<VulkanRenderEngineContext> engineContextOption = Option.none();
+    private VulkanRenderEngineContext cx;
     private Option<Swapchain> swapchainOption = Option.none();
     private int currentFrameIndex = 0;
     private boolean pauseRender = false;
 
+    // object management fields
     private final Ref<List<UnacquiredObject>> unAcquiredObjects = new Ref<>(new ArrayList<>());
     private final Ref<List<UnUploadedObject>> unUploadedObjects = new Ref<>(new ArrayList<>());
     private final AtomicBoolean hasAcquireOrUploadJob = new AtomicBoolean(false);
     private final HashMap<Long, Resource.Object> objects = new HashMap<>();
+
+    // pipelines
     private final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
+
     // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
     private final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
 
