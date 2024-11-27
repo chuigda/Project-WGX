@@ -29,17 +29,12 @@ public final class PipelineCreate {
     }
 
     public RenderPipelineHandle createPipelineImpl(RenderPipelineCreateInfo info) throws RenderException {
-        VulkanRenderEngineContext cx = engine.cx;
-
         if (!(info.vulkanShaderProgram instanceof Option.Some<ShaderProgram.Vulkan> someProgram)) {
             throw new RenderException("未提供 Vulkan 渲染器所需的着色器程序");
         }
         ShaderProgram.Vulkan program = someProgram.value;
 
-        if (!(engine.swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
-            throw new RenderException("交换链未初始化");
-        }
-        Swapchain swapchain = someSwapchain.value;
+        VulkanRenderEngineContext cx = engine.cx;
 
         VkShaderModule vertexShaderModule = null;
         VkShaderModule fragmentShaderModule = null;
@@ -177,11 +172,11 @@ public final class PipelineCreate {
             pipelineRenderingCreateInfo.colorAttachmentCount(info.colorAttachmentCount);
             IntBuffer pColorAttachmentFormats = IntBuffer.allocate(arena, info.colorAttachmentCount);
             for (int i = 0; i < info.colorAttachmentCount; i++) {
-                pColorAttachmentFormats.write(i, swapchain.swapChainImageFormat);
+                pColorAttachmentFormats.write(i, engine.swapchain.swapChainImageFormat);
             }
             pipelineRenderingCreateInfo.pColorAttachmentFormats(pColorAttachmentFormats);
             if (info.depthTest) {
-                pipelineRenderingCreateInfo.depthAttachmentFormat(swapchain.depthFormat);
+                pipelineRenderingCreateInfo.depthAttachmentFormat(engine.swapchain.depthFormat);
             }
             pipelineInfo.pNext(pipelineRenderingCreateInfo);
 

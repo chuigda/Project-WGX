@@ -16,7 +16,6 @@ import tech.icey.vk4j.bitmask.*;
 import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
 import tech.icey.vk4j.handle.*;
-import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
@@ -50,7 +49,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
             int width = pWidthHeight.read(0);
             int height = pWidthHeight.read(1);
-            swapchainOption = Option.some(Swapchain.create(cx, width, height));
+            swapchain = Swapchain.create(cx, width, height);
             logger.info("交换链已创建");
         } catch (RenderException e) {
             logger.severe("无法创建交换链: " + e.getMessage());
@@ -59,7 +58,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    protected void resize(int width, int height) {
+    protected void resize(int width, int height) throws RenderException {
         if (width == 0 || height == 0) {
             pauseRender = true;
             return;
@@ -67,33 +66,24 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         pauseRender = false;
 
         cx.dCmd.vkDeviceWaitIdle(cx.device);
-        if (swapchainOption instanceof Option.Some<Swapchain> someSwapchain) {
-            someSwapchain.value.dispose(cx);
-        }
+        swapchain.dispose(cx);
 
         try {
-            swapchainOption = Option.some(Swapchain.create(cx, width, height));
+            swapchain = Swapchain.create(cx, width, height);
             logger.info("交换链已重新创建");
         } catch (RenderException e) {
             logger.severe("无法重新创建交换链: " + e.getMessage());
-            logger.warning("程序会继续运行, 但渲染结果将不会被输出");
-            swapchainOption = Option.none();
+            throw e;
         }
     }
 
     @Override
     protected void renderFrame() throws RenderException {
         objectCreate.handleObjectUploading();
-
-        if (!(swapchainOption instanceof Option.Some<Swapchain> someSwapchain)) {
-            return;
-        }
-
         if (pauseRender) {
             return;
         }
 
-        Swapchain swapchain = someSwapchain.value;
         VkFence inFlightFence = cx.inFlightFences[currentFrameIndex];
         VkSemaphore imageAvailableSemaphore = cx.imageAvailableSemaphores[currentFrameIndex];
         VkSemaphore renderFinishedSemaphore = cx.renderFinishedSemaphores[currentFrameIndex];
@@ -175,9 +165,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     @Override
     protected void close() {
         cx.dCmd.vkDeviceWaitIdle(cx.device);
-        if (swapchainOption instanceof Option.Some<Swapchain> someSwapchain) {
-            someSwapchain.value.dispose(cx);
-        }
+        swapchain.dispose(cx);
 
         for (Resource.Pipeline pipeline : pipelines.values()) {
             pipeline.dispose(cx);
@@ -276,21 +264,21 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             attachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
             attachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE);
             VkRenderingInfo renderingInfo = VkRenderingInfo.allocate(arena);
-            renderingInfo.renderArea().extent(swapchainOption.get().swapExtent);
+            renderingInfo.renderArea().extent(swapchain.swapExtent);
             renderingInfo.layerCount(1);
             renderingInfo.colorAttachmentCount(1);
             renderingInfo.pColorAttachments(attachmentInfo);
             VkViewport viewport = VkViewport.allocate(arena);
             viewport.x(0.0f);
             viewport.y(0.0f);
-            viewport.width(swapchainOption.get().swapExtent.width());
-            viewport.height(swapchainOption.get().swapExtent.height());
+            viewport.width(swapchain.swapExtent.width());
+            viewport.height(swapchain.swapExtent.height());
             viewport.minDepth(0.0f);
             viewport.maxDepth(1.0f);
             VkRect2D scissor = VkRect2D.allocate(arena);
             scissor.offset().x(0);
             scissor.offset().y(0);
-            scissor.extent(swapchainOption.get().swapExtent);
+            scissor.extent(swapchain.swapExtent);
 
             for (RenderTaskInfo task : tasks.values()) {
                 Resource.Pipeline pipeline = Objects.requireNonNull(pipelines.get(task.pipelineHandle.getId()));
@@ -345,7 +333,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private final PipelineCreate pipelineCreate;
 
     VulkanRenderEngineContext cx;
-    Option<Swapchain> swapchainOption = Option.none();
+    Swapchain swapchain;
     int currentFrameIndex = 0;
     boolean pauseRender = false;
 
