@@ -69,7 +69,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
         pauseRender = false;
 
-        cx.dCmd.vkDeviceWaitIdle(cx.device);
+        cx.waitDeviceIdle();
         swapchain.dispose(cx);
 
         try {
@@ -170,7 +170,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     protected void close() {
-        cx.dCmd.vkDeviceWaitIdle(cx.device);
+        cx.waitDeviceIdle();
         swapchain.dispose(cx);
 
         for (Resource.Pipeline pipeline : pipelines.values()) {

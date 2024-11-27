@@ -157,8 +157,24 @@ public final class VulkanRenderEngineContext {
         }
     }
 
+    public void waitDeviceIdle() {
+        // Vulkan 文档表明 `vkDeviceWaitIdle` 需要外部同步所有从设备上创建的队列，妈的
+        synchronized (graphicsQueue) {
+            synchronized (presentQueue) {
+                if (dedicatedTransferQueue instanceof Option.Some<VkQueue> someDedicatedTransferQueue) {
+                    synchronized (someDedicatedTransferQueue.value) {
+                        dCmd.vkDeviceWaitIdle(device);
+                    }
+                }
+                else {
+                    dCmd.vkDeviceWaitIdle(device);
+                }
+            }
+        }
+    }
+
     public void dispose() {
-        dCmd.vkDeviceWaitIdle(device);
+        waitDeviceIdle();
 
         vma.vmaDestroyAllocator(vmaAllocator);
         if (transferCommandPool instanceof Option.Some<VkCommandPool> someTransferCommandPool) {
