@@ -17,6 +17,7 @@ import tech.icey.xjbutil.functional.Action2;
 import tech.icey.xjbutil.sync.Oneshot;
 
 import java.lang.foreign.Arena;
+import java.util.List;
 
 public final class GLES2RenderEngine extends AbstractRenderEngine {
     public GLES2RenderEngine(
@@ -67,6 +68,11 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
 
     @Override
     public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
+        return null;
+    }
+
+    @Override
+    public List<ObjectHandle> createObject(List<ObjectCreateInfo> infos) throws RenderException {
         return null;
     }
 

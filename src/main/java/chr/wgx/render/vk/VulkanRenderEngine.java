@@ -23,6 +23,7 @@ import tech.icey.xjbutil.functional.Action2;
 
 import java.lang.foreign.Arena;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -42,6 +43,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     @Override
     protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
         cx = VulkanRenderEngineContext.create(glfw, window);
+
+        logger.info("cx.graphicsQueueFamilyIndex == cx.presentQueueFamilyIndex ? " + (cx.graphicsQueueFamilyIndex == cx.presentQueueFamilyIndex));
+        logger.info("cx.graphicsQueue == cx.presentQueue ? " + (cx.graphicsQueue.segment() == cx.presentQueue.segment()));
 
         try (Arena arena = Arena.ofConfined()) {
             IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
@@ -153,6 +157,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             synchronized (cx.presentQueue) {
                 result = cx.dCmd.vkQueuePresentKHR(cx.presentQueue, presentInfo);
             }
+
             if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR) {
                 return;
             } else if (result != VkResult.VK_SUCCESS && result != VkResult.VK_SUBOPTIMAL_KHR) {
@@ -182,6 +187,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     @Override
     public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
         return objectCreate.createObjectImpl(info);
+    }
+
+    @Override
+    public List<ObjectHandle> createObject(List<ObjectCreateInfo> infos) throws RenderException {
+        return objectCreate.createObjectImpl(infos);
     }
 
     @Override

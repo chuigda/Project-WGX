@@ -9,6 +9,7 @@ import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractRenderEngine {
@@ -64,6 +65,7 @@ public abstract class AbstractRenderEngine {
     protected abstract void close();
 
     public abstract ObjectHandle createObject(ObjectCreateInfo info) throws RenderException;
+    public abstract List<ObjectHandle> createObject(List<ObjectCreateInfo> info) throws RenderException;
     public abstract AttachmentHandle.Color createColorAttachment(AttachmentCreateInfo.Color i) throws RenderException;
     public abstract AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth i) throws RenderException;
     public abstract Pair<AttachmentHandle.Color, AttachmentHandle.Depth> getDefaultAttachments();
