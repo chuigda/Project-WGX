@@ -1,6 +1,5 @@
 package chr.wgx.render.info;
 
-import chr.wgx.render.common.Color;
 import tech.icey.xjbutil.container.Option;
 
 import java.util.List;

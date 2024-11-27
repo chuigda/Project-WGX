@@ -1,10 +1,6 @@
 package chr.wgx.ui;
 
 import javax.swing.*;
-import javax.swing.text.StyleContext;
-import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
 
 public final class SwingUtil {
     public static void createTextAreaMenu(JTextArea textArea) {

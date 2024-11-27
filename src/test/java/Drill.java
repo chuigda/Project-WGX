@@ -1,6 +1,7 @@
 import chr.wgx.Config;
 import com.google.gson.Gson;
 
+@SuppressWarnings("CallToPrintStackTrace")
 public final class Drill {
     public static void main(String[] args) {
         var config = new Config();

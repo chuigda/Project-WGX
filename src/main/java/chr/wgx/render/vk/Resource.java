@@ -1,7 +1,6 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
-import chr.wgx.render.info.ObjectCreateInfo;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.VertexInputInfo;
 import org.jetbrains.annotations.Nullable;

@@ -24,14 +24,12 @@ public final class ControlWindow extends JFrame {
 
         JMenuItem pluginManagementItem = new JMenuItem("插件管理");
         systemMenu.add(pluginManagementItem);
-        pluginManagementItem.addActionListener(_ -> {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "插件系统尚未加载，请稍等片刻",
-                    "提示",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-        });
+        pluginManagementItem.addActionListener(_ -> JOptionPane.showMessageDialog(
+                this,
+                "插件系统尚未加载，请稍等片刻",
+                "提示",
+                JOptionPane.INFORMATION_MESSAGE
+        ));
 
         JMenu logLevelSubMenu = new JMenu("日志级别");
         systemMenu.add(logLevelSubMenu);
@@ -123,15 +121,13 @@ public final class ControlWindow extends JFrame {
                     long freeMemory = runtime.freeMemory() / (1024 * 1024);
                     long maxMemory = runtime.maxMemory() / (1024 * 1024);
                     long usedMemory = totalMemory - freeMemory;
-                    SwingUtilities.invokeLater(() -> {
-                        statusLabel.setText(String.format(
-                                "JVM 内存: 当前 %d, 最大 %d, 已使用 %d, 空闲 %d (MiB)",
-                                totalMemory,
-                                maxMemory,
-                                usedMemory,
-                                freeMemory
-                        ));
-                    });
+                    SwingUtilities.invokeLater(() -> statusLabel.setText(String.format(
+                            "JVM 内存: 当前 %d, 最大 %d, 已使用 %d, 空闲 %d (MiB)",
+                            totalMemory,
+                            maxMemory,
+                            usedMemory,
+                            freeMemory
+                    )));
                 } catch (InterruptedException ignored) {}
             }
         }).start();
