@@ -22,9 +22,12 @@ import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.Arena;
+import java.util.concurrent.Semaphore;
 
 public final class VulkanRenderEngineContext {
     public final Arena autoArena = Arena.ofAuto();
+    /// 同一帧里最多只允许在渲染线程外额外提交 {@code 4} 个指令缓冲
+    public final Semaphore graphicsQueueSubmitPermission = new Semaphore(4);
 
     public final StaticCommands sCmd;
     public final EntryCommands eCmd;
@@ -145,7 +148,13 @@ public final class VulkanRenderEngineContext {
     }
 
     public void executeGraphicsCommand(Action1<VkCommandBuffer> recordCommandBuffer) throws RenderException {
-        executeOnceCommand(graphicsOnceCommandPool, graphicsQueue, recordCommandBuffer);
+        graphicsQueueSubmitPermission.acquireUninterruptibly();
+        try {
+            executeOnceCommand(graphicsOnceCommandPool, graphicsQueue, recordCommandBuffer);
+        }
+        finally {
+            graphicsQueueSubmitPermission.release();
+        }
     }
 
     public void dispose() {
