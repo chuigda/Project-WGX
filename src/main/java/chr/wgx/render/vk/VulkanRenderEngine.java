@@ -83,9 +83,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     protected void renderFrame() throws RenderException {
-        cx.graphicsQueueSubmitPermission.drainPermits();
-        cx.graphicsQueueSubmitPermission.release(4);
-
         if (pauseRender) {
             return;
         }
