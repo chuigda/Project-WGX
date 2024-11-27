@@ -96,7 +96,7 @@ public final class ObjectCreate {
                             1, barrier,
                             0, null
                     );
-                }, Option.none(), Option.none(), Option.none(), true);
+                });
 
                 Pair<Oneshot.Sender<Boolean>, Oneshot.Receiver<Boolean>> channel = Oneshot.create();
                 synchronized (unAcquiredObjects) {
@@ -169,17 +169,8 @@ public final class ObjectCreate {
         }
 
         new Thread(() -> {
-            VkFence fence = null;
             try (Arena arena = Arena.ofConfined()) {
-                VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
-                VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
-                @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
-                if (result != VkResult.VK_SUCCESS) {
-                    throw new RenderException("无法创建围栏, 错误代码: " + VkResult.explain(result));
-                }
-                fence = pFence.read();
-
-                VkCommandBuffer acquireCommandBuffer = cx.executeGraphicsCommand(cmd -> {
+                cx.executeGraphicsCommand(cmd -> {
                     for (UnacquiredObject object : objectsToAcquire) {
                         VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
                         barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
@@ -199,18 +190,10 @@ public final class ObjectCreate {
                                 0, null
                         );
                     }
-                }, Option.none(), Option.none(), Option.some(fence), false).get();
+                });
 
-                // TODO handle VK_DEVICE_LOST?
-                cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
                 for (UnacquiredObject object : objectsToAcquire) {
                     object.onTransferComplete.send(true);
-                }
-
-                VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
-                pCommandBuffer.write(acquireCommandBuffer);
-                synchronized (cx.graphicsOnceCommandPool) {
-                    cx.dCmd.vkFreeCommandBuffers(cx.device, cx.graphicsOnceCommandPool, 1, pCommandBuffer);
                 }
             } catch (RenderException e) {
                 logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
@@ -219,9 +202,6 @@ public final class ObjectCreate {
                     object.buffer.dispose(cx);
                 }
             } finally {
-                if (fence != null) {
-                    cx.dCmd.vkDestroyFence(cx.device, fence, null);
-                }
                 hasAcquireOrUploadJob.set(false);
             }
         }).start();
@@ -244,34 +224,17 @@ public final class ObjectCreate {
         }
 
         new Thread(() -> {
-            VkFence fence = null;
             try (Arena arena = Arena.ofConfined()) {
-                VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
-                VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
-                @enumtype(VkResult.class) int result = cx.dCmd.vkCreateFence(cx.device, fenceCreateInfo, null, pFence);
-                if (result != VkResult.VK_SUCCESS) {
-                    throw new RenderException("无法创建围栏, 错误代码: " + VkResult.explain(result));
-                }
-                fence = pFence.read();
-
-                VkCommandBuffer uploadCommandBuffer = cx.executeGraphicsCommand(cmd -> {
+                cx.executeGraphicsCommand(cmd -> {
                     for (UnUploadedObject object : objectsToUpload) {
                         VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
                         copyRegion.size(object.bufferSize);
                         cx.dCmd.vkCmdCopyBuffer(cmd, object.stagingBuffer.buffer, object.vertexBuffer.buffer, 1, copyRegion);
                     }
-                }, Option.none(), Option.none(), Option.some(fence), false).get();
+                });
 
-                // TODO handle VK_DEVICE_LOST?
-                cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
                 for (UnUploadedObject object : objectsToUpload) {
                     object.onUploadComplete.send(true);
-                }
-
-                VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
-                pCommandBuffer.write(uploadCommandBuffer);
-                synchronized (cx.graphicsOnceCommandPool) {
-                    cx.dCmd.vkFreeCommandBuffers(cx.device, cx.graphicsOnceCommandPool, 1, pCommandBuffer);
                 }
             } catch (RenderException e) {
                 logger.severe("无法执行缓冲区传输任务: " + e.getMessage());
@@ -281,9 +244,6 @@ public final class ObjectCreate {
                     object.vertexBuffer.dispose(cx);
                 }
             } finally {
-                if (fence != null) {
-                    cx.dCmd.vkDestroyFence(cx.device, fence, null);
-                }
                 hasAcquireOrUploadJob.set(false);
             }
         }).start();

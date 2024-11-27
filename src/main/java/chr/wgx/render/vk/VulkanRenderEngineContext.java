@@ -5,16 +5,14 @@ import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.IntBuffer;
+import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.bitmask.VkCommandBufferUsageFlags;
 import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.command.DeviceCommands;
 import tech.icey.vk4j.command.EntryCommands;
 import tech.icey.vk4j.command.InstanceCommands;
 import tech.icey.vk4j.command.StaticCommands;
-import tech.icey.vk4j.datatype.VkCommandBufferAllocateInfo;
-import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
-import tech.icey.vk4j.datatype.VkShaderModuleCreateInfo;
-import tech.icey.vk4j.datatype.VkSubmitInfo;
+import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.VkCommandBufferLevel;
 import tech.icey.vk4j.enumtype.VkResult;
 import tech.icey.vk4j.handle.*;
@@ -136,13 +134,7 @@ public final class VulkanRenderEngineContext {
         }
     }
 
-    public void executeTransferCommand(
-            Action1<VkCommandBuffer> recordCommandBuffer,
-            Option<VkSemaphore.Buffer> pWaitSemaphores,
-            Option<VkSemaphore.Buffer> pSignalSemaphores,
-            Option<VkFence> fence,
-            boolean waitQueueIdle
-    ) throws RenderException {
+    public void executeTransferCommand(Action1<VkCommandBuffer> recordCommandBuffer) throws RenderException {
         if (!(transferCommandPool instanceof Option.Some<VkCommandPool> someCommandPool)) {
             throw new IllegalStateException("未启用专用传输队列");
         }
@@ -153,29 +145,15 @@ public final class VulkanRenderEngineContext {
         executeOnceCommand(
                 commandPool1,
                 queue,
-                recordCommandBuffer,
-                pWaitSemaphores,
-                pSignalSemaphores,
-                fence,
-                waitQueueIdle
+                recordCommandBuffer
         );
     }
 
-    public Option<VkCommandBuffer> executeGraphicsCommand(
-            Action1<VkCommandBuffer> recordCommandBuffer,
-            Option<VkSemaphore.Buffer> pWaitSemaphores,
-            Option<VkSemaphore.Buffer> pSignalSemaphores,
-            Option<VkFence> fence,
-            boolean waitQueueIdle
-    ) throws RenderException {
-        return executeOnceCommand(
+    public void executeGraphicsCommand(Action1<VkCommandBuffer> recordCommandBuffer) throws RenderException {
+        executeOnceCommand(
                 graphicsOnceCommandPool,
                 graphicsQueue,
-                recordCommandBuffer,
-                pWaitSemaphores,
-                pSignalSemaphores,
-                fence,
-                waitQueueIdle
+                recordCommandBuffer
         );
     }
 
@@ -206,15 +184,14 @@ public final class VulkanRenderEngineContext {
     }
 
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    private Option<VkCommandBuffer> executeOnceCommand(
+    private void executeOnceCommand(
             VkCommandPool commandPool1,
             VkQueue queue,
-            Action1<VkCommandBuffer> recordCommandBuffer,
-            Option<VkSemaphore.Buffer> pWaitSemaphores,
-            Option<VkSemaphore.Buffer> pSignalSemaphores,
-            Option<VkFence> fence,
-            boolean waitQueueIdle
+            Action1<VkCommandBuffer> recordCommandBuffer
     ) throws RenderException {
+        VkCommandBuffer commandBuffer = null;
+        VkFence fence = null;
+
         try (Arena arena = Arena.ofConfined()) {
             VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.allocate(arena);
             allocateInfo.commandPool(commandPool1);
@@ -222,13 +199,12 @@ public final class VulkanRenderEngineContext {
             allocateInfo.commandBufferCount(1);
 
             VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
-            VkCommandBuffer commandBuffer;
             @enumtype(VkResult.class) int result;
 
             synchronized (commandPool1) {
                 result = dCmd.vkAllocateCommandBuffers(device, allocateInfo, pCommandBuffer);
                 if (result != VkResult.VK_SUCCESS) {
-                    throw new RenderException("无法为传输操作分配指令缓冲, 错误代码: " + VkResult.explain(result));
+                    throw new RenderException("无法为操作分配指令缓冲, 错误代码: " + VkResult.explain(result));
                 }
                 commandBuffer = pCommandBuffer.read();
 
@@ -236,47 +212,52 @@ public final class VulkanRenderEngineContext {
                 beginInfo.flags(VkCommandBufferUsageFlags.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
                 result = dCmd.vkBeginCommandBuffer(commandBuffer, beginInfo);
                 if (result != VkResult.VK_SUCCESS) {
-                    throw new RenderException("无法开始记录传输操作指令缓冲, 错误代码: " + VkResult.explain(result));
+                    throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));
                 }
 
                 recordCommandBuffer.apply(commandBuffer);
 
                 result = dCmd.vkEndCommandBuffer(commandBuffer);
                 if (result != VkResult.VK_SUCCESS) {
-                    throw new RenderException("无法结束传输操作指令缓冲记录, 错误代码: " + VkResult.explain(result));
+                    throw new RenderException("无法结束指令缓冲记录, 错误代码: " + VkResult.explain(result));
                 }
             }
 
             VkSubmitInfo submitInfo = VkSubmitInfo.allocate(arena);
             submitInfo.commandBufferCount(1);
             submitInfo.pCommandBuffers(pCommandBuffer);
-            if (pWaitSemaphores instanceof Option.Some<VkSemaphore.Buffer> someWaitSemaphores) {
-                submitInfo.waitSemaphoreCount((int) someWaitSemaphores.value.size());
-                submitInfo.pWaitSemaphores(someWaitSemaphores.value);
+
+            VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
+            VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
+            result = dCmd.vkCreateFence(device, fenceCreateInfo, null, pFence);
+            if (result != VkResult.VK_SUCCESS) {
+                throw new RenderException("无法创建指令缓冲同步信栅栏, 错误代码: " + VkResult.explain(result));
             }
-            if (pSignalSemaphores instanceof Option.Some<VkSemaphore.Buffer> someSignalSemaphores) {
-                submitInfo.signalSemaphoreCount((int) someSignalSemaphores.value.size());
-                submitInfo.pSignalSemaphores(someSignalSemaphores.value);
-            }
+            fence = pFence.read();
 
             synchronized (queue) {
-                result = dCmd.vkQueueSubmit(queue, 1, submitInfo, fence.nullable());
+                result = dCmd.vkQueueSubmit(queue, 1, submitInfo, fence);
                 if (result != VkResult.VK_SUCCESS) {
-                    throw new RenderException("无法提交传输操作指令缓冲, 错误代码: " + VkResult.explain(result));
-                }
-
-                if (waitQueueIdle) {
-                    dCmd.vkQueueWaitIdle(queue);
+                    throw new RenderException("无法提交指令缓冲, 错误代码: " + VkResult.explain(result));
                 }
             }
 
-            if (waitQueueIdle) {
-                synchronized (commandPool1) {
+            result = dCmd.vkWaitForFences(device, 1, pFence, Constants.VK_TRUE, -1);
+            if (result != VkResult.VK_SUCCESS) {
+                throw new RenderException("无法等待操作指令缓冲完成, 错误代码: " + VkResult.explain(result));
+            }
+        }
+        finally {
+            if (fence != null) {
+                dCmd.vkDestroyFence(device, fence, null);
+            }
+
+            if (commandBuffer != null) {
+                try (Arena arena = Arena.ofConfined()) {
+                    VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
+                    pCommandBuffer.write(commandBuffer);
                     dCmd.vkFreeCommandBuffers(device, commandPool1, 1, pCommandBuffer);
                 }
-                return Option.none();
-            } else {
-                return Option.some(commandBuffer);
             }
         }
     }
