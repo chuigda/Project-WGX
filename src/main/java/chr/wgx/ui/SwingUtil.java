@@ -1,6 +1,7 @@
 package chr.wgx.ui;
 
 import javax.swing.*;
+import java.awt.event.ActionListener;
 
 public final class SwingUtil {
     public static void createTextAreaMenu(JTextArea textArea) {
@@ -24,5 +25,17 @@ public final class SwingUtil {
         }
 
         textArea.setComponentPopupMenu(menu);
+    }
+
+    public static JPanel createGroupBox(String title) {
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createTitledBorder(title));
+        return panel;
+    }
+
+    public static void removeAllActionListeners(JButton component) {
+        for (ActionListener listener : component.getActionListeners()) {
+            component.removeActionListener(listener);
+        }
     }
 }
