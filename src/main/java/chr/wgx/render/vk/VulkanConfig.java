@@ -13,7 +13,7 @@ public final class VulkanConfig {
     /// - `0`: 强制禁用垂直同步
     /// - `1`: 若 `VK_PRESENT_MODE_MAILBOX_KHR` 模式可用，则不启用垂直同步
     /// - `2`: 强制启用垂直同步
-    public int vsync = 1;
+    public int vsync = 2;
 
     /// 帧率上限
     public int maxFPS = 0;
