@@ -7,12 +7,10 @@ import chr.wgx.render.handle.ObjectHandle;
 import chr.wgx.render.handle.RenderPipelineHandle;
 import chr.wgx.render.handle.RenderTaskHandle;
 import chr.wgx.render.info.*;
-import tech.icey.panama.buffer.FloatBuffer;
 import tech.icey.xjbutil.container.Option;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.List;
 import java.util.logging.Logger;
@@ -20,7 +18,7 @@ import java.util.logging.Logger;
 public class DrillCreateObject {
     public static void createObjectInThread(AbstractRenderEngine engine) {
         new Thread(() -> {
-            try (Arena arena = Arena.ofConfined()) {
+            try {
                 VertexInputInfo vii = new VertexInputInfo(List.of(
                         new VertexInputInfo.AttributeIn("position", CGType.Vec2),
                         new VertexInputInfo.AttributeIn("color", CGType.Vec3)
