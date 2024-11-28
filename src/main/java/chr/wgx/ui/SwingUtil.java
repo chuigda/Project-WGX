@@ -2,6 +2,7 @@ package chr.wgx.ui;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
+import java.awt.*;
 import java.awt.event.ActionListener;
 
 public final class SwingUtil {
@@ -30,7 +31,10 @@ public final class SwingUtil {
 
     public static JPanel createGroupBox(String title) {
         JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder(title));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(title),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+        ));
         return panel;
     }
 
@@ -38,5 +42,44 @@ public final class SwingUtil {
         for (ActionListener listener : component.getActionListeners()) {
             component.removeActionListener(listener);
         }
+    }
+
+    public static void addConfigItemFast(
+            JPanel panel,
+            int y,
+            String label,
+            JComponent field,
+            String tooltip
+    ) {
+        GridBagConstraints cLeft = new GridBagConstraints();
+        cLeft.fill = GridBagConstraints.HORIZONTAL;
+        cLeft.weightx = 1;
+        cLeft.gridx = 0;
+        cLeft.anchor = GridBagConstraints.LINE_START;
+        GridBagConstraints cRight = new GridBagConstraints();
+        cRight.fill = GridBagConstraints.HORIZONTAL;
+        cRight.weightx = 1;
+        cRight.gridx = 2;
+        cRight.anchor = GridBagConstraints.LINE_END;
+
+        JLabel jLabel = new JLabel(label);
+        cLeft.gridy = y;
+        cRight.gridy = y;
+        panel.add(jLabel, cLeft);
+        panel.add(field, cRight);
+
+        if (!tooltip.isEmpty()) {
+            jLabel.setToolTipText(tooltip);
+            field.setToolTipText(tooltip);
+        }
+    }
+
+    public static void addConfigItemFast(
+            JPanel panel,
+            int y,
+            String label,
+            JComponent field
+    ) {
+        addConfigItemFast(panel, y, label, field, "");
     }
 }

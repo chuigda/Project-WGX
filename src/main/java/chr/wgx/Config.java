@@ -34,6 +34,8 @@ public final class Config {
         return gson.toJson(this);
     }
 
+    public static final Config DEFAULT = new Config();
+
     public static Option<Config> GLOBAL_CONFIG = Option.none();
 
     public static Config config() {

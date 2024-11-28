@@ -11,6 +11,7 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 
 public final class LicenseWindow extends JFrame {
+    @SuppressWarnings("ClassCanBeRecord")
     public static final class License {
         public final String licenseName;
         public final String brief;

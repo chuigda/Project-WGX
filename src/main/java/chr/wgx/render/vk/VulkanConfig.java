@@ -38,4 +38,6 @@ public final class VulkanConfig {
 
     /// 是否总是使用图形队列进行传输操作（即使专门的传输队列可用）
     public boolean alwaysUploadWithGraphicsQueue = false;
+
+    public static final VulkanConfig DEFAULT = new VulkanConfig();
 }
