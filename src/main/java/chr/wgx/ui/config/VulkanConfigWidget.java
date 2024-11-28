@@ -20,9 +20,9 @@ public final class VulkanConfigWidget extends JPanel {
                 this,
                 0,
                 "物理设备 ID",
-                physicalDeviceIDField,
+                physicalDeviceSelectionButton,
                 "在系统安装有有多个支持 Vulkan 的物理设备时，指定使用的物理设备 ID\n" +
-                "填 0 表示自动选择找到的第一个物理设备"
+                "若不指定使用的物理设备，则会自动选择找到的第一个支持 Vulkan 的物理设备"
         );
         SwingUtil.addConfigItemFast(
                 this,
@@ -64,7 +64,7 @@ public final class VulkanConfigWidget extends JPanel {
         );
     }
 
-    final JTextField physicalDeviceIDField = new JTextField(Integer.toString(VulkanConfig.DEFAULT.physicalDeviceID));
+    final JButton physicalDeviceSelectionButton = new JButton("未指定");
     final JComboBox<String> validationLayersComboBox = new JComboBox<>(new String[]{ "关闭", "启用" });
     final JComboBox<String> vsyncComboBox = new JComboBox<>(new String[]{
             "禁用垂直同步",
