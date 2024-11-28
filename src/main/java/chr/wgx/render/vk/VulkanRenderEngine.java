@@ -44,9 +44,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
         cx = VulkanRenderEngineContext.create(glfw, window);
 
-        logger.info("cx.graphicsQueueFamilyIndex == cx.presentQueueFamilyIndex ? " + (cx.graphicsQueueFamilyIndex == cx.presentQueueFamilyIndex));
-        logger.info("cx.graphicsQueue == cx.presentQueue ? " + (cx.graphicsQueue.segment().address() == cx.presentQueue.segment().address()));
-
         try (Arena arena = Arena.ofConfined()) {
             IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
             glfw.glfwGetFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));

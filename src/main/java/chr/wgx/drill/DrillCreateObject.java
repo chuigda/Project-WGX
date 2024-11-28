@@ -13,6 +13,7 @@ import tech.icey.xjbutil.container.Option;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -26,12 +27,8 @@ public class DrillCreateObject {
                 ));
 
                 logger.info("运行测试项目: 在线程中创建对象");
-                FloatBuffer buffer = FloatBuffer.allocate(arena, VERTICES.length);
-                for (int i = 0; i < VERTICES.length; i++) {
-                    buffer.write(i, VERTICES[i]);
-                }
-
-                ObjectCreateInfo oci = new ObjectCreateInfo(vii, buffer);
+                MemorySegment s = MemorySegment.ofArray(VERTICES);
+                ObjectCreateInfo oci = new ObjectCreateInfo(vii, s);
                 ObjectHandle handle = engine.createObject(oci);
                 logger.info("对象已创建: " + handle);
 

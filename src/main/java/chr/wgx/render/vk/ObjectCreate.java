@@ -33,7 +33,7 @@ public final class ObjectCreate {
 
         List<Long> vertexCounts = info.stream()
                 .map(i -> {
-                    long bufferSize = i.pData.segment().byteSize();
+                    long bufferSize = i.pData.byteSize();
                     assert bufferSize % i.vertexInputInfo.stride == 0;
                     return bufferSize / i.vertexInputInfo.stride;
                 })
@@ -46,7 +46,7 @@ public final class ObjectCreate {
             for (ObjectCreateInfo oci : info) {
                 Resource.Buffer stagingBuffer = Resource.Buffer.create(
                         cx,
-                        oci.pData.segment().byteSize(),
+                        oci.pData.byteSize(),
                         VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                         VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
                         null
@@ -61,13 +61,13 @@ public final class ObjectCreate {
                 if (result != VkResult.VK_SUCCESS) {
                     throw new RenderException("无法映射缓冲区内存, 错误代码: " + VkResult.explain(result));
                 }
-                MemorySegment pData = ppData.read().reinterpret(oci.pData.segment().byteSize());
-                pData.copyFrom(oci.pData.segment());
+                MemorySegment pData = ppData.read().reinterpret(oci.pData.byteSize());
+                pData.copyFrom(oci.pData);
                 cx.vma.vmaUnmapMemory(cx.vmaAllocator, stagingBuffer.allocation);
 
                 Resource.Buffer vertexBuffer = Resource.Buffer.create(
                         cx,
-                        oci.pData.segment().byteSize(),
+                        oci.pData.byteSize(),
                         VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT
                                 | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                         0,
@@ -85,7 +85,7 @@ public final class ObjectCreate {
                         Resource.Buffer stagingBuffer = stagingBuffers.get(i);
                         Resource.Buffer vertexBuffer = vertexBuffers.get(i);
 
-                        copyRegion.size(oci.pData.segment().byteSize());
+                        copyRegion.size(oci.pData.byteSize());
                         cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, vertexBuffer.buffer, 1, copyRegion);
 
                         barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
@@ -94,7 +94,7 @@ public final class ObjectCreate {
                         barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
                         barrier.buffer(vertexBuffer.buffer);
                         barrier.offset(0);
-                        barrier.size(oci.pData.segment().byteSize());
+                        barrier.size(oci.pData.byteSize());
                         cx.dCmd.vkCmdPipelineBarrier(
                                 cmd,
                                 VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -119,7 +119,7 @@ public final class ObjectCreate {
                         barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
                         barrier.buffer(vertexBuffer.buffer);
                         barrier.offset(0);
-                        barrier.size(oci.pData.segment().byteSize());
+                        barrier.size(oci.pData.byteSize());
                         cx.dCmd.vkCmdPipelineBarrier(
                                 cmd,
                                 VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -140,7 +140,7 @@ public final class ObjectCreate {
                         Resource.Buffer stagingBuffer = stagingBuffers.get(i);
                         Resource.Buffer vertexBuffer = vertexBuffers.get(i);
 
-                        copyRegion.size(oci.pData.segment().byteSize());
+                        copyRegion.size(oci.pData.byteSize());
                         cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, vertexBuffer.buffer, 1, copyRegion);
                     }
                 });
