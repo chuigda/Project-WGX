@@ -1,0 +1,11 @@
+= Project-WGX
+author: Chuigda Whitegive <icey@icey.tech>
+
+尝试用 Java, Vulkan 和 OpenGL ES2 画一个可爱（大概吧）的小机器人。
+
+[quote]
+____
+此项目还在施工中，预计 2025 年 5 月之前完成全部功能。
+
+前代版本：link:https://github.com/chuigda/Project-WG[Project-WG]
+____
