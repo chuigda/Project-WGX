@@ -125,9 +125,16 @@ public final class LicenseWindow extends JFrame {
     }
 
     private void updateWidgets() {
-        licenseNameLabel.setText(licenses.get(currentLicense).licenseName);
+        licenseNameLabel.setText(String.format(
+                "[%d/%d] %s",
+                currentLicense + 1,
+                licenses.size(),
+                licenses.get(currentLicense).licenseName
+        ));
         briefTextArea.setText(licenses.get(currentLicense).brief);
         fullTextArea.setText(licenses.get(currentLicense).fullText);
+        briefTextArea.setCaretPosition(0);
+        fullTextArea.setCaretPosition(0);
 
         leftButton.setEnabled(currentLicense != 0);
 

@@ -1,10 +1,11 @@
 package chr.wgx.ui;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.event.ActionListener;
 
 public final class SwingUtil {
-    public static void createTextAreaMenu(JTextArea textArea) {
+    public static void createTextAreaMenu(JTextComponent textArea) {
         JPopupMenu menu = new JPopupMenu();
         JMenuItem cut = new JMenuItem("剪切");
         JMenuItem copy = new JMenuItem("复制");
