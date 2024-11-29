@@ -16,7 +16,9 @@ import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 import tech.icey.xjbutil.sync.Oneshot;
 
+import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
+import java.util.List;
 
 public final class GLES2RenderEngine extends AbstractRenderEngine {
     public GLES2RenderEngine(
@@ -71,22 +73,27 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public AttachmentHandle.Color createColorAttachment(AttachmentCreateInfo.Color i) throws RenderException {
+    public List<ObjectHandle> createObject(List<ObjectCreateInfo> infos) throws RenderException {
         return null;
     }
 
     @Override
-    public AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth i) throws RenderException {
+    public Pair<ColorAttachmentHandle, SamplerHandle> createColorAttachment(AttachmentCreateInfo i) throws RenderException {
         return null;
     }
 
     @Override
-    public Pair<AttachmentHandle.Color, AttachmentHandle.Depth> getDefaultAttachments() {
+    public DepthAttachmentHandle createDepthAttachment(AttachmentCreateInfo i) throws RenderException {
         return null;
     }
 
     @Override
-    public UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException {
+    public Pair<ColorAttachmentHandle, DepthAttachmentHandle> getDefaultAttachments() {
+        return null;
+    }
+
+    @Override
+    public SamplerHandle createTexture(BufferedImage image) throws RenderException {
         return null;
     }
 

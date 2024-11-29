@@ -2,15 +2,24 @@ package chr.wgx.main;
 
 import chr.wgx.Config;
 import chr.wgx.ui.ControlWindow;
+import chr.wgx.ui.LicenseWindow;
 import chr.wgx.util.JULUtil;
+import chr.wgx.util.ResourceUtil;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
+import javax.swing.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class Main {
     public static void main(String[] args) {
         FlatIntelliJLaf.setup();
+
+        checkLicense();
 
         ControlWindow controlWindow = new ControlWindow();
         controlWindow.setVisible(true);
@@ -44,6 +53,39 @@ public final class Main {
                 sb.append("\n\tat ").append(ste.toString());
             }
             logger.severe(sb.toString());
+        }
+    }
+
+    private static void checkLicense() {
+        Path agreementFilePath = Path.of("LICENSE.AGREED");
+        if (Files.exists(agreementFilePath)) {
+            return;
+        }
+
+        try {
+            String agplBrief = ResourceUtil.readTextFile("/resources/license/brief/LICENSE-AGPLv3.txt");
+            String ccBrief = ResourceUtil.readTextFile("/resources/license/brief/LICENSE-CC-BY-SA-4.0.txt");
+            String agplFullText = ResourceUtil.readTextFile("/resources/license/LICENSE-AGPLv3.txt");
+            String ccFullText = ResourceUtil.readTextFile("/resources/license/LICENSE-CC-BY-SA-4.0.txt");
+
+            LicenseWindow w = new LicenseWindow(
+                    List.of(
+                            new LicenseWindow.License("GNU Affero General Public License v3.0", agplBrief, agplFullText),
+                            new LicenseWindow.License("Creative Commons Attribution-ShareAlike 4.0 International", ccBrief, ccFullText)
+                    )
+            );
+            if (!w.requireAgreement()) {
+                System.exit(0);
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "检测到非法的修改，程序即将退出", "错误", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
+
+        try {
+            Files.createFile(agreementFilePath);
+        } catch (IOException e) {
+            // ignore the error, this is not a fatal error anyway
         }
     }
 

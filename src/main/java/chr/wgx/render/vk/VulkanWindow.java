@@ -1,15 +1,19 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
+import chr.wgx.util.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
+import tech.icey.glfw.datatype.GLFWimage;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.annotation.pointer;
 import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.panama.buffer.IntBuffer;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -52,6 +56,14 @@ public final class VulkanWindow implements AutoCloseable {
             glfw.glfwSetFramebufferSizeCallback(rawWindow, segment);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException("找不到回调函数 VulkanWindow::framebufferSizeCallback", e);
+        }
+
+        try (Arena arena = Arena.ofConfined()) {
+            BufferedImage image = ImageUtil.loadImageFromResource("/resources/icon/icon-v2.png");
+            GLFWimage glfwImage = ImageUtil.image2glfw(arena, image);
+            glfw.glfwSetWindowIcon(rawWindow, 1, glfwImage);
+        } catch (IOException e) {
+            logger.warning("无法加载窗口图标: " + e.getMessage());
         }
     }
 

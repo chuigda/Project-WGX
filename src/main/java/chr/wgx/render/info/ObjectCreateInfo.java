@@ -1,13 +1,13 @@
 package chr.wgx.render.info;
 
-import tech.icey.panama.IPointer;
+import java.lang.foreign.MemorySegment;
 
 @SuppressWarnings("ClassCanBeRecord")
 public final class ObjectCreateInfo {
     public final VertexInputInfo vertexInputInfo;
-    public final IPointer pData;
+    public final MemorySegment pData;
 
-    public ObjectCreateInfo(VertexInputInfo vertexInputInfo, IPointer pData) {
+    public ObjectCreateInfo(VertexInputInfo vertexInputInfo, MemorySegment pData) {
         this.vertexInputInfo = vertexInputInfo;
         this.pData = pData;
     }

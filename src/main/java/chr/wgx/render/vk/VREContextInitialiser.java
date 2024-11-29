@@ -239,8 +239,10 @@ final class VREContextInitialiser {
                 iCmd.vkGetPhysicalDeviceProperties(device, deviceProperties);
                 if (physicalDeviceID == 0 || deviceProperties.deviceID() == physicalDeviceID) {
                     physicalDevice = device;
-                    msaaSampleCountFlags = pickMSAASampleCount(deviceProperties.limits().framebufferColorSampleCounts() &
-                                                          deviceProperties.limits().framebufferDepthSampleCounts());
+                    msaaSampleCountFlags = pickMSAASampleCount(
+                            deviceProperties.limits().framebufferColorSampleCounts() &
+                            deviceProperties.limits().framebufferDepthSampleCounts()
+                    );
                     break;
                 }
             }
