@@ -8,10 +8,7 @@ import tech.icey.gles2.GLES2;
 import tech.icey.gles2.GLES2Constants;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
-import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.ByteBuffer;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.functional.Action0;
@@ -149,7 +146,10 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
             gles.glAttachShader(programHandle, GLES2Utils.loadShader(gles, arena, GLES2Constants.GL_FRAGMENT_SHADER, fragmentShader));
             gles.glLinkProgram(programHandle);
 
-            // TODO: check program compilation status
+            GLES2Utils.checkStatus(GLES2Utils.InformationKind.Program, gles, arena, GLES2Constants.GL_LINK_STATUS, programHandle, msg ->
+                    new RenderException("无法链接程序: " + msg));
+
+            handlerMapping.put(handle, programHandle);
         });
 
         return new RenderPipelineHandle(handle);
