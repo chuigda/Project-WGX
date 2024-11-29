@@ -10,6 +10,7 @@ import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.ByteBuffer;
+import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
@@ -125,26 +126,6 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         return null;
     }
 
-    private static int loadShader(Arena arena, GLES2 gl, @enumtype(GLES2Constants.class) int shaderType, String shaderSource) {
-        var shaderHandle = gl.glCreateShader(shaderType);
-        gl.glShaderSource(shaderHandle, 1, new PointerBuffer(arena.allocateFrom(shaderSource)), null);
-        gl.glCompileShader(shaderHandle);
-
-        // TODO: check shader compilation status
-
-        return shaderHandle;
-    }
-
-    private static void bindAttributes(GLES2 gl, Arena arena, int programHandle, VertexInputInfo info) {
-        int index = 0;
-        for (var attr : info.attributes) {
-            var ty = attr.type;
-            var name = attr.name;
-            gl.glBindAttribLocation(programHandle, index, ByteBuffer.allocateString(arena, name));
-            index = index + ty.glIndexSize;
-        }
-    }
-
     @Override
     public RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException {
         var handle = nextHandle();
@@ -161,11 +142,11 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
             var programHandle = gles.glCreateProgram();
 
             // attributes
-            bindAttributes(gles, arena, programHandle, info.vertexInputInfo);
+            GLES2Utils.bindAttributes(gles, arena, programHandle, info.vertexInputInfo);
 
             // shaders
-            gles.glAttachShader(programHandle, loadShader(arena, gles, GLES2Constants.GL_VERTEX_SHADER, vertexShader));
-            gles.glAttachShader(programHandle, loadShader(arena, gles, GLES2Constants.GL_FRAGMENT_SHADER, fragmentShader));
+            gles.glAttachShader(programHandle, GLES2Utils.loadShader(gles, arena, GLES2Constants.GL_VERTEX_SHADER, vertexShader));
+            gles.glAttachShader(programHandle, GLES2Utils.loadShader(gles, arena, GLES2Constants.GL_FRAGMENT_SHADER, fragmentShader));
             gles.glLinkProgram(programHandle);
 
             // TODO: check program compilation status
