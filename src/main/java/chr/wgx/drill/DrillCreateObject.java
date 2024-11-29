@@ -3,11 +3,10 @@ package chr.wgx.drill;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.CGType;
-import chr.wgx.render.handle.ObjectHandle;
-import chr.wgx.render.handle.RenderPipelineHandle;
-import chr.wgx.render.handle.RenderTaskHandle;
+import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
 import tech.icey.xjbutil.container.Option;
+import tech.icey.xjbutil.container.Pair;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +35,9 @@ public class DrillCreateObject {
                         DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill.frag.spv")
                 );
 
+                Pair<ColorAttachmentHandle, DepthAttachmentHandle> defaultAttachments = engine.getDefaultAttachments();
+                ColorAttachmentHandle defaultColorAttachment = defaultAttachments.first();
+
                 RenderPipelineCreateInfo rpci = new RenderPipelineCreateInfo(
                         vii,
                         List.of(),
@@ -49,7 +51,12 @@ public class DrillCreateObject {
                 logger.info("渲染管线已创建: " + pipelineHandle);
 
                 logger.info("运行测试项目: 创建渲染任务");
-                RenderTaskInfo rti = new RenderTaskInfo(pipelineHandle, List.of(handle));
+                RenderTaskInfo rti = new RenderTaskInfo(
+                        pipelineHandle,
+                        List.of(handle),
+                        List.of(defaultColorAttachment),
+                        Option.none()
+                );
                 RenderTaskHandle renderTaskHandle = engine.createTask(rti);
                 logger.info("渲染任务已创建: " + renderTaskHandle);
             } catch (RenderException e) {
