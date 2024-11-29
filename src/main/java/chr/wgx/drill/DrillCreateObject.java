@@ -52,6 +52,7 @@ public class DrillCreateObject {
 
                 logger.info("运行测试项目: 创建渲染任务");
                 RenderTaskInfo rti = new RenderTaskInfo(
+                        RenderTaskInfo.PRIORITY_NOT_IMPORTANT,
                         pipelineHandle,
                         List.of(handle),
                         List.of(defaultColorAttachment),

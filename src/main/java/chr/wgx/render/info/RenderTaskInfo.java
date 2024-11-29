@@ -11,6 +11,9 @@ import tech.icey.xjbutil.container.Option;
 import java.util.List;
 
 public final class RenderTaskInfo {
+    public static final int PRIORITY_NOT_IMPORTANT = -1;
+
+    public final int priority;
     public final RenderPipelineHandle pipelineHandle;
     public final List<ObjectHandle> objectHandles;
 
@@ -23,6 +26,7 @@ public final class RenderTaskInfo {
     // TODO: attachments, uniforms and push constants
 
     public RenderTaskInfo(
+            int priority,
             RenderPipelineHandle pipelineHandle,
             List<ObjectHandle> objectHandles,
             List<ColorAttachmentHandle> colorAttachments,
@@ -30,6 +34,7 @@ public final class RenderTaskInfo {
             ClearBehavior clearBehavior,
             Option<Color> clearColor
     ) {
+        this.priority = priority;
         this.pipelineHandle = pipelineHandle;
         this.objectHandles = objectHandles;
         this.colorAttachments = colorAttachments;
@@ -39,6 +44,7 @@ public final class RenderTaskInfo {
     }
 
     public RenderTaskInfo(
+            int priority,
             RenderPipelineHandle pipelineHandle,
             List<ObjectHandle> objectHandles,
             List<ColorAttachmentHandle> colorAttachments,
@@ -46,6 +52,7 @@ public final class RenderTaskInfo {
             ClearBehavior clearBehavior
     ) {
         this(
+                priority,
                 pipelineHandle,
                 objectHandles,
                 colorAttachments,
@@ -58,12 +65,14 @@ public final class RenderTaskInfo {
     }
 
     public RenderTaskInfo(
+            int priority,
             RenderPipelineHandle pipelineHandle,
             List<ObjectHandle> objectHandles,
             List<ColorAttachmentHandle> colorAttachments,
             Option<DepthAttachmentHandle> depthAttachment
     ) {
         this(
+                priority,
                 pipelineHandle,
                 objectHandles,
                 colorAttachments,
