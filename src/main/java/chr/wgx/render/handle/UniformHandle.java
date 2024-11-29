@@ -16,10 +16,4 @@ public abstract sealed class UniformHandle extends AbstractHandle {
             super(handle);
         }
     }
-
-    public static final class Sampler2D extends UniformHandle {
-        public Sampler2D(long handle) {
-            super(handle);
-        }
-    }
 }

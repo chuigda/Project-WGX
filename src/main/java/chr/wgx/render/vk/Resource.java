@@ -1,19 +1,18 @@
 package chr.wgx.render.vk;
 
+import chr.wgx.Config;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.VertexInputInfo;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.annotation.pointer;
+import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.bitmask.VkBufferUsageFlags;
 import tech.icey.vk4j.bitmask.VkImageAspectFlags;
 import tech.icey.vk4j.bitmask.VkImageUsageFlags;
 import tech.icey.vk4j.bitmask.VkSampleCountFlags;
-import tech.icey.vk4j.datatype.VkBufferCreateInfo;
-import tech.icey.vk4j.datatype.VkImageCreateInfo;
-import tech.icey.vk4j.datatype.VkImageSubresourceRange;
-import tech.icey.vk4j.datatype.VkImageViewCreateInfo;
+import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
 import tech.icey.vk4j.handle.*;
 import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
@@ -21,6 +20,7 @@ import tech.icey.vma.datatype.VmaAllocationCreateInfo;
 import tech.icey.vma.datatype.VmaAllocationInfo;
 import tech.icey.vma.enumtype.VmaMemoryUsage;
 import tech.icey.vma.handle.VmaAllocation;
+import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 
 import java.lang.foreign.Arena;
@@ -68,6 +68,56 @@ public final class Resource {
         public void dispose(VulkanRenderEngineContext cx) {
             cx.dCmd.vkDestroyImageView(cx.device, imageView, null);
             cx.vma.vmaDestroyImage(cx.vmaAllocator, image, allocation);
+        }
+    }
+
+    public static final class Texture {
+        public final Image image;
+        public final VkSampler sampler;
+
+        private Texture(Image image, VkSampler sampler) {
+            this.image = image;
+            this.sampler = sampler;
+        }
+
+        public void dispose(VulkanRenderEngineContext cx) {
+            image.dispose(cx);
+            cx.dCmd.vkDestroySampler(cx.device, sampler, null);
+        }
+
+        public static Texture create(VulkanRenderEngineContext cx, Image image, int mipLevels) throws RenderException {
+            VkSampler sampler = createSampler(cx, image.image, mipLevels);
+            return new Texture(image, sampler);
+        }
+    }
+
+    public static final class Attachment {
+        public final int width;
+        public final int height;
+
+        public final Image image;
+        public final VkSampler sampler;
+
+        public Attachment(int width, int height, Image image, VkSampler sampler) {
+            this.width = width;
+            this.height = height;
+            this.image = image;
+            this.sampler = sampler;
+        }
+
+        public void dispose(VulkanRenderEngineContext cx) {
+            image.dispose(cx);
+            cx.dCmd.vkDestroySampler(cx.device, sampler, null);
+        }
+
+        public static Attachment create(
+                VulkanRenderEngineContext cx,
+                int width,
+                int height,
+                Image image
+        ) throws RenderException {
+            VkSampler sampler = createSampler(cx, image.image, 0);
+            return new Attachment(width, height, image, sampler);
         }
     }
 
@@ -250,6 +300,41 @@ public final class Resource {
                 throw new RenderException("无法创建 Vulkan 图像视图, 错误代码: " + result);
             }
             return pImageView.read();
+        }
+    }
+
+    public static VkSampler createSampler(
+            VulkanRenderEngineContext cx,
+            VkImage image,
+            int mipLevels
+    ) throws RenderException {
+        VulkanConfig config = Config.config().vulkanConfig;
+
+        try (Arena arena = Arena.ofConfined()) {
+            VkSamplerCreateInfo createInfo = VkSamplerCreateInfo.allocate(arena);
+            createInfo.magFilter(VkFilter.VK_FILTER_LINEAR);
+            createInfo.minFilter(VkFilter.VK_FILTER_LINEAR);
+            createInfo.addressModeU(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT);
+            createInfo.addressModeV(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT);
+            createInfo.addressModeW(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT);
+            createInfo.anisotropyEnable(config.enableAnisotropy ? Constants.VK_TRUE : Constants.VK_FALSE);
+            createInfo.maxAnisotropy(config.anisotropyLevel);
+            createInfo.borderColor(VkBorderColor.VK_BORDER_COLOR_INT_OPAQUE_BLACK);
+            createInfo.unnormalizedCoordinates(Constants.VK_FALSE);
+            createInfo.compareEnable(Constants.VK_FALSE);
+            createInfo.compareOp(VkCompareOp.VK_COMPARE_OP_ALWAYS);
+            createInfo.mipmapMode(VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR);
+            createInfo.mipLodBias(0);
+            createInfo.minLod(0);
+            createInfo.maxLod(mipLevels);
+
+            VkSampler.Buffer pSampler = VkSampler.Buffer.allocate(arena);
+            @enumtype(VkResult.class) int result = cx.dCmd.vkCreateSampler(cx.device, createInfo, null, pSampler);
+            if (result != VkResult.VK_SUCCESS) {
+                throw new RenderException("无法创建 Vulkan 采样器, 错误代码: " + result);
+            }
+
+            return pSampler.read();
         }
     }
 }

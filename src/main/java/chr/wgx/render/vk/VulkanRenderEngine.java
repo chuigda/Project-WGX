@@ -21,6 +21,7 @@ import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
+import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.HashMap;
 import java.util.List;
@@ -194,22 +195,22 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public AttachmentHandle.Color createColorAttachment(AttachmentCreateInfo.Color info) throws RenderException {
+    public Pair<ColorAttachmentHandle, SamplerHandle> createColorAttachment(AttachmentCreateInfo info) throws RenderException {
         return null;
     }
 
     @Override
-    public AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth info) throws RenderException {
+    public DepthAttachmentHandle createDepthAttachment(AttachmentCreateInfo info) throws RenderException {
         return null;
     }
 
     @Override
-    public Pair<AttachmentHandle.Color, AttachmentHandle.Depth> getDefaultAttachments() {
+    public Pair<ColorAttachmentHandle, DepthAttachmentHandle> getDefaultAttachments() {
         return new Pair<>(DEFAULT_COLOR_ATTACHMENT, DEFAULT_DEPTH_ATTACHMENT);
     }
 
     @Override
-    public UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException {
+    public SamplerHandle createTexture(BufferedImage image) throws RenderException {
         return null;
     }
 
@@ -349,11 +350,14 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     final HashMap<Long, Resource.Object> objects = new HashMap<>();
     final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
+    final HashMap<Long, Resource.Texture> colorAttachments = new HashMap<>();
+    final HashMap<Long, Resource.Texture> textures = new HashMap<>();
+    final HashMap<Long, Boolean> samplerIsAttachment = new HashMap<>();
     // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
     final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
 
-    static final AttachmentHandle.Color DEFAULT_COLOR_ATTACHMENT = new AttachmentHandle.Color(0L);
-    static final AttachmentHandle.Depth DEFAULT_DEPTH_ATTACHMENT = new AttachmentHandle.Depth(1L);
+    static final ColorAttachmentHandle DEFAULT_COLOR_ATTACHMENT = new ColorAttachmentHandle(0L);
+    static final DepthAttachmentHandle DEFAULT_DEPTH_ATTACHMENT = new DepthAttachmentHandle(1L);
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }
