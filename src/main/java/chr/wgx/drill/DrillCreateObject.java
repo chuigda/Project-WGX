@@ -24,7 +24,7 @@ public class DrillCreateObject {
                 ));
 
                 logger.info("运行测试项目: 在线程中创建对象");
-                MemorySegment s = MemorySegment.ofArray(VERTICES);
+                MemorySegment s = MemorySegment.ofArray(VERTICES_OBJ1);
                 ObjectCreateInfo oci = new ObjectCreateInfo(vii, s);
                 ObjectHandle handle = engine.createObject(oci);
                 logger.info("对象已创建: " + handle);
@@ -45,7 +45,7 @@ public class DrillCreateObject {
                         Option.some(shaderProgram),
                         Option.none(),
                         1,
-                        false
+                        true
                 );
                 RenderPipelineHandle pipelineHandle = engine.createPipeline(rpci);
                 logger.info("渲染管线已创建: " + pipelineHandle);
@@ -78,11 +78,14 @@ public class DrillCreateObject {
         }
     }
 
-    private static final float[] VERTICES = {
+    private static final float[] VERTICES_OBJ1 = {
             // vec2 position, vec3 color
             -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
             0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
             0.0f, 0.5f,   0.0f, 0.0f, 1.0f,
+    };
+
+    private static final float[] VERTICES_OBJ2 = {
     };
 
     private static final Logger logger = Logger.getLogger(DrillCreateObject.class.getName());

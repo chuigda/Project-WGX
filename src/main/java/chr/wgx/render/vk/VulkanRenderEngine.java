@@ -275,11 +275,19 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             attachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             attachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
             attachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE);
+            VkRenderingAttachmentInfo depthAttachmentInfo = VkRenderingAttachmentInfo.allocate(arena);
+            depthAttachmentInfo.imageView(swapchain.depthImage.imageView);
+            depthAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            depthAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
+            depthAttachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            depthAttachmentInfo.clearValue().depthStencil().depth(1.0f);
+
             VkRenderingInfo renderingInfo = VkRenderingInfo.allocate(arena);
             renderingInfo.renderArea().extent(swapchain.swapExtent);
             renderingInfo.layerCount(1);
             renderingInfo.colorAttachmentCount(1);
             renderingInfo.pColorAttachments(attachmentInfo);
+            renderingInfo.pDepthAttachment(depthAttachmentInfo);
             VkViewport viewport = VkViewport.allocate(arena);
             viewport.x(0.0f);
             viewport.y(0.0f);
