@@ -12,7 +12,7 @@ public final class Configurator {
 
         List<VulkanDeviceInfo> deviceInfoList = VulkanDeviceInfo.listVulkanDevices();
 
-        ConfigWindow w = new ConfigWindow();
+        ConfigWindow w = new ConfigWindow(deviceInfoList);
         w.setVisible(true);
     }
 }

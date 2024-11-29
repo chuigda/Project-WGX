@@ -2,12 +2,14 @@ package chr.wgx.ui.config;
 
 import chr.wgx.render.vk.VulkanConfig;
 import chr.wgx.ui.SwingUtil;
+import tech.icey.xjbutil.container.Option;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public final class VulkanConfigWidget extends JPanel {
-    public VulkanConfigWidget() {
+    public VulkanConfigWidget(List<VulkanDeviceInfo> deviceInfoList) {
         super();
 
         this.setBorder(BorderFactory.createCompoundBorder(
@@ -62,6 +64,24 @@ public final class VulkanConfigWidget extends JPanel {
                 "注意: 开发人员选项\n" +
                 "即使图形处理器支持专用传输队列，也强制使用图形队列上传所有数据"
         );
+
+        physicalDeviceSelectionButton.addActionListener(_ -> {
+            VulkanDeviceSelectDialog dialog = new VulkanDeviceSelectDialog(
+                    (JFrame) this.getTopLevelAncestor(),
+                    deviceInfoList,
+                    currentConfig.physicalDeviceID,
+                    info -> {
+                        if (info instanceof Option.Some<VulkanDeviceInfo> someInfo) {
+                            physicalDeviceSelectionButton.setText(Integer.toString(someInfo.value.deviceId));
+                            currentConfig.physicalDeviceID = someInfo.value.deviceId;
+                        } else {
+                            physicalDeviceSelectionButton.setText("未指定");
+                            currentConfig.physicalDeviceID = 0;
+                        }
+                    }
+            );
+            dialog.setVisible(true);
+        });
     }
 
     final JButton physicalDeviceSelectionButton = new JButton("未指定");
@@ -79,4 +99,6 @@ public final class VulkanConfigWidget extends JPanel {
     final JTextField anisotropyLevelField = new JTextField(Float.toString(VulkanConfig.DEFAULT.anisotropyLevel));
     final JComboBox<String> forceUNORMComboBox = new JComboBox<>(new String[]{ "关闭", "启用" });
     final JComboBox<String> alwaysUploadWithGraphicsQueueComboBox = new JComboBox<>(new String[]{ "关闭", "启用" });
+
+    final VulkanConfig currentConfig = new VulkanConfig();
 }

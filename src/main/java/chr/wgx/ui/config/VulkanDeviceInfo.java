@@ -6,14 +6,13 @@ import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.Version;
 import tech.icey.vk4j.VulkanLoader;
+import tech.icey.vk4j.bitmask.VkQueueFlags;
 import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.command.EntryCommands;
 import tech.icey.vk4j.command.InstanceCommands;
 import tech.icey.vk4j.command.StaticCommands;
-import tech.icey.vk4j.datatype.VkInstanceCreateInfo;
-import tech.icey.vk4j.datatype.VkPhysicalDeviceFeatures;
-import tech.icey.vk4j.datatype.VkPhysicalDeviceLimits;
-import tech.icey.vk4j.datatype.VkPhysicalDeviceProperties;
+import tech.icey.vk4j.datatype.*;
+import tech.icey.vk4j.enumtype.VkPhysicalDeviceType;
 import tech.icey.vk4j.enumtype.VkResult;
 import tech.icey.vk4j.handle.VkInstance;
 import tech.icey.vk4j.handle.VkPhysicalDevice;
@@ -24,23 +23,32 @@ import java.util.List;
 
 public final class VulkanDeviceInfo {
     public final @unsigned int deviceId;
+    public final @enumtype(VkPhysicalDeviceType.class) int deviceType;
     public final String deviceName;
+    public final Version.Decoded apiVersion;
     public final boolean supportsMSAA;
     public final List<Integer> msaaSampleCounts;
     public final float maxAnisotropy;
+    public final boolean dedicatedTransferQueue;
 
     public VulkanDeviceInfo(
             @unsigned int deviceId,
+            @enumtype(VkPhysicalDeviceType.class) int deviceType,
             String deviceName,
+            Version.Decoded apiVersion,
             boolean supportsMSAA,
             List<Integer> msaaSampleCounts,
-            float maxAnisotropy
+            float maxAnisotropy,
+            boolean dedicatedTransferQueue
     ) {
         this.deviceId = deviceId;
+        this.deviceType = deviceType;
         this.deviceName = deviceName;
+        this.apiVersion = apiVersion;
         this.supportsMSAA = supportsMSAA;
         this.msaaSampleCounts = msaaSampleCounts;
         this.maxAnisotropy = maxAnisotropy;
+        this.dedicatedTransferQueue = dedicatedTransferQueue;
     }
 
     public static List<VulkanDeviceInfo> listVulkanDevices() {
@@ -100,6 +108,7 @@ public final class VulkanDeviceInfo {
                 VkPhysicalDeviceLimits limits = properties.limits();
 
                 @unsigned int deviceId = properties.deviceID();
+                @enumtype(VkPhysicalDeviceType.class) int deviceType = properties.deviceType();
                 String deviceName = properties.deviceName().readString();
 
                 boolean supportsMSAA = features.sampleRateShading() == Constants.VK_TRUE;
@@ -109,12 +118,33 @@ public final class VulkanDeviceInfo {
                 boolean supportsAnisotropy = features.samplerAnisotropy() == Constants.VK_TRUE;
                 float maxAnisotropy = supportsAnisotropy ? limits.maxSamplerAnisotropy() : 1.0f;
 
+                boolean dedicatedTransferQueue = false;
+                // get all queue families
+                IntBuffer pQueueFamilyCount = IntBuffer.allocate(arena);
+                iCmd.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyCount, null);
+                int queueFamilyCount = pQueueFamilyCount.read();
+                VkQueueFamilyProperties[] queueFamilyProperties = VkQueueFamilyProperties.allocate(arena, queueFamilyCount);
+                iCmd.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyCount, queueFamilyProperties[0]);
+
+                for (int j = 0; j < queueFamilyCount; j++) {
+                    VkQueueFamilyProperties queueFamilyProperty = queueFamilyProperties[j];
+                    if ((queueFamilyProperty.queueFlags() & VkQueueFlags.VK_QUEUE_TRANSFER_BIT) != 0 &&
+                            (queueFamilyProperty.queueFlags() & VkQueueFlags.VK_QUEUE_GRAPHICS_BIT) == 0 &&
+                            (queueFamilyProperty.queueFlags() & VkQueueFlags.VK_QUEUE_COMPUTE_BIT) == 0) {
+                        dedicatedTransferQueue = true;
+                        break;
+                    }
+                }
+
                 devices.add(new VulkanDeviceInfo(
                         deviceId,
+                        deviceType,
                         deviceName,
+                        Version.decode(properties.apiVersion()),
                         supportsMSAA,
                         msaaSampleCounts,
-                        maxAnisotropy
+                        maxAnisotropy,
+                        dedicatedTransferQueue
                 ));
             }
             return devices;

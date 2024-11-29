@@ -5,9 +5,10 @@ import chr.wgx.ui.SwingUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public final class ConfigWindow extends JFrame {
-    public ConfigWindow() {
+    public ConfigWindow(List<VulkanDeviceInfo> vulkanDeviceInfoList) {
         super("配置 Project-WGX");
 
         JMenu fileMenu = new JMenu("文件");
@@ -36,6 +37,7 @@ public final class ConfigWindow extends JFrame {
         renderModeComboBox.setSelectedIndex(0);
         SwingUtil.addConfigItemFast(contentPanel, 6, "渲染模式", renderModeComboBox);
 
+        vulkanConfigWidget = new VulkanConfigWidget(vulkanDeviceInfoList);
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
         c.gridx = 0;
@@ -57,5 +59,5 @@ public final class ConfigWindow extends JFrame {
     private final JTextField renderOutputWindowWidthField = new JTextField(Integer.toString(Config.DEFAULT.windowWidth));
     private final JTextField renderOutputWindowHeightField = new JTextField(Integer.toString(Config.DEFAULT.windowHeight));
     private final JComboBox<String> renderModeComboBox = new JComboBox<>(new String[]{ "vulkan", "gles2" });
-    private final VulkanConfigWidget vulkanConfigWidget = new VulkanConfigWidget();
+    private final VulkanConfigWidget vulkanConfigWidget;
 }
