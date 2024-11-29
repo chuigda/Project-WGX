@@ -319,6 +319,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 }
 
                 cx.dCmd.vkCmdEndRendering(commandBuffer);
+                attachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
+                depthAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE);
             }
 
             VkImageMemoryBarrier drawToPresentBarrier = VkImageMemoryBarrier.allocate(arena);
