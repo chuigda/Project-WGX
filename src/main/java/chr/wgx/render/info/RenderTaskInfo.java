@@ -11,7 +11,10 @@ public final class RenderTaskInfo {
 
     // TODO: attachments, uniforms and push constants
 
-    public RenderTaskInfo(RenderPipelineHandle pipelineHandle, List<ObjectHandle> objectHandles) {
+    public RenderTaskInfo(
+            RenderPipelineHandle pipelineHandle,
+            List<ObjectHandle> objectHandles
+    ) {
         this.pipelineHandle = pipelineHandle;
         this.objectHandles = objectHandles;
     }

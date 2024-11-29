@@ -20,7 +20,6 @@ import tech.icey.vma.datatype.VmaAllocationCreateInfo;
 import tech.icey.vma.datatype.VmaAllocationInfo;
 import tech.icey.vma.enumtype.VmaMemoryUsage;
 import tech.icey.vma.handle.VmaAllocation;
-import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 
 import java.lang.foreign.Arena;

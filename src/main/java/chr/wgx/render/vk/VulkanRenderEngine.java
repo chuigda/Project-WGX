@@ -37,8 +37,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             Action0 onClose
     ) {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
-        objectCreate = new ObjectCreate(this);
-        pipelineCreate = new PipelineCreate(this);
+        objectCreateAspect = new ObjectCreateAspect(this);
+        attachmentCreateAspect = new AttachmentCreateAspect(this);
+        pipelineCreateAspect = new PipelineCreateAspect(this);
     }
 
     @Override
@@ -186,22 +187,22 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
-        return objectCreate.createObjectImpl(info);
+        return objectCreateAspect.createObjectImpl(info);
     }
 
     @Override
     public List<ObjectHandle> createObject(List<ObjectCreateInfo> infos) throws RenderException {
-        return objectCreate.createObjectImpl(infos);
+        return objectCreateAspect.createObjectImpl(infos);
     }
 
     @Override
     public Pair<ColorAttachmentHandle, SamplerHandle> createColorAttachment(AttachmentCreateInfo info) throws RenderException {
-        return null;
+        return attachmentCreateAspect.createColorAttachmentImpl(info);
     }
 
     @Override
     public DepthAttachmentHandle createDepthAttachment(AttachmentCreateInfo info) throws RenderException {
-        return null;
+        return attachmentCreateAspect.createDepthAttachmentImpl(info);
     }
 
     @Override
@@ -221,7 +222,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException {
-        return pipelineCreate.createPipelineImpl(info);
+        return pipelineCreateAspect.createPipelineImpl(info);
     }
 
     @Override
@@ -340,8 +341,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
     }
 
-    private final ObjectCreate objectCreate;
-    private final PipelineCreate pipelineCreate;
+    private final ObjectCreateAspect objectCreateAspect;
+    private final AttachmentCreateAspect attachmentCreateAspect;
+    private final PipelineCreateAspect pipelineCreateAspect;
 
     VulkanRenderEngineContext cx;
     Swapchain swapchain;
@@ -350,7 +352,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     final HashMap<Long, Resource.Object> objects = new HashMap<>();
     final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
-    final HashMap<Long, Resource.Texture> colorAttachments = new HashMap<>();
+    final HashMap<Long, Resource.Attachment> colorAttachments = new HashMap<>();
+    final HashMap<Long, Resource.Attachment> depthAttachments = new HashMap<>();
     final HashMap<Long, Resource.Texture> textures = new HashMap<>();
     final HashMap<Long, Boolean> samplerIsAttachment = new HashMap<>();
     // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
