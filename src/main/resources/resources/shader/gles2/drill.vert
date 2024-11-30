@@ -2,7 +2,7 @@
 
 precision mediump float;
 
-attribute vec2 inPosition;
+attribute vec3 inPosition;
 attribute vec3 inColor;
 
 varying vec3 outColor;

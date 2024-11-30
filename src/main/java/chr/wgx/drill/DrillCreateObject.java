@@ -42,13 +42,17 @@ public class DrillCreateObject {
                         DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill.vert.spv"),
                         DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill.frag.spv")
                 );
+                ShaderProgram.GLES2 shaderProgram1GLES = new ShaderProgram.GLES2(
+                        DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShaderText("/resources/shader/gles2/drill.vert"),
+                        DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShaderText("/resources/shader/gles2/drill.frag")
+                );
 
                 RenderPipelineCreateInfo rpci = new RenderPipelineCreateInfo(
                         vii1,
                         List.of(),
                         List.of(),
                         Option.some(shaderProgram1),
-                        Option.none(),
+                        Option.some(shaderProgram1GLES),
                         1,
                         true
                 );
@@ -60,12 +64,16 @@ public class DrillCreateObject {
                         DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill2.vert.spv"),
                         DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill2.frag.spv")
                 );
+                ShaderProgram.GLES2 shaderProgram2GLES = new ShaderProgram.GLES2(
+                        DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShaderText("/resources/shader/gles2/drill2.vert"),
+                        DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShaderText("/resources/shader/gles2/drill2.frag")
+                );
                 RenderPipelineCreateInfo rpci2 = new RenderPipelineCreateInfo(
                         vii2,
                         List.of(),
                         List.of(),
                         Option.some(shaderProgram2),
-                        Option.none(),
+                        Option.some(shaderProgram2GLES),
                         1,
                         true
                 );
@@ -108,6 +116,18 @@ public class DrillCreateObject {
             }
 
             return stream.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShaderText(String path) {
+        try (InputStream stream  = DrillCreateObject.class.getResourceAsStream(path)) {
+            if (stream == null) {
+                throw new RuntimeException("找不到文件: " + path);
+            }
+
+            return new String(stream.readAllBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

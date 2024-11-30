@@ -9,8 +9,10 @@ import tech.icey.gles2.GLES2Constants;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.buffer.ByteBuffer;
+import tech.icey.xjbutil.container.Either;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
+import tech.icey.xjbutil.container.Ref;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
@@ -19,20 +21,32 @@ import tech.icey.xjbutil.sync.Oneshot;
 import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
 
 public final class GLES2RenderEngine extends AbstractRenderEngine {
-    // TODO: move this to elsewhere
     @FunctionalInterface
-    public interface CheckedAction {
-        void invoke(GLES2 gl, Arena arena) throws RenderException;
+    public interface CheckedFunction<T> {
+        T apply(GLES2 gles2) throws RenderException;
     }
 
-    private final ConcurrentLinkedQueue<CheckedAction> taskQueue = new ConcurrentLinkedQueue<>();
-    private final ConcurrentMap<Long, Object> handlerMapping = new ConcurrentHashMap<>();
+    @SuppressWarnings("ClassCanBeRecord")
+    private static class DeferredTask<T> {
+        public final CheckedFunction<T> action;
+        @SuppressWarnings("rawtypes")
+        public final Oneshot.Sender sender;
+
+        DeferredTask(CheckedFunction<T> action, Oneshot.Sender<Either<T, RenderException>> sender) {
+            this.action = action;
+            this.sender = sender;
+        }
+    }
+
+    private final Ref<List<DeferredTask<?>>> taskQueue = new Ref<>(new ArrayList<>());
+
+    // OpenGL ES2 的所有资源更新实际上只在渲染线程上进行，因此不需要加锁或者使用并行数据结构
+    private final HashMap<Long, Resource.Object> objects = new HashMap<>();
+    private final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
 
     public GLES2RenderEngine(
             Action1<AbstractRenderEngine> onInit,
@@ -47,29 +61,37 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
     @Override
     protected void init(GLFW glfw, GLFWwindow window) {
         glfw.glfwMakeContextCurrent(window);
-        this.gles2Option = Option.some(new GLES2(name -> {
+        this.gles2 = new GLES2(name -> {
             try (var localArena = Arena.ofConfined()) {
                 return glfw.glfwGetProcAddress(ByteBuffer.allocateString(localArena, name));
             }
-        }));
+        });
     }
 
     @Override
     protected void resize(int width, int height) {
-        if (!(gles2Option instanceof Option.Some<GLES2> someGLES2)) {
-            return;
-        }
-        GLES2 gles2 = someGLES2.value;
-
         gles2.glViewport(0, 0, width, height);
     }
 
     @Override
     protected void renderFrame() throws RenderException {
-        if (!(gles2Option instanceof Option.Some<GLES2> someGLES2)) {
-            return;
+        List<DeferredTask<?>> pendingTasks = List.of();
+        synchronized (taskQueue) {
+            if (!taskQueue.value.isEmpty()) {
+                pendingTasks = taskQueue.value;
+                taskQueue.value = new ArrayList<>();
+            }
         }
-        GLES2 gles2 = someGLES2.value;
+
+        for (DeferredTask<?> task : pendingTasks) {
+            try {
+                //noinspection unchecked
+                task.sender.send(Either.left(task.action.apply(gles2)));
+            } catch (RenderException e) {
+                //noinspection unchecked
+                task.sender.send(Either.right(e));
+            }
+        }
 
         gles2.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT | GLES2Constants.GL_DEPTH_BUFFER_BIT);
@@ -80,8 +102,18 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         // there's actually nothing to do here
     }
 
-    private void invokeLater(CheckedAction run) {
-        taskQueue.add(run);
+    private <T> T invokeLater(CheckedFunction<T> run) throws RenderException {
+        Pair<Oneshot.Sender<Either<T, RenderException>>, Oneshot.Receiver<Either<T, RenderException>>> channel = Oneshot.create();
+        Oneshot.Sender<Either<T, RenderException>> tx = channel.first();
+        Oneshot.Receiver<Either<T, RenderException>> rx = channel.second();
+        synchronized (taskQueue) {
+            taskQueue.value.add(new DeferredTask<>(run, tx));
+        }
+
+        return switch (rx.recv()) {
+            case Either.Left<T, RenderException> l -> l.value;
+            case Either.Right<T, RenderException> r -> throw r.value;
+        };
     }
 
     @Override
@@ -126,34 +158,54 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
 
     @Override
     public RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException {
-        var handle = nextHandle();
-        invokeLater((gles, arena) -> {
-            if (! (info.gles2ShaderProgram instanceof Option.Some<ShaderProgram.GLES2> someProgramSource)) {
-                // TODO: do something
-                throw new RuntimeException();
+        return invokeLater(gles -> {
+            boolean hasCompiledVertexShader = false;
+            boolean hasCompiledFragmentShader = false;
+            int vertexShaderHandle = 0;
+            int fragmentShaderHandle = 0;
+
+            try (Arena arena = Arena.ofConfined()) {
+                if (! (info.gles2ShaderProgram instanceof Option.Some<ShaderProgram.GLES2> someProgramSource)) {
+                    throw new RenderException("无法创建渲染管线: 缺少 GLES2 着色器程序");
+                }
+
+                ShaderProgram.GLES2 programSource = someProgramSource.value;
+                String vertexShader = programSource.vertexShader;
+                String fragmentShader = programSource.fragmentShader;
+
+                int programHandle = gles.glCreateProgram();
+
+                vertexShaderHandle = GLES2Utils.loadShader(gles, arena, GLES2Constants.GL_VERTEX_SHADER, vertexShader);
+                hasCompiledVertexShader = true;
+
+                fragmentShaderHandle = GLES2Utils.loadShader(gles, arena, GLES2Constants.GL_FRAGMENT_SHADER, fragmentShader);
+                hasCompiledFragmentShader = true;
+
+                gles.glAttachShader(programHandle, vertexShaderHandle);
+                gles.glAttachShader(programHandle, fragmentShaderHandle);
+                gles.glLinkProgram(programHandle);
+
+                GLES2Utils.checkStatus(
+                        GLES2Utils.InformationKind.Program,
+                        gles,
+                        arena,
+                        GLES2Constants.GL_LINK_STATUS,
+                        programHandle,
+                        msg -> new RenderException("无法链接程序: " + msg)
+                );
+
+                long handle = nextHandle();
+                pipelines.put(handle, new Resource.Pipeline(info, programHandle));
+                return new RenderPipelineHandle(handle);
+            } finally {
+                if (hasCompiledVertexShader) {
+                    gles.glDeleteShader(vertexShaderHandle);
+                }
+                if (hasCompiledFragmentShader) {
+                    gles.glDeleteShader(fragmentShaderHandle);
+                }
             }
-
-            var programSource = someProgramSource.value;
-            var vertexShader = programSource.vertexShader;
-            var fragmentShader = programSource.fragmentShader;
-
-            var programHandle = gles.glCreateProgram();
-
-            // attributes
-            GLES2Utils.bindAttributes(gles, arena, programHandle, info.vertexInputInfo);
-
-            // shaders
-            gles.glAttachShader(programHandle, GLES2Utils.loadShader(gles, arena, GLES2Constants.GL_VERTEX_SHADER, vertexShader));
-            gles.glAttachShader(programHandle, GLES2Utils.loadShader(gles, arena, GLES2Constants.GL_FRAGMENT_SHADER, fragmentShader));
-            gles.glLinkProgram(programHandle);
-
-            GLES2Utils.checkStatus(GLES2Utils.InformationKind.Program, gles, arena, GLES2Constants.GL_LINK_STATUS, programHandle, msg ->
-                    new RenderException("无法链接程序: " + msg));
-
-            handlerMapping.put(handle, programHandle);
         });
-
-        return new RenderPipelineHandle(handle);
     }
 
     @Override
@@ -171,5 +223,5 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         }
     }
 
-    private Option<GLES2> gles2Option = Option.none();
+    private GLES2 gles2;
 }

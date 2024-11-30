@@ -1,5 +1,6 @@
 package chr.wgx.render.gles2;
 
+import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.VertexInputInfo;
 import tech.icey.gles2.GLES2;
 import tech.icey.panama.buffer.IntBuffer;
@@ -25,6 +26,26 @@ public final class Resource {
                 pBuffer.write(glHandle);
 
                 gles2.glDeleteBuffers(1, pBuffer);
+            }
+        }
+    }
+
+    @SuppressWarnings("ClassCanBeRecord")
+    public static final class Pipeline {
+        public final RenderPipelineCreateInfo createInfo;
+        public final int shaderHandle;
+
+        public Pipeline(RenderPipelineCreateInfo createInfo, int shaderHandle) {
+            this.createInfo = createInfo;
+            this.shaderHandle = shaderHandle;
+        }
+
+        public void dispose(GLES2 gles2) {
+            try (Arena arena = Arena.ofConfined()) {
+                IntBuffer pBuffer = IntBuffer.allocate(arena);
+                pBuffer.write(shaderHandle);
+
+                gles2.glDeleteProgram(shaderHandle);
             }
         }
     }
