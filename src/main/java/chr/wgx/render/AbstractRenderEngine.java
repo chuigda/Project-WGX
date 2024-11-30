@@ -9,6 +9,7 @@ import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -66,11 +67,11 @@ public abstract class AbstractRenderEngine {
 
     public abstract ObjectHandle createObject(ObjectCreateInfo info) throws RenderException;
     public abstract List<ObjectHandle> createObject(List<ObjectCreateInfo> info) throws RenderException;
-    public abstract AttachmentHandle.Color createColorAttachment(AttachmentCreateInfo.Color i) throws RenderException;
-    public abstract AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth i) throws RenderException;
-    public abstract Pair<AttachmentHandle.Color, AttachmentHandle.Depth> getDefaultAttachments();
+    public abstract Pair<ColorAttachmentHandle, SamplerHandle> createColorAttachment(AttachmentCreateInfo i) throws RenderException;
+    public abstract DepthAttachmentHandle createDepthAttachment(AttachmentCreateInfo i) throws RenderException;
+    public abstract Pair<ColorAttachmentHandle, DepthAttachmentHandle> getDefaultAttachments();
 
-    public abstract UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException;
+    public abstract SamplerHandle createTexture(BufferedImage image) throws RenderException;
     public abstract UniformHandle createUniform(UniformCreateInfo info) throws RenderException;
     public abstract RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException;
     public abstract RenderTaskHandle createTask(RenderTaskInfo info) throws RenderException;

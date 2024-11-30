@@ -24,10 +24,4 @@ public abstract sealed class DescriptorInfo {
             super(stage);
         }
     }
-
-    public static final class Sampler2D extends DescriptorInfo {
-        public Sampler2D(ShaderStage stage) {
-            super(stage);
-        }
-    }
 }

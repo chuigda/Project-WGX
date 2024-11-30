@@ -21,6 +21,7 @@ import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
+import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.HashMap;
 import java.util.List;
@@ -36,8 +37,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             Action0 onClose
     ) {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
-        objectCreate = new ObjectCreate(this);
-        pipelineCreate = new PipelineCreate(this);
+        objectCreateAspect = new ObjectCreateAspect(this);
+        attachmentCreateAspect = new AttachmentCreateAspect(this);
+        pipelineCreateAspect = new PipelineCreateAspect(this);
     }
 
     @Override
@@ -185,31 +187,31 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
-        return objectCreate.createObjectImpl(info);
+        return objectCreateAspect.createObjectImpl(info);
     }
 
     @Override
     public List<ObjectHandle> createObject(List<ObjectCreateInfo> infos) throws RenderException {
-        return objectCreate.createObjectImpl(infos);
+        return objectCreateAspect.createObjectImpl(infos);
     }
 
     @Override
-    public AttachmentHandle.Color createColorAttachment(AttachmentCreateInfo.Color info) throws RenderException {
-        return null;
+    public Pair<ColorAttachmentHandle, SamplerHandle> createColorAttachment(AttachmentCreateInfo info) throws RenderException {
+        return attachmentCreateAspect.createColorAttachmentImpl(info);
     }
 
     @Override
-    public AttachmentHandle.Depth createDepthAttachment(AttachmentCreateInfo.Depth info) throws RenderException {
-        return null;
+    public DepthAttachmentHandle createDepthAttachment(AttachmentCreateInfo info) throws RenderException {
+        return attachmentCreateAspect.createDepthAttachmentImpl(info);
     }
 
     @Override
-    public Pair<AttachmentHandle.Color, AttachmentHandle.Depth> getDefaultAttachments() {
+    public Pair<ColorAttachmentHandle, DepthAttachmentHandle> getDefaultAttachments() {
         return new Pair<>(DEFAULT_COLOR_ATTACHMENT, DEFAULT_DEPTH_ATTACHMENT);
     }
 
     @Override
-    public UniformHandle.Sampler2D createTexture(TextureCreateInfo info) throws RenderException {
+    public SamplerHandle createTexture(BufferedImage image) throws RenderException {
         return null;
     }
 
@@ -220,7 +222,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException {
-        return pipelineCreate.createPipelineImpl(info);
+        return pipelineCreateAspect.createPipelineImpl(info);
     }
 
     @Override
@@ -273,11 +275,19 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             attachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             attachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
             attachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE);
+            VkRenderingAttachmentInfo depthAttachmentInfo = VkRenderingAttachmentInfo.allocate(arena);
+            depthAttachmentInfo.imageView(swapchain.depthImage.imageView);
+            depthAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            depthAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
+            depthAttachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            depthAttachmentInfo.clearValue().depthStencil().depth(1.0f);
+
             VkRenderingInfo renderingInfo = VkRenderingInfo.allocate(arena);
             renderingInfo.renderArea().extent(swapchain.swapExtent);
             renderingInfo.layerCount(1);
             renderingInfo.colorAttachmentCount(1);
             renderingInfo.pColorAttachments(attachmentInfo);
+            renderingInfo.pDepthAttachment(depthAttachmentInfo);
             VkViewport viewport = VkViewport.allocate(arena);
             viewport.x(0.0f);
             viewport.y(0.0f);
@@ -290,10 +300,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             scissor.offset().y(0);
             scissor.extent(swapchain.swapExtent);
 
+            cx.dCmd.vkCmdBeginRendering(commandBuffer, renderingInfo);
+
             for (RenderTaskInfo task : tasks.values()) {
                 Resource.Pipeline pipeline = Objects.requireNonNull(pipelines.get(task.pipelineHandle.getId()));
 
-                cx.dCmd.vkCmdBeginRendering(commandBuffer, renderingInfo);
                 cx.dCmd.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
                 cx.dCmd.vkCmdSetViewport(commandBuffer, 0, 1, viewport);
                 cx.dCmd.vkCmdSetScissor(commandBuffer, 0, 1, scissor);
@@ -307,9 +318,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                     cx.dCmd.vkCmdBindVertexBuffers(commandBuffer, 0, 1, pVertexBuffer, pOffsets);
                     cx.dCmd.vkCmdDraw(commandBuffer, (int) object.vertexCount, 1, 0, 0);
                 }
-
-                cx.dCmd.vkCmdEndRendering(commandBuffer);
             }
+
+            cx.dCmd.vkCmdEndRendering(commandBuffer);
 
             VkImageMemoryBarrier drawToPresentBarrier = VkImageMemoryBarrier.allocate(arena);
             drawToPresentBarrier.srcAccessMask(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
@@ -339,8 +350,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
     }
 
-    private final ObjectCreate objectCreate;
-    private final PipelineCreate pipelineCreate;
+    private final ObjectCreateAspect objectCreateAspect;
+    private final AttachmentCreateAspect attachmentCreateAspect;
+    private final PipelineCreateAspect pipelineCreateAspect;
 
     VulkanRenderEngineContext cx;
     Swapchain swapchain;
@@ -349,11 +361,15 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     final HashMap<Long, Resource.Object> objects = new HashMap<>();
     final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
+    final HashMap<Long, Resource.Attachment> colorAttachments = new HashMap<>();
+    final HashMap<Long, Resource.Attachment> depthAttachments = new HashMap<>();
+    final HashMap<Long, Resource.Texture> textures = new HashMap<>();
+    final HashMap<Long, Boolean> samplerIsAttachment = new HashMap<>();
     // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
     final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
 
-    static final AttachmentHandle.Color DEFAULT_COLOR_ATTACHMENT = new AttachmentHandle.Color(0L);
-    static final AttachmentHandle.Depth DEFAULT_DEPTH_ATTACHMENT = new AttachmentHandle.Depth(1L);
+    static final ColorAttachmentHandle DEFAULT_COLOR_ATTACHMENT = new ColorAttachmentHandle(0L);
+    static final DepthAttachmentHandle DEFAULT_DEPTH_ATTACHMENT = new DepthAttachmentHandle(1L);
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }

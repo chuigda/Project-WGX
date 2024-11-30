@@ -23,8 +23,8 @@ import tech.icey.xjbutil.container.Option;
 import java.lang.foreign.Arena;
 import java.util.logging.Logger;
 
-public final class PipelineCreate {
-    public PipelineCreate(VulkanRenderEngine engine) {
+public final class PipelineCreateAspect {
+    public PipelineCreateAspect(VulkanRenderEngine engine) {
         this.engine = engine;
     }
 
@@ -205,5 +205,5 @@ public final class PipelineCreate {
     private final VulkanRenderEngine engine;
 
     private static final ByteBuffer MAIN_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "main");
-    private static final Logger logger = Logger.getLogger(PipelineCreate.class.getName());
+    private static final Logger logger = Logger.getLogger(PipelineCreateAspect.class.getName());
 }

@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public final class ObjectCreate {
-    public ObjectCreate(VulkanRenderEngine engine) {
+public final class ObjectCreateAspect {
+    public ObjectCreateAspect(VulkanRenderEngine engine) {
         this.engine = engine;
     }
 
@@ -174,5 +174,5 @@ public final class ObjectCreate {
     }
 
     private final VulkanRenderEngine engine;
-    private static final Logger logger = Logger.getLogger(ObjectCreate.class.getName());
+    private static final Logger logger = Logger.getLogger(ObjectCreateAspect.class.getName());
 }
