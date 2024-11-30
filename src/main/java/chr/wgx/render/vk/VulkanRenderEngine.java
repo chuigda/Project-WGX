@@ -300,10 +300,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             scissor.offset().y(0);
             scissor.extent(swapchain.swapExtent);
 
+            cx.dCmd.vkCmdBeginRendering(commandBuffer, renderingInfo);
+
             for (RenderTaskInfo task : tasks.values()) {
                 Resource.Pipeline pipeline = Objects.requireNonNull(pipelines.get(task.pipelineHandle.getId()));
 
-                cx.dCmd.vkCmdBeginRendering(commandBuffer, renderingInfo);
                 cx.dCmd.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
                 cx.dCmd.vkCmdSetViewport(commandBuffer, 0, 1, viewport);
                 cx.dCmd.vkCmdSetScissor(commandBuffer, 0, 1, scissor);
@@ -317,11 +318,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                     cx.dCmd.vkCmdBindVertexBuffers(commandBuffer, 0, 1, pVertexBuffer, pOffsets);
                     cx.dCmd.vkCmdDraw(commandBuffer, (int) object.vertexCount, 1, 0, 0);
                 }
-
-                cx.dCmd.vkCmdEndRendering(commandBuffer);
-                attachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
-                depthAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_DONT_CARE);
             }
+
+            cx.dCmd.vkCmdEndRendering(commandBuffer);
 
             VkImageMemoryBarrier drawToPresentBarrier = VkImageMemoryBarrier.allocate(arena);
             drawToPresentBarrier.srcAccessMask(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
