@@ -29,6 +29,16 @@ public final class Config {
 
     public HashMap<String, JsonObject> pluginConfigs = new HashMap<>();
 
+    public void detectJVMArgumentsOverride() {
+        String logLevel = System.getProperty("cfg.logLevel");
+        if (logLevel != null) {
+            this.logLevel = logLevel;
+        }
+
+        vulkanConfig.detectJVMArgumentsOverride();
+        gles2Config.detectJVMArgumentsOverride();
+    }
+
     public String toPrettyJSON() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         return gson.toJson(this);

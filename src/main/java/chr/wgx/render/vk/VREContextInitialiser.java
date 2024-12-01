@@ -216,6 +216,7 @@ final class VREContextInitialiser {
     private void pickPhysicalDevice() throws RenderException {
         int physicalDeviceID = Config.config().vulkanConfig.physicalDeviceID;
         try (Arena arena = Arena.ofConfined()) {
+            logger.info("正在选取 Vulkan 物理设备");
             IntBuffer pDeviceCount = IntBuffer.allocate(arena);
             @enumtype(VkResult.class) int result = iCmd.vkEnumeratePhysicalDevices(instance, pDeviceCount, null);
             if (result != VkResult.VK_SUCCESS) {
@@ -232,20 +233,48 @@ final class VREContextInitialiser {
             if (result != VkResult.VK_SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 物理设备列表, 错误代码: " + VkResult.explain(result));
             }
+            VkPhysicalDevice[] devices = pDevices.readAll();
 
-            VkPhysicalDeviceProperties deviceProperties = VkPhysicalDeviceProperties.allocate(arena);
+            VkPhysicalDeviceProperties[] deviceProperties = VkPhysicalDeviceProperties.allocate(arena, deviceCount);
             for (int i = 0; i < deviceCount; i++) {
-                VkPhysicalDevice device = pDevices.read(i);
-                iCmd.vkGetPhysicalDeviceProperties(device, deviceProperties);
-                if (physicalDeviceID == 0 || deviceProperties.deviceID() == physicalDeviceID) {
-                    physicalDevice = device;
+                VkPhysicalDevice device = devices[i];
+                iCmd.vkGetPhysicalDeviceProperties(device, deviceProperties[i]);
+
+                VkPhysicalDeviceProperties deviceProperty = deviceProperties[i];
+                Version.Decoded decodedVersion = Version.decode(deviceProperty.apiVersion());
+                logger.info(String.format(
+                        "发现 Vulkan 物理设备, ID: %s, 名称: %s, 类型: %s, API 版本: %d.%d.%d",
+                        Integer.toUnsignedString(deviceProperty.deviceID()),
+                        deviceProperty.deviceName().readString(),
+                        VkPhysicalDeviceType.explain(deviceProperty.deviceType()),
+                        decodedVersion.major(),
+                        decodedVersion.minor(),
+                        decodedVersion.patch()
+                ));
+            }
+
+            for (int i = 0; i < deviceCount; i++) {
+                VkPhysicalDeviceProperties deviceProperty = deviceProperties[i];
+                if (physicalDeviceID == 0 || deviceProperty.deviceID() == physicalDeviceID) {
+                    physicalDevice = pDevices.read(i);
                     msaaSampleCountFlags = pickMSAASampleCount(
-                            deviceProperties.limits().framebufferColorSampleCounts() &
-                            deviceProperties.limits().framebufferDepthSampleCounts()
+                            deviceProperty.limits().framebufferColorSampleCounts() &
+                            deviceProperty.limits().framebufferDepthSampleCounts()
                     );
+
+                    if (physicalDeviceID == 0) {
+                        logger.info("自动选定 Vulkan 物理设备: " + deviceProperty.deviceName().readString());
+                    } else {
+                        logger.info(String.format(
+                                "根据指定的设备 ID=%s 选定了 Vulkan 物理设备: %s",
+                                Integer.toUnsignedString(physicalDeviceID),
+                                deviceProperty.deviceName().readString()
+                        ));
+                    }
                     break;
                 }
             }
+
             if (physicalDevice == null) {
                 throw new RenderException("未找到指定的 Vulkan 物理设备");
             }

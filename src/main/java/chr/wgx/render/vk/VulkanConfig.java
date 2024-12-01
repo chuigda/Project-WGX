@@ -1,5 +1,7 @@
 package chr.wgx.render.vk;
 
+import java.util.logging.Logger;
+
 /// Vulkan 渲染器配置
 public final class VulkanConfig {
     /// 选定的物理设备 ID，为 0 则自动选择第一个可用物理设备
@@ -39,5 +41,27 @@ public final class VulkanConfig {
     /// 是否总是使用图形队列进行传输操作（即使专门的传输队列可用）
     public boolean alwaysUploadWithGraphicsQueue = false;
 
+    public void detectJVMArgumentsOverride() {
+        String physicalDeviceID = System.getProperty("cfg.vulkan.physicalDeviceID");
+        if (physicalDeviceID != null) {
+            try {
+                this.physicalDeviceID = Integer.parseInt(physicalDeviceID);
+            } catch (NumberFormatException e) {
+                logger.warning("vulkan.physicalDeviceID 参数无效: " + physicalDeviceID);
+            }
+        }
+
+        String validationLayers = System.getProperty("cfg.vulkan.validationLayers");
+        this.validationLayers = validationLayers != null && !validationLayers.isBlank();
+
+        String forceUNORM = System.getProperty("cfg.vulkan.forceUNORM");
+        this.forceUNORM = forceUNORM != null && !forceUNORM.isBlank();
+
+        String alwaysUploadWithGraphicsQueue = System.getProperty("cfg.vulkan.noTransferQueue");
+        this.alwaysUploadWithGraphicsQueue = alwaysUploadWithGraphicsQueue != null
+                && !alwaysUploadWithGraphicsQueue.isBlank();
+    }
+
     public static final VulkanConfig DEFAULT = new VulkanConfig();
+    private static final Logger logger = Logger.getLogger(VulkanConfig.class.getName());
 }
