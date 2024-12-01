@@ -57,9 +57,17 @@ public final class Main {
     }
 
     private static void checkLicense() {
+        String skipLicenseCheck = System.getProperty("wgx.license.skip");
+        if (skipLicenseCheck != null && !skipLicenseCheck.isEmpty()) {
+            return;
+        }
+
         Path agreementFilePath = Path.of("LICENSE.AGREED");
         if (Files.exists(agreementFilePath)) {
-            return;
+            String forceLicenseCheck = System.getProperty("wgx.license.force");
+            if (forceLicenseCheck == null || forceLicenseCheck.isEmpty()) {
+                return;
+            }
         }
 
         try {

@@ -42,7 +42,7 @@ public final class VulkanConfig {
     public boolean alwaysUploadWithGraphicsQueue = false;
 
     public void detectJVMArgumentsOverride() {
-        String physicalDeviceID = System.getProperty("cfg.vulkan.physicalDeviceID");
+        String physicalDeviceID = System.getProperty("wgx.vulkan.physicalDeviceID");
         if (physicalDeviceID != null) {
             try {
                 this.physicalDeviceID = Integer.parseInt(physicalDeviceID);
@@ -51,13 +51,13 @@ public final class VulkanConfig {
             }
         }
 
-        String validationLayers = System.getProperty("cfg.vulkan.validationLayers");
+        String validationLayers = System.getProperty("wgx.vulkan.validationLayers");
         this.validationLayers = validationLayers != null && !validationLayers.isBlank();
 
-        String forceUNORM = System.getProperty("cfg.vulkan.forceUNORM");
+        String forceUNORM = System.getProperty("wgx.vulkan.forceUNORM");
         this.forceUNORM = forceUNORM != null && !forceUNORM.isBlank();
 
-        String alwaysUploadWithGraphicsQueue = System.getProperty("cfg.vulkan.noTransferQueue");
+        String alwaysUploadWithGraphicsQueue = System.getProperty("wgx.vulkan.noTransferQueue");
         this.alwaysUploadWithGraphicsQueue = alwaysUploadWithGraphicsQueue != null
                 && !alwaysUploadWithGraphicsQueue.isBlank();
     }

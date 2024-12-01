@@ -30,7 +30,7 @@ public final class Config {
     public HashMap<String, JsonObject> pluginConfigs = new HashMap<>();
 
     public void detectJVMArgumentsOverride() {
-        String logLevel = System.getProperty("cfg.logLevel");
+        String logLevel = System.getProperty("wgx.logLevel");
         if (logLevel != null) {
             this.logLevel = logLevel;
         }
