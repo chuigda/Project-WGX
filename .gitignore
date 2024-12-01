@@ -36,3 +36,6 @@ build/
 
 ### Agreed license file ###
 LICENSE.AGREED
+
+### Configuration file ###
+config.json

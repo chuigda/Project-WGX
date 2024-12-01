@@ -1,0 +1,107 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Project-WGX 配置文件",
+    "description": "Project-WGX 配置文件",
+    "type": "object",
+    "properties": {
+        "logLevel": {
+            "type": "string",
+            "description": "日志级别",
+            "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error"
+            ]
+        },
+        "controlWindowWidth": {
+            "type": "integer",
+            "description": "控制窗口宽度"
+        },
+        "controlWindowHeight": {
+            "type": "integer",
+            "description": "控制窗口高度"
+        },
+        "windowTitle": {
+            "type": "string",
+            "description": "绘图输出窗口标题"
+        },
+        "windowWidth": {
+            "type": "integer",
+            "description": "绘图输出窗口宽度"
+        },
+        "windowHeight": {
+            "type": "integer",
+            "description": "绘图输出窗口高度"
+        },
+        "renderMode": {
+            "type": "string",
+            "description": "渲染模式",
+            "enum": [
+                "vulkan",
+                "gles2"
+            ]
+        },
+        "vulkanConfig": {
+            "type": "object",
+            "description": "Vulkan 配置",
+            "properties": {
+                "physicalDeviceID": {
+                    "type": "integer",
+                    "description": "物理设备 ID"
+                },
+                "validationLayers": {
+                    "type": "boolean",
+                    "description": "启用验证层"
+                },
+                "vsync": {
+                    "type": "integer",
+                    "description": "垂直同步模式",
+                    "enum": [
+                        0,
+                        1,
+                        2
+                    ]
+                },
+                "enableMSAA": {
+                    "type": "boolean",
+                    "description": "启用多重采样抗锯齿"
+                },
+                "msaaSampleCount": {
+                    "type": "integer",
+                    "description": "多重采样抗锯齿采样次数"
+                },
+                "enableAnisotropy": {
+                    "type": "boolean",
+                    "description": "启用各向异性过滤"
+                },
+                "anisotropyLevel": {
+                    "type": "number",
+                    "description": "各向异性过滤级别"
+                },
+                "forceUNORM": {
+                    "type": "boolean",
+                    "description": "强制使用 UNORM 格式"
+                }
+            }
+        },
+        "gles2Config": {
+            "type": "object",
+            "description": "GLES2 配置",
+            "properties": {
+                "enableMSAA": {
+                    "type": "boolean",
+                    "description": "启用多重采样抗锯齿"
+                },
+                "enableLineSmooth": {
+                    "type": "boolean",
+                    "description": "启用线条平滑"
+                }
+            }
+        },
+        "pluginConfigs": {
+            "type": "object",
+            "description": "插件配置"
+        }
+    }
+}
