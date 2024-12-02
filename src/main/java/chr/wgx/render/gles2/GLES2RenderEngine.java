@@ -58,7 +58,7 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
     // OpenGL ES2 的所有资源更新实际上只在渲染线程上进行，因此不需要加锁或者使用并行数据结构
     private final HashMap<Long, Resource.Object> objects = new HashMap<>();
     private final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
-    private final HashMap<Long, Resource.Task> tasks = new HashMap<>();
+    private final LinkedHashMap<Long, Resource.Task> tasks = new LinkedHashMap<>();
 
     public GLES2RenderEngine(
             Action1<AbstractRenderEngine> onInit,
