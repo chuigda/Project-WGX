@@ -142,13 +142,16 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
             return;
         }
 
-        VertexInputInfo vertexInfo = pipeline.createInfo.vertexInputInfo;
-        GLES2Utils.initializeAttributes(gl, arena, pipeline.programHandle, vertexInfo);
+        if (pipeline.createInfo.depthTest) {
+            gl.glEnable(GLES2Constants.GL_DEPTH_TEST);
+        }
 
+        VertexInputInfo vertexInfo = pipeline.createInfo.vertexInputInfo;
         for (var objHandle : objects) {
             var obj = getObject(objHandle);
 
-            gl.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, obj.glHandle);
+            gl.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, obj.vbo);
+            GLES2Utils.initializeAttributes(gl, arena, pipeline.programHandle, vertexInfo);
             gl.glDrawArrays(GLES2Constants.GL_TRIANGLES, 0, (int) obj.vertexCount);
         }
     }

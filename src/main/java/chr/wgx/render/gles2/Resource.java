@@ -17,12 +17,12 @@ public final class Resource {
 
     @SuppressWarnings("ClassCanBeRecord")
     public static final class Object implements Disposable {
-        public final int glHandle;
+        public final int vbo;
         public final VertexInputInfo attributeInfo;
         public final long vertexCount;
 
-        public Object(int glHandle, VertexInputInfo attributeInfo, long vertexCount) {
-            this.glHandle = glHandle;
+        public Object(int vbo, VertexInputInfo attributeInfo, long vertexCount) {
+            this.vbo = vbo;
             this.attributeInfo = attributeInfo;
             this.vertexCount = vertexCount;
         }
@@ -31,7 +31,7 @@ public final class Resource {
         public void dispose(GLES2 gles2) {
             try (Arena arena = Arena.ofConfined()) {
                 IntBuffer pBuffer = IntBuffer.allocate(arena);
-                pBuffer.write(glHandle);
+                pBuffer.write(vbo);
 
                 gles2.glDeleteBuffers(1, pBuffer);
             }

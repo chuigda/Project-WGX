@@ -132,7 +132,6 @@ public final class GLES2Utils {
         var stride = info.stride;
 
         forEachAttribute(info, (attr, index) -> {
-            gl.glBindAttribLocation(programHandle, index, ByteBuffer.allocateString(arena, attr.name));
             gl.glEnableVertexAttribArray(index);
             gl.glVertexAttribPointer(
                     index,
