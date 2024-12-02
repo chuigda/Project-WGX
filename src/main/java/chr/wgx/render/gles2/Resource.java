@@ -8,6 +8,8 @@ import tech.icey.panama.buffer.IntBuffer;
 import java.lang.foreign.Arena;
 
 public final class Resource {
+    private Resource() {}
+
     @SuppressWarnings("ClassCanBeRecord")
     public static final class Object {
         public final int glHandle;
@@ -33,19 +35,19 @@ public final class Resource {
     @SuppressWarnings("ClassCanBeRecord")
     public static final class Pipeline {
         public final RenderPipelineCreateInfo createInfo;
-        public final int shaderHandle;
+        public final int programHandle;
 
-        public Pipeline(RenderPipelineCreateInfo createInfo, int shaderHandle) {
+        public Pipeline(RenderPipelineCreateInfo createInfo, int programHandle) {
             this.createInfo = createInfo;
-            this.shaderHandle = shaderHandle;
+            this.programHandle = programHandle;
         }
 
         public void dispose(GLES2 gles2) {
             try (Arena arena = Arena.ofConfined()) {
                 IntBuffer pBuffer = IntBuffer.allocate(arena);
-                pBuffer.write(shaderHandle);
+                pBuffer.write(programHandle);
 
-                gles2.glDeleteProgram(shaderHandle);
+                gles2.glDeleteProgram(programHandle);
             }
         }
     }

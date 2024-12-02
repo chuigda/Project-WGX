@@ -20,10 +20,11 @@ import tech.icey.xjbutil.sync.Oneshot;
 
 import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
+/**
+ * See also <a href="https://docs.gl/es2">this page</a>
+ */
 public final class GLES2RenderEngine extends AbstractRenderEngine {
     @FunctionalInterface
     public interface CheckedFunction<T> {
@@ -39,6 +40,16 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         DeferredTask(CheckedFunction<T> action, Oneshot.Sender<Either<T, RenderException>> sender) {
             this.action = action;
             this.sender = sender;
+        }
+
+        public void runTask(GLES2 gles2) {
+            try {
+                //noinspection unchecked
+                sender.send(Either.left(action.apply(gles2)));
+            } catch (RenderException e) {
+                //noinspection unchecked
+                sender.send(Either.right(e));
+            }
         }
     }
 
@@ -57,6 +68,20 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
     ) {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
     }
+
+    // region Object Getter
+
+    // All Object Getters are supposed to be run in the render thread
+
+    private Resource.Pipeline getObject(RenderPipelineHandle handle) {
+        return Objects.requireNonNull(pipelines.get(handle.getId()));
+    }
+
+    private Resource.Object getObject(ObjectHandle handle) {
+        return Objects.requireNonNull(objects.get(handle.getId()));
+    }
+
+    // endregion Object Getter
 
     @Override
     protected void init(GLFW glfw, GLFWwindow window) {
@@ -83,15 +108,7 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
             }
         }
 
-        for (DeferredTask<?> task : pendingTasks) {
-            try {
-                //noinspection unchecked
-                task.sender.send(Either.left(task.action.apply(gles2)));
-            } catch (RenderException e) {
-                //noinspection unchecked
-                task.sender.send(Either.right(e));
-            }
-        }
+        pendingTasks.forEach(x -> x.runTask(gles2));
 
         gles2.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT | GLES2Constants.GL_DEPTH_BUFFER_BIT);
@@ -102,10 +119,12 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         // there's actually nothing to do here
     }
 
+    /// 将程序在渲染线程上运行，并阻塞调用直到运行完成。
     private <T> T invokeLater(CheckedFunction<T> run) throws RenderException {
         Pair<Oneshot.Sender<Either<T, RenderException>>, Oneshot.Receiver<Either<T, RenderException>>> channel = Oneshot.create();
         Oneshot.Sender<Either<T, RenderException>> tx = channel.first();
         Oneshot.Receiver<Either<T, RenderException>> rx = channel.second();
+
         synchronized (taskQueue) {
             taskQueue.value.add(new DeferredTask<>(run, tx));
         }
@@ -118,17 +137,30 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
 
     @Override
     public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
-        return null;
+        return createObject(List.of(info)).getFirst();
     }
 
     @Override
     public List<ObjectHandle> createObject(List<ObjectCreateInfo> infos) throws RenderException {
-        var results = new ArrayList<ObjectHandle>();
-        for (var info : infos) {
-            results.add(createObject(info));        // null implies exception, no need to check
-        }
+        if (infos.isEmpty()) return List.of();
+        return invokeLater(gl -> {
+            var handles = new ArrayList<ObjectHandle>(infos.size());
+            try (var arena = Arena.ofConfined()) {
+                for (var info : infos) {
+                    var bufferHandle = GLES2Utils.initBuffer(gl, arena, GLES2Constants.GL_ARRAY_BUFFER, info.pData);
 
-        return results;
+                    var dataSize = info.vertexInputInfo.stride;
+                    var vertexCount = info.pData.byteSize() / dataSize;
+                    var object = new Resource.Object(bufferHandle, info.vertexInputInfo, vertexCount);
+
+                    var handle = nextHandle();
+                    objects.put(handle, object);
+                    handles.add(new ObjectHandle(handle));
+                }
+            }
+
+            return handles;
+        });
     }
 
     @Override
@@ -165,7 +197,7 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
             int fragmentShaderHandle = 0;
 
             try (Arena arena = Arena.ofConfined()) {
-                if (! (info.gles2ShaderProgram instanceof Option.Some<ShaderProgram.GLES2> someProgramSource)) {
+                if (!(info.gles2ShaderProgram instanceof Option.Some<ShaderProgram.GLES2> someProgramSource)) {
                     throw new RenderException("无法创建渲染管线: 缺少 GLES2 着色器程序");
                 }
 
@@ -210,7 +242,14 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
 
     @Override
     public RenderTaskHandle createTask(RenderTaskInfo info) throws RenderException {
-        return null;
+        return invokeLater(gl -> {
+            var pipeline = getObject(info.pipelineHandle);
+
+            gl.glUseProgram(pipeline.programHandle);
+
+            // TODO
+            throw new UnsupportedOperationException("TODO");
+        });
     }
 
     private static final class UnUploadedObject {

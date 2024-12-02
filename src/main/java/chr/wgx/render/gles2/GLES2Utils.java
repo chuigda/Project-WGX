@@ -10,6 +10,7 @@ import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.panama.buffer.PointerBuffer;
 
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.util.function.Function;
 
 public final class GLES2Utils {
@@ -46,20 +47,15 @@ public final class GLES2Utils {
         return logBuffer.readString();
     }
 
-    public static int getShaderStatus(GLES2 gl, Arena arena, @enumtype(GLES2Constants.class) int statusKind, int shaderHandle) {
-        return getStatus(InformationKind.Shader, gl, arena, statusKind, shaderHandle);
-    }
-
-    public static int getProgramStatus(GLES2 gl, Arena arena, @enumtype(GLES2Constants.class) int statusKind, int programHandle) {
-        return getStatus(InformationKind.Program, gl, arena, statusKind, programHandle);
-    }
-
-    public static String getShaderLog(GLES2 gl, Arena arena, int shaderHandle) {
-        return getLog(InformationKind.Shader, gl, arena, shaderHandle);
-    }
-
-    public static String getProgramLog(GLES2 gl, Arena arena, int programHandle) {
-        return getLog(InformationKind.Program, gl, arena, programHandle);
+    public static int getBufferStatus(
+            GLES2 gl,
+            Arena arena,
+            @enumtype(GLES2Constants.class) int bufferKind,
+            @enumtype(GLES2Constants.class) int statusKind
+    ) {
+        IntBuffer result = IntBuffer.allocate(arena);
+        gl.glGetBufferParameteriv(bufferKind, statusKind, result);
+        return result.read();
     }
 
     public static void checkStatus(
@@ -88,6 +84,34 @@ public final class GLES2Utils {
         return shaderHandle;
     }
 
+    /// 创建并初始化缓存
+    /// @implSpec 这个函数会修改当前被绑定到 {@param target} 的缓存
+    public static int initBuffer(GLES2 gl, Arena arena, @enumtype(GLES2Constants.class) int target, MemorySegment bufferData) throws RenderException {
+        var bufferPtr = IntBuffer.allocate(arena);
+        var bufferHandle = bufferPtr.read();
+        var objectSize = bufferData.byteSize();
+        // no more performance
+        gl.glGenBuffers(1, bufferPtr);
+        // the program should not assume which buffer WAS bound to ARRAY_BUFFER,
+        // so it is safe to bind the buffer to ARRAY_BUFFER here
+        gl.glBindBuffer(target, bufferHandle);
+        gl.glBufferData(target,
+                objectSize,
+                GLES2Utils.makeSureNative(arena, bufferData),
+                GLES2Constants.GL_STATIC_DRAW
+        );
+
+        // check full write
+        var bufferSize = GLES2Utils.getBufferStatus(gl, arena, target, GLES2Constants.GL_BUFFER_SIZE);
+        if (bufferSize != objectSize) {
+            gl.glDeleteBuffers(1, bufferPtr);
+            // out of memory
+            throw new RenderException("无法创建对象：内存不足 (" + bufferSize + "/" + objectSize + ")");
+        }
+
+        return bufferHandle;
+    }
+
     public static void bindAttributes(GLES2 gl, Arena arena, int programHandle, VertexInputInfo info) {
         int index = 0;
         for (var attr : info.attributes) {
@@ -96,5 +120,12 @@ public final class GLES2Utils {
             gl.glBindAttribLocation(programHandle, index, ByteBuffer.allocateString(arena, name));
             index = index + ty.glIndexSize;
         }
+    }
+
+    // TODO: move this to elsewhere
+    public static MemorySegment makeSureNative(Arena arena, MemorySegment memory) {
+        if (memory.isNative()) return memory;
+        return arena.allocate(memory.byteSize())
+                .copyFrom(memory);
     }
 }
