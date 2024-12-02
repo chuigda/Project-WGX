@@ -1,6 +1,7 @@
 package chr.wgx.render.gles2;
 
 import chr.wgx.render.info.RenderPipelineCreateInfo;
+import chr.wgx.render.info.RenderTaskInfo;
 import chr.wgx.render.info.VertexInputInfo;
 import tech.icey.gles2.GLES2;
 import tech.icey.panama.buffer.IntBuffer;
@@ -10,8 +11,12 @@ import java.lang.foreign.Arena;
 public final class Resource {
     private Resource() {}
 
+    public interface Disposable {
+        void dispose(GLES2 gles2);
+    }
+
     @SuppressWarnings("ClassCanBeRecord")
-    public static final class Object {
+    public static final class Object implements Disposable {
         public final int glHandle;
         public final VertexInputInfo attributeInfo;
         public final long vertexCount;
@@ -22,6 +27,7 @@ public final class Resource {
             this.vertexCount = vertexCount;
         }
 
+        @Override
         public void dispose(GLES2 gles2) {
             try (Arena arena = Arena.ofConfined()) {
                 IntBuffer pBuffer = IntBuffer.allocate(arena);
@@ -33,7 +39,7 @@ public final class Resource {
     }
 
     @SuppressWarnings("ClassCanBeRecord")
-    public static final class Pipeline {
+    public static final class Pipeline implements Disposable {
         public final RenderPipelineCreateInfo createInfo;
         public final int programHandle;
 
@@ -42,6 +48,7 @@ public final class Resource {
             this.programHandle = programHandle;
         }
 
+        @Override
         public void dispose(GLES2 gles2) {
             try (Arena arena = Arena.ofConfined()) {
                 IntBuffer pBuffer = IntBuffer.allocate(arena);
@@ -49,6 +56,19 @@ public final class Resource {
 
                 gles2.glDeleteProgram(programHandle);
             }
+        }
+    }
+
+    public static final class Task implements Disposable {
+        public final RenderTaskInfo taskInfo;
+
+        public Task(RenderTaskInfo taskInfo) {
+            this.taskInfo = taskInfo;
+        }
+
+        @Override
+        public void dispose(GLES2 gles2) {
+            // TODO
         }
     }
 }

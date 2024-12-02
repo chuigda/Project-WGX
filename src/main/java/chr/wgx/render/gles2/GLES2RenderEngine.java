@@ -21,7 +21,6 @@ import tech.icey.xjbutil.sync.Oneshot;
 import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * See also <a href="https://docs.gl/es2">this page</a>
@@ -59,6 +58,7 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
     // OpenGL ES2 的所有资源更新实际上只在渲染线程上进行，因此不需要加锁或者使用并行数据结构
     private final HashMap<Long, Resource.Object> objects = new HashMap<>();
     private final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
+    private final HashMap<Long, Resource.Task> tasks = new HashMap<>();
 
     public GLES2RenderEngine(
             Action1<AbstractRenderEngine> onInit,
@@ -82,6 +82,10 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         return Objects.requireNonNull(objects.get(handle.getId()));
     }
 
+    private Resource.Task getObject(RenderTaskHandle handle) {
+        return Objects.requireNonNull(tasks.get(handle.getId()));
+    }
+
     // endregion Object Getter
 
     @Override
@@ -99,6 +103,35 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         gles2.glViewport(0, 0, width, height);
     }
 
+    private void doRenderObject(GLES2 gl, Arena arena, int programHandle, List<ObjectHandle> objects) {
+        if (objects.isEmpty()) return;
+        VertexInputInfo vertexInfo = null;
+        for (var objHandle : objects) {
+            var obj = getObject(objHandle);
+            if (vertexInfo == null) {
+                vertexInfo = obj.attributeInfo;
+                // initialize vertex attributes
+                // TODO: do not initialize if init the same VertexInputInfo before, save some performance
+                GLES2Utils.initializeAttributes(gl, arena, programHandle, vertexInfo);
+            } else {
+                // TODO check same vertex info
+            }
+
+            gl.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, obj.glHandle);
+            gl.glDrawArrays(GLES2Constants.GL_TRIANGLES, 0, (int) obj.vertexCount);
+        }
+    }
+
+    private void doRunTask(GLES2 gl, Resource.Task task) {
+        try (var arena = Arena.ofConfined()) {
+            var pipeline = getObject(task.taskInfo.pipelineHandle);
+            var programHandle = pipeline.programHandle;
+
+            gl.glUseProgram(programHandle);
+            doRenderObject(gl, arena, programHandle, task.taskInfo.objectHandles);
+        }
+    }
+
     @Override
     protected void renderFrame() throws RenderException {
         List<DeferredTask<?>> pendingTasks = List.of();
@@ -113,6 +146,7 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
 
         gles2.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT | GLES2Constants.GL_DEPTH_BUFFER_BIT);
+        tasks.values().forEach(x -> doRunTask(gles2, x));
     }
 
     @Override
@@ -243,39 +277,12 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         });
     }
 
-    private void doRenderObject(GLES2 gl, Arena arena, int programHandle, List<ObjectHandle> objects) {
-        if (objects.isEmpty()) return;
-        VertexInputInfo vertexInfo = null;
-        for (var objHandle : objects) {
-            var obj = getObject(objHandle);
-            if (vertexInfo == null) {
-                vertexInfo = obj.attributeInfo;
-                // initialize vertex attributes
-                // TODO: do not initialize if init before, save some performance
-                GLES2Utils.initializeAttributes(gl, arena, programHandle, vertexInfo);
-            } else {
-                // TODO check same vertex info
-            }
-
-            gl.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, obj.glHandle);
-            gl.glDrawArrays(GLES2Constants.GL_TRIANGLES, 0, (int) obj.vertexCount);
-        }
-    }
-
     @Override
     public RenderTaskHandle createTask(RenderTaskInfo info) throws RenderException {
-
         return invokeLater(gl -> {
-            var pipeline = getObject(info.pipelineHandle);
-
-            gl.glUseProgram(pipeline.programHandle);
-            try (var arena = Arena.ofConfined()) {
-                doRenderObject(gl, arena, pipeline.programHandle, info.objectHandles);
-            }
-
-            throw new UnsupportedOperationException("TODO");
-
-            // TODO
+            var handle = nextHandle();
+            tasks.put(handle, new Resource.Task(info));
+            return new RenderTaskHandle(handle);
         });
     }
 

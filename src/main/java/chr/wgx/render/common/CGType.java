@@ -22,9 +22,9 @@ public enum CGType {
     public final int std140Alignment;
     /// 对应的 Vulkan format
     public final @enumtype(VkFormat.class) int vkFormat;
-    /// 在 GLES 中占用的 index 数量
+    /// 在 GLES 中占用的 index 数量, 这也等价于它作为矩阵的列的数量
     public final int glIndexSize;
-    /// 一列的元素数量
+    /// 每列的元素数量
     public final int componentCount;
 
     CGType(int componentCount, int alignment, int std140Alignment, @enumtype(VkFormat.class) int vkFormat, boolean isMat) {
