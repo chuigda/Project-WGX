@@ -10,5 +10,6 @@ public final class ObjectCreateInfo {
     public ObjectCreateInfo(VertexInputInfo vertexInputInfo, MemorySegment pData) {
         this.vertexInputInfo = vertexInputInfo;
         this.pData = pData;
+        // TODO: make sure pData.byteSize is multiple of vertexInputInfo.stride
     }
 }
