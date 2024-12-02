@@ -45,6 +45,7 @@ public final class GLES2Window implements AutoCloseable {
         engine.initEngine(glfw, rawWindow);
         while (glfw.glfwWindowShouldClose(rawWindow) != GLFWConstants.GLFW_TRUE) {
             engine.renderFrameEngine();
+            glfw.glfwSwapBuffers(rawWindow);
             glfw.glfwPollEvents();
         }
         engine.closeEngine();
