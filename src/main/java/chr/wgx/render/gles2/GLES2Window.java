@@ -19,6 +19,8 @@ public final class GLES2Window implements AutoCloseable {
         glfw.glfwWindowHint(GLFWConstants.GLFW_CONTEXT_VERSION_MAJOR, 2);
         glfw.glfwWindowHint(GLFWConstants.GLFW_CONTEXT_VERSION_MINOR, 0);
         glfw.glfwWindowHint(GLFWConstants.GLFW_OPENGL_PROFILE, GLFWConstants.GLFW_OPENGL_ES_API);
+        // TODO: add a switch in GLES2Config to enable/disable debug
+        glfw.glfwWindowHint(GLFWConstants.GLFW_OPENGL_DEBUG_CONTEXT, GLFWConstants.GLFW_TRUE);
 
         try (Arena arena = Arena.ofConfined()) {
             ByteBuffer titleBuffer = ByteBuffer.allocateString(arena, title);

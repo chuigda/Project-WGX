@@ -4,6 +4,7 @@ import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
+import org.jetbrains.annotations.Nullable;
 import tech.icey.gles2.GLES2;
 import tech.icey.gles2.GLES2Constants;
 import tech.icey.glfw.GLFW;
@@ -21,6 +22,7 @@ import tech.icey.xjbutil.sync.Oneshot;
 import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * See also <a href="https://docs.gl/es2">this page</a>
@@ -91,11 +93,43 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
     @Override
     protected void init(GLFW glfw, GLFWwindow window) {
         glfw.glfwMakeContextCurrent(window);
-        this.gles2 = new GLES2(name -> {
+        gles2 = new GLES2(name -> {
             try (var localArena = Arena.ofConfined()) {
                 return glfw.glfwGetProcAddress(ByteBuffer.allocateString(localArena, name));
             }
         });
+
+        @Nullable ByteBuffer extensions = gles2.glGetString(GLES2Constants.GL_EXTENSIONS);
+        if (extensions != null) {
+            String extensionsString = extensions.readString();
+            logger.info("支持的 OpenGL ES2 扩展: " + extensionsString);
+
+            // TODO: add a switch in GLES2Config to enable/disable debug
+            if (extensionsString.contains("GL_KHR_debug")) {
+                GLES2DebugFunctions debugFunctions;
+                try {
+                    debugFunctions = new GLES2DebugFunctions(name -> {
+                        try (var localArena = Arena.ofConfined()) {
+                            return glfw.glfwGetProcAddress(ByteBuffer.allocateString(localArena, name));
+                        }
+                    });
+                } catch (Throwable e) {
+                    logger.warning("找到了 OpenGL ES2 调试扩展, 但是无法初始化调试函数: " + e.getMessage());
+                    return;
+                }
+
+                debugFunctions.glDebugMessageControl(
+                        GLES2Constants.GL_DONT_CARE,
+                        GLES2Constants.GL_DONT_CARE,
+                        GLES2Constants.GL_DONT_CARE,
+                        0,
+                        null,
+                        true
+                );
+                debugFunctions.glDebugMessageCallback(GLES2DebugCallback.DEBUG_CALLBACK, null);
+                logger.info("已启用 OpenGL ES2 调试扩展");
+            }
+        }
     }
 
     @Override
@@ -286,15 +320,6 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         });
     }
 
-    private static final class UnUploadedObject {
-        public final ObjectCreateInfo info;
-        public final Oneshot.Sender<Option<Integer>> sender;
-
-        public UnUploadedObject(ObjectCreateInfo info, Oneshot.Sender<Option<Integer>> sender) {
-            this.info = info;
-            this.sender = sender;
-        }
-    }
-
     private GLES2 gles2;
+    private static final Logger logger = Logger.getLogger(GLES2RenderEngine.class.getName());
 }
