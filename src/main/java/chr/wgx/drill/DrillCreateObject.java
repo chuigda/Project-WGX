@@ -80,15 +80,15 @@ public class DrillCreateObject {
                 RenderPipelineHandle pipelineHandle2 = engine.createPipeline(rpci2);
                 logger.info("第二个渲染管线已创建: " + pipelineHandle2);
 
-                Pair<ColorAttachmentHandle, DepthAttachmentHandle> defaultAttachments = engine.getDefaultAttachments();
-                ColorAttachmentHandle defaultColorAttachment = defaultAttachments.first();
+//                Pair<ColorAttachmentHandle, DepthAttachmentHandle> defaultAttachments = engine.getDefaultAttachments();
+//                ColorAttachmentHandle defaultColorAttachment = defaultAttachments.first();
 
                 logger.info("运行测试项目: 创建渲染任务");
                 RenderTaskInfo rti = new RenderTaskInfo(
                         RenderTaskInfo.PRIORITY_NOT_IMPORTANT,
                         pipelineHandle,
                         List.of(handle1),
-                        List.of(defaultColorAttachment),
+                        List.of(),
                         Option.none()
                 );
                 RenderTaskHandle renderTaskHandle = engine.createTask(rti);
@@ -98,7 +98,7 @@ public class DrillCreateObject {
                         RenderTaskInfo.PRIORITY_NOT_IMPORTANT,
                         pipelineHandle2,
                         List.of(handle2),
-                        List.of(defaultColorAttachment),
+                        List.of(),
                         Option.none()
                 );
                 RenderTaskHandle renderTaskHandle2 = engine.createTask(rti2);

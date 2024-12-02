@@ -76,9 +76,16 @@ public final class GLES2Utils {
         }
     }
 
-    public static int loadShader(GLES2 gl, Arena arena, @enumtype(GLES2Constants.class) int shaderType, String shaderSource) throws RenderException {
+    public static int loadShader(
+            GLES2 gl,
+            Arena arena,
+            @enumtype(GLES2Constants.class) int shaderType,
+            String shaderSource
+    ) throws RenderException {
         var shaderHandle = gl.glCreateShader(shaderType);
-        gl.glShaderSource(shaderHandle, 1, new PointerBuffer(arena.allocateFrom(shaderSource)), null);
+        var ppString = PointerBuffer.allocate(arena);
+        ppString.write(ByteBuffer.allocateString(arena, shaderSource));
+        gl.glShaderSource(shaderHandle, 1, ppString, null);
         gl.glCompileShader(shaderHandle);
 
         checkStatus(InformationKind.Shader, gl, arena, GLES2Constants.GL_COMPILE_STATUS, shaderHandle, msg ->
@@ -89,27 +96,32 @@ public final class GLES2Utils {
 
     /// 创建并初始化缓存
     /// @implSpec 这个函数会被绑定新的缓存到 {@param target}
-    public static int initBuffer(GLES2 gl, Arena arena, @enumtype(GLES2Constants.class) int target, MemorySegment bufferData) throws RenderException {
+    public static int initBuffer(
+            GLES2 gl,
+            Arena arena,
+            @enumtype(GLES2Constants.class) int target,
+            MemorySegment bufferData
+    ) throws RenderException {
         var bufferPtr = IntBuffer.allocate(arena);
-        var bufferHandle = bufferPtr.read();
         var objectSize = bufferData.byteSize();
         // no more performance
         gl.glGenBuffers(1, bufferPtr);
+
         // the program should not assume which buffer WAS bound to ARRAY_BUFFER,
         // so it is safe to bind the buffer to ARRAY_BUFFER here
+        int bufferHandle = bufferPtr.read();
         gl.glBindBuffer(target, bufferHandle);
+
         gl.glBufferData(target,
                 objectSize,
                 GLES2Utils.makeSureNative(arena, bufferData),
                 GLES2Constants.GL_STATIC_DRAW
         );
 
-        // check full write
-        var bufferSize = GLES2Utils.getBufferStatus(gl, arena, target, GLES2Constants.GL_BUFFER_SIZE);
-        if (bufferSize != objectSize) {
+        int error = gl.glGetError();
+        if (error != GLES2Constants.GL_NO_ERROR) {
             gl.glDeleteBuffers(1, bufferPtr);
-            // out of memory
-            throw new RenderException("无法创建对象: 内存不足 (" + bufferSize + "/" + objectSize + ")");
+            throw new RenderException("无法初始化缓冲: " + error);
         }
 
         return bufferHandle;

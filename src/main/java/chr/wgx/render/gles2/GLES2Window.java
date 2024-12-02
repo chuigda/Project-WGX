@@ -1,5 +1,6 @@
 package chr.wgx.render.gles2;
 
+import chr.wgx.render.RenderException;
 import org.jetbrains.annotations.NotNull;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
@@ -31,10 +32,19 @@ public final class GLES2Window implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         logger.info("关闭 GLFW 窗口");
         glfw.glfwDestroyWindow(rawWindow);
     }
 
     private static final Logger logger = Logger.getLogger(GLES2Window.class.getName());
+
+    public void mainLoop(GLES2RenderEngine engine) throws RenderException {
+        engine.initEngine(glfw, rawWindow);
+        while (glfw.glfwWindowShouldClose(rawWindow) != GLFWConstants.GLFW_TRUE) {
+            engine.renderFrameEngine();
+            glfw.glfwPollEvents();
+        }
+        engine.closeEngine();
+    }
 }
