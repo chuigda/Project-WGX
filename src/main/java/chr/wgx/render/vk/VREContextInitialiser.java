@@ -504,7 +504,10 @@ final class VREContextInitialiser {
         try (Arena arena = Arena.ofConfined()) {
             VkCommandPoolCreateInfo commandPoolCreateInfo = VkCommandPoolCreateInfo.allocate(arena);
             commandPoolCreateInfo.queueFamilyIndex(graphicsQueueFamilyIndex);
-            commandPoolCreateInfo.flags(VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+            commandPoolCreateInfo.flags(
+                    VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
+                    VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+            );
 
             VkCommandPool.Buffer pCommandPool = VkCommandPool.Buffer.allocate(arena);
             @enumtype(VkResult.class) int result =
