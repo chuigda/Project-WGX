@@ -58,18 +58,20 @@ public final class GLES2Utils {
         return result.read();
     }
 
+    /// 检查特定状态，并在错误时调用 {@param onException}
+    /// @param onException 错误时调用一次，可以包含副作用。接受一段错误信息，返回一个会被立刻抛出的 {@link RenderException}。
     public static void checkStatus(
             InformationKind kind,
             GLES2 gl,
             Arena arena,
             @enumtype(GLES2Constants.class) int statusKind,
             int handle,
-            Function<String, RenderException> exceptionProvider
+            Function<String, RenderException> onException
     ) throws RenderException {
         var status = getStatus(kind, gl, arena, statusKind, handle);
         if (status != GLES2Constants.GL_TRUE) {
             var errorMsg = getLog(kind, gl, arena, handle);
-            throw exceptionProvider.apply(errorMsg);
+            throw onException.apply(errorMsg);
         }
     }
 
@@ -106,7 +108,7 @@ public final class GLES2Utils {
         if (bufferSize != objectSize) {
             gl.glDeleteBuffers(1, bufferPtr);
             // out of memory
-            throw new RenderException("无法创建对象：内存不足 (" + bufferSize + "/" + objectSize + ")");
+            throw new RenderException("无法创建对象: 内存不足 (" + bufferSize + "/" + objectSize + ")");
         }
 
         return bufferHandle;

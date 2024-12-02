@@ -219,11 +219,13 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
 
                 GLES2Utils.checkStatus(
                         GLES2Utils.InformationKind.Program,
-                        gles,
-                        arena,
+                        gles, arena,
                         GLES2Constants.GL_LINK_STATUS,
                         programHandle,
-                        msg -> new RenderException("无法链接程序: " + msg)
+                        msg -> {
+                            gles.glDeleteProgram(programHandle);
+                            return new RenderException("无法链接程序: " + msg);
+                        }
                 );
 
                 long handle = nextHandle();
