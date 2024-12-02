@@ -355,7 +355,7 @@ final class VREContextInitialiser {
             presentQueueFamilyIndex = somePresentFamilyIndex.value;
 
             if (dedicatedTransferQueueFamilyIndex.isNone()) {
-                logger.info("未找到专用传输队列族, 渲染器将不会使用多线程数据传输");
+                logger.info("专用传输队列族未找到或被手动禁用, 渲染器将不会使用专用传输队列传输数据");
             }
         }
     }

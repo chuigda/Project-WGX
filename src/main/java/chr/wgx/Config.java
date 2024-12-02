@@ -59,6 +59,7 @@ public final class Config {
                 logger.info(String.format("无法读取配置文件: %s, 使用默认配置", e.getMessage()));
                 newConfig = new Config();
             }
+            newConfig.detectJVMArgumentsOverride();
             GLOBAL_CONFIG = Option.some(newConfig);
             return newConfig;
         }
