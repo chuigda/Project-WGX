@@ -12,6 +12,7 @@ import tech.icey.panama.buffer.PointerBuffer;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.function.Function;
+import java.util.function.ObjIntConsumer;
 
 public final class GLES2Utils {
     public enum InformationKind {
@@ -87,7 +88,7 @@ public final class GLES2Utils {
     }
 
     /// 创建并初始化缓存
-    /// @implSpec 这个函数会修改当前被绑定到 {@param target} 的缓存
+    /// @implSpec 这个函数会被绑定新的缓存到 {@param target}
     public static int initBuffer(GLES2 gl, Arena arena, @enumtype(GLES2Constants.class) int target, MemorySegment bufferData) throws RenderException {
         var bufferPtr = IntBuffer.allocate(arena);
         var bufferHandle = bufferPtr.read();
@@ -114,13 +115,27 @@ public final class GLES2Utils {
         return bufferHandle;
     }
 
-    public static void bindAttributes(GLES2 gl, Arena arena, int programHandle, VertexInputInfo info) {
+    /// 绑定并启用 {@param info} 所提供的 {@link chr.wgx.render.info.VertexInputInfo.Attribute}
+    public static void initializeAttributes(GLES2 gl, Arena arena, int programHandle, VertexInputInfo info) {
+        var stride = info.stride;
+
+        forEachAttribute(info, (attr, index) -> {
+            gl.glBindAttribLocation(programHandle, index, ByteBuffer.allocateString(arena, attr.name));
+            gl.glEnableVertexAttribArray(index);
+            gl.glVertexAttribPointer(index,
+                    attr.type.componentCount, GLES2Constants.GL_FLOAT,
+                    (byte) GLES2Constants.GL_FALSE,
+                    stride,
+                    MemorySegment.ofAddress(attr.byteOffset)
+            );
+        });
+    }
+
+    public static void forEachAttribute(VertexInputInfo info, ObjIntConsumer<VertexInputInfo.Attribute> block) {
         int index = 0;
         for (var attr : info.attributes) {
-            var ty = attr.type;
-            var name = attr.name;
-            gl.glBindAttribLocation(programHandle, index, ByteBuffer.allocateString(arena, name));
-            index = index + ty.glIndexSize;
+            block.accept(attr, index);
+            index = index + attr.type.glIndexSize;
         }
     }
 
