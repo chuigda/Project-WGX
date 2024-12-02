@@ -645,7 +645,7 @@ final class VREContextInitialiser {
     private static final ByteBuffer APP_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "Project-WGX");
     private static final ByteBuffer ENGINE_NAME_BUF = ByteBuffer.allocateString(
             Arena.global(),
-            "NG-ARACI : Neue Genesis Advanced Rendering And Computing Infrastructure"
+            "NG-DRCI-J : Neue Genesis Data-oriented Rendering and Computing Infrastructure for Java"
     );
     private static final ByteBuffer VALIDATION_LAYER_EXTENSION_BUF =
             ByteBuffer.allocateString(Arena.global(), Constants.VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
