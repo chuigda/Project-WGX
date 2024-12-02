@@ -137,19 +137,16 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
         gles2.glViewport(0, 0, width, height);
     }
 
-    private void doRenderObject(GLES2 gl, Arena arena, int programHandle, List<ObjectHandle> objects) {
-        if (objects.isEmpty()) return;
-        VertexInputInfo vertexInfo = null;
+    private void doRenderObject(GLES2 gl, Arena arena, Resource.Pipeline pipeline, List<ObjectHandle> objects) {
+        if (objects.isEmpty()) {
+            return;
+        }
+
+        VertexInputInfo vertexInfo = pipeline.createInfo.vertexInputInfo;
+        GLES2Utils.initializeAttributes(gl, arena, pipeline.programHandle, vertexInfo);
+
         for (var objHandle : objects) {
             var obj = getObject(objHandle);
-            if (vertexInfo == null) {
-                vertexInfo = obj.attributeInfo;
-                // initialize vertex attributes
-                // TODO: do not initialize if init the same VertexInputInfo before, save some performance
-                GLES2Utils.initializeAttributes(gl, arena, programHandle, vertexInfo);
-            } else {
-                // TODO check same vertex info
-            }
 
             gl.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, obj.glHandle);
             gl.glDrawArrays(GLES2Constants.GL_TRIANGLES, 0, (int) obj.vertexCount);
@@ -162,7 +159,7 @@ public final class GLES2RenderEngine extends AbstractRenderEngine {
             var programHandle = pipeline.programHandle;
 
             gl.glUseProgram(programHandle);
-            doRenderObject(gl, arena, programHandle, task.taskInfo.objectHandles);
+            doRenderObject(gl, arena, pipeline, task.taskInfo.objectHandles);
         }
     }
 

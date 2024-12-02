@@ -134,8 +134,10 @@ public final class GLES2Utils {
         forEachAttribute(info, (attr, index) -> {
             gl.glBindAttribLocation(programHandle, index, ByteBuffer.allocateString(arena, attr.name));
             gl.glEnableVertexAttribArray(index);
-            gl.glVertexAttribPointer(index,
-                    attr.type.componentCount, GLES2Constants.GL_FLOAT,
+            gl.glVertexAttribPointer(
+                    index,
+                    attr.type.componentCount,
+                    GLES2Constants.GL_FLOAT,
                     (byte) GLES2Constants.GL_FALSE,
                     stride,
                     MemorySegment.ofAddress(attr.byteOffset)
