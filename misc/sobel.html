@@ -5,8 +5,8 @@
         <style>
             #mainCanvas {
                 border: 1px solid black;
-                width: 800px;
-                height: 600px;
+                width: 1600px;
+                height: 800px;
             }
         </style>
         <script src="https://git.io/glm-js.min.js"></script>
@@ -16,8 +16,10 @@
             Your browser does not support the HTML5 canvas tag
         </canvas>
         <br />
+        <input id="rotate" type="range" min="-360" max="360" value="0" />
+        <br />
         <button onclick="uploadObjectFile()">提交 OBJ 文件</button>
 
-        <script src="shading.js"></script>
+        <script src="sobel.js"></script>
     </body>
 </html>
