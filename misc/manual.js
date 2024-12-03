@@ -40,35 +40,32 @@ bool modIsZero(int numer, int denom) {
 void main() {
    vec3 normal = normalize(vVertexNormal);
    vec3 lightDirection = normalize(lightPosition - vFragPos);
-   float intensity = max(dot(normal, lightDirection), 0.0);
+   float intensity = sqrt(max(dot(normal, lightDirection), 0.0));
 
-   if (intensity < 0.1) {
-      intensity = 0.25;
-   }
-   else if (intensity < 0.25) {
+   if (intensity < 0.2) {
       // interleaved 0.1 and 0.25
       ivec2 coord = ivec2(gl_FragCoord.xy);
       if (modIsZero(coord.x, 3) && modIsZero(coord.y, 3)) {
-         intensity = 0.6;
+         intensity = 0.1;
       }
       else {
          intensity = 0.25;
       }
    }
-   else if (intensity < 0.6) {
-      intensity = 0.6;
+   else if (intensity < 0.5) {
+      intensity = 0.4;
    }
    else if (intensity < 0.8) {
       ivec2 coord = ivec2(gl_FragCoord.xy);
       if (modIsZero(coord.x, 2) && modIsZero(coord.y, 2)) {
-         intensity = 0.6;
+         intensity = 0.4;
       }
       else {
-         intensity = 0.8;
+         intensity = 0.7;
       }
    }
    else {
-      intensity = 1.0;
+      intensity = 0.7;
    }
 
    gl_FragColor = vec4(vec3(intensity) * materialColor, 1.0);
@@ -190,10 +187,7 @@ void main() {
    if (color != se) { count++; }
 
    if (count > 0) {
-      gl_FragColor = vec4(0.35, 0.65, 0.70, 1.0);
-   }
-   else if (count != 0) {
-      gl_FragColor = 0.5 * vec4(0.45, 0.55, 0.60, 1.0);
+      gl_FragColor = mix(vec4(0.25, 0.90, 0.90, 1.0), texture2D(uLightTexture, uv), 0.5);
    }
    else {
       gl_FragColor = texture2D(uLightTexture, uv);
