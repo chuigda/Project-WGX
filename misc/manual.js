@@ -76,18 +76,6 @@ precision mediump float;
 uniform sampler2D uNormalTexture;
 uniform vec2 uViewportSize;
 
-const mat3 sobelX = mat3(
-   vec3(1.0, 2.0, 1.0),
-   vec3(0.0, 0.0, 0.0),
-   vec3(-1.0, -2.0, -1.0)
-);
-
-const mat3 sobelY = mat3(
-   vec3(1.0, 0.0, -1.0),
-   vec3(2.0, 0.0, -2.0),
-   vec3(1.0, 0.0, -1.0)
-);
-
 bool closeToZero(vec3 v) {
    return v.x < 0.0001 && v.y < 0.0001 && v.z < 0.0001;
 }
@@ -98,8 +86,8 @@ void main() {
    vec2 uv = vec2(u, v);
    vec2 offset = vec2(1.0 / uViewportSize.x, 1.0 / uViewportSize.y);
 
-   vec3 normal = texture2D(uNormalTexture, uv).rgb;
-   if (closeToZero(normal)) {
+   vec3 color = texture2D(uNormalTexture, uv).rgb;
+   if (closeToZero(color)) {
       gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       return;
    }
@@ -114,33 +102,23 @@ void main() {
    vec3 se = texture2D(uNormalTexture, uv + vec2(offset.x, offset.y)).rgb;
 
    int count = 0;
-   if (closeToZero(n)) { count += 1; }
-   if (closeToZero(s)) { count += 1; }
-   if (closeToZero(e)) { count += 1; }
-   if (closeToZero(w)) { count += 1; }
-   if (closeToZero(nw)) { count += 1; }
-   if (closeToZero(ne)) { count += 1; }
-   if (closeToZero(sw)) { count += 1; }
-   if (closeToZero(se)) { count += 1; }
+   if (color != n) { count++; }
+   if (color != s) { count++; }
+   if (color != e) { count++; }
+   if (color != w) { count++; }
+   if (color != nw) { count++; }
+   if (color != ne) { count++; }
+   if (color != sw) { count++; }
+   if (color != se) { count++; }
+
    if (count >= 3) {
-      gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-      return;
-   }
-
-   mat3 surrounding = mat3(
-      vec3(length(nw - normal), length(n - normal), length(ne - normal)),
-      vec3(length(w - normal), 0.0, length(e - normal)),
-      vec3(length(sw - normal), length(s - normal), length(se - normal))
-   );
-
-   float edgeX = (dot(sobelX[0], surrounding[0]) + dot(sobelX[1], surrounding[1]) + dot(sobelX[2], surrounding[2])) / 9.0;
-   float edgeY = (dot(sobelY[0], surrounding[0]) + dot(sobelY[1], surrounding[1]) + dot(sobelY[2], surrounding[2])) / 9.0;
-   float edge = sqrt(edgeX * edgeX + edgeY * edgeY);
-
-   if (edge > 0.15) {
       gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-   } else {
-      gl_FragColor = vec4(edge * 2.0, 0.0, 0.0, 1.0);
+   }
+   else if (count != 0) {
+      gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+   }
+   else {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
    }
 }
 `
@@ -324,11 +302,16 @@ const renderFrame = () => {
       gl.enableVertexAttribArray(normalPass_shaderProgram_Info.aVertexColor)
       gl.vertexAttribPointer(normalPass_shaderProgram_Info.aVertexColor, 3, gl.FLOAT, false, 24, 12)
 
-      const scroll = parseFloat(document.getElementById("rotate").value)
+      const rotateY = parseFloat(document.getElementById("rotate").value)
+      const rotateX = parseFloat(document.getElementById("rotateX").value)
 
       const p = glm.perspective(glm.radians(45), 0.5 * width / height, 0.1, 100)
-      const m = glm.rotate(glm.mat4(), glm.radians(scroll), glm.vec3(0, 1, 0))
-      const v = glm.lookAt(glm.vec3(0.5, 0.5, 0.5), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
+      const m = glm.rotate(
+         glm.rotate(glm.mat4(), glm.radians(rotateY), glm.vec3(0, 1, 0)),
+         glm.radians(rotateX),
+         glm.vec3(1, 0, 0)
+      )
+      const v = glm.lookAt(glm.vec3(0.5, 0, 0.5), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
 
       gl.uniformMatrix4fv(normalPass_shaderProgram_Info.uModel, false, m.elements)
       gl.uniformMatrix4fv(normalPass_shaderProgram_Info.uView, false, v.elements)

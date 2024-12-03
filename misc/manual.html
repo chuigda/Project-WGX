@@ -8,6 +8,10 @@
                 width: 1600px;
                 height: 800px;
             }
+
+            input {
+                width: 500px;
+            }
         </style>
         <script src="glm.min.js"></script>
     </header>
@@ -16,7 +20,8 @@
             Your browser does not support the HTML5 canvas tag
         </canvas>
         <br />
-        <input id="rotate" type="range" min="-360" max="360" value="0" />
+        <input id="rotate" type="range" min="-360" max="360" value="0"/>
+        <input id="rotateX" type="range" min="-360" max="360" value="0" />
         <br />
         <button onclick="uploadObjectFile()">提交 OBJ 文件</button>
 
