@@ -4,57 +4,18 @@ const normalPass_vertexShaderSource = String.raw`
 precision mediump float;
 
 attribute vec3 aVertexPosition;
-attribute vec3 aVertexNormal;
-varying vec3 vVertexNormal;
+attribute vec3 aVertexColor;
 
 uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat4 uProjection;
 
-mat3 transpose(mat3 matrix) {
-      return mat3(
-            vec3(matrix[0].x, matrix[1].x, matrix[2].x),
-            vec3(matrix[0].y, matrix[1].y, matrix[2].y),
-            vec3(matrix[0].z, matrix[1].z, matrix[2].z)
-      );
-}
-
-float det(mat2 matrix) {
-    return matrix[0].x * matrix[1].y - matrix[0].y * matrix[1].x;
-}
-
-mat3 inverse(mat3 matrix) {
-    vec3 row0 = matrix[0];
-    vec3 row1 = matrix[1];
-    vec3 row2 = matrix[2];
-
-    vec3 minors0 = vec3(
-        det(mat2(row1.y, row1.z, row2.y, row2.z)),
-        det(mat2(row1.z, row1.x, row2.z, row2.x)),
-        det(mat2(row1.x, row1.y, row2.x, row2.y))
-    );
-    vec3 minors1 = vec3(
-        det(mat2(row2.y, row2.z, row0.y, row0.z)),
-        det(mat2(row2.z, row2.x, row0.z, row0.x)),
-        det(mat2(row2.x, row2.y, row0.x, row0.y))
-    );
-    vec3 minors2 = vec3(
-        det(mat2(row0.y, row0.z, row1.y, row1.z)),
-        det(mat2(row0.z, row0.x, row1.z, row1.x)),
-        det(mat2(row0.x, row0.y, row1.x, row1.y))
-    );
-
-    mat3 adj = transpose(mat3(minors0, minors1, minors2));
-
-    return (1.0 / dot(row0, minors0)) * adj;
-}
+varying vec3 vVertexColor;
 
 void main() {
-   mat4 mvp = uProjection * uView * uModel ;
+   mat4 mvp = uProjection * uView * uModel;
+   vVertexColor = aVertexColor;
    gl_Position = mvp * vec4(aVertexPosition, 1.0);
-
-   mat3 normalMatrix = transpose(inverse(mat3(uModel)));
-   vVertexNormal = normalMatrix * aVertexNormal;
 }`
 
 const normalPass_fragmentShaderSource = String.raw`
@@ -62,10 +23,10 @@ const normalPass_fragmentShaderSource = String.raw`
 
 precision mediump float;
 
-varying vec3 vVertexNormal;
+varying vec3 vVertexColor;
 
 void main() {
-   gl_FragColor = vec4(normalize(vVertexNormal), 1.0);
+   gl_FragColor = vec4(vVertexColor, 1.0);
 }`
 
 const colorPassCopy_vertexShaderSource = String.raw`
@@ -222,7 +183,7 @@ gl.linkProgram(normalPass_shaderProgram)
 
 const normalPass_shaderProgram_Info = {
    aVertexPosition: gl.getAttribLocation(normalPass_shaderProgram, 'aVertexPosition'),
-   aVertexNormal: gl.getAttribLocation(normalPass_shaderProgram, 'aVertexNormal'),
+   aVertexColor: gl.getAttribLocation(normalPass_shaderProgram, 'aVertexColor'),
    uModel: gl.getUniformLocation(normalPass_shaderProgram, 'uModel'),
    uView: gl.getUniformLocation(normalPass_shaderProgram, 'uView'),
    uProjection: gl.getUniformLocation(normalPass_shaderProgram, 'uProjection')
@@ -317,7 +278,6 @@ const uploadObjectFile = async () => {
    }
 
    const vertices = []
-   const vertexNormals = []
    const vboData = []
    for (const originalLine of objectFileContent.split('\n')) {
       const line = originalLine.trim()
@@ -327,15 +287,7 @@ const uploadObjectFile = async () => {
 
       const parts = line.split(/\s+/)
       if (parts[0] === 'v') {
-         const coords = parts.slice(1).map(x => parseFloat(x))
-         console.info(coords)
-         if (coords.length === 6) {
-            vertices.push(coords.slice(0, 3))
-         } else {
-            vertices.push(coords)
-         }
-      } else if (parts[0] === 'vn') {
-         vertexNormals.push(parts.map(x => parseFloat(x)))
+         vertices.push(parts.slice(1).map(parseFloat))
       } else if (parts[0] === "f") {
          if (parts.length !== 4) {
             alert("只支持三角面!")
@@ -343,11 +295,8 @@ const uploadObjectFile = async () => {
          }
 
          for (let i = 1; i < 4; i++) {
-            const [vertexIndex, _, normalIndex] = parts[i].split('/').map(s => parseInt(s))
-            vboData.push(
-               ...vertices[vertexIndex - 1],
-               ...vertexNormals[normalIndex - 1]
-            )
+            const vertexIndex = parseInt(parts[i].split('/')[0])
+            vboData.push(...vertices[vertexIndex - 1])
          }
       }
    }
@@ -372,8 +321,8 @@ const renderFrame = () => {
       gl.bindBuffer(gl.ARRAY_BUFFER, vboRef.value)
       gl.enableVertexAttribArray(normalPass_shaderProgram_Info.aVertexPosition)
       gl.vertexAttribPointer(normalPass_shaderProgram_Info.aVertexPosition, 3, gl.FLOAT, false, 24, 0)
-      gl.enableVertexAttribArray(normalPass_shaderProgram_Info.aVertexNormal)
-      gl.vertexAttribPointer(normalPass_shaderProgram_Info.aVertexNormal, 3, gl.FLOAT, false, 24, 12)
+      gl.enableVertexAttribArray(normalPass_shaderProgram_Info.aVertexColor)
+      gl.vertexAttribPointer(normalPass_shaderProgram_Info.aVertexColor, 3, gl.FLOAT, false, 24, 12)
 
       const scroll = parseFloat(document.getElementById("rotate").value)
 
