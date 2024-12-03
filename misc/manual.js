@@ -1,4 +1,81 @@
-const normalPass_vertexShaderSource = String.raw`
+const lightPass_vertexShaderSource = String.raw`
+#version 100
+
+precision mediump float;
+
+attribute vec3 aVertexPosition;
+attribute vec3 aVertexNormal;
+varying vec3 vFragPos;
+varying vec3 vVertexNormal;
+
+uniform mat4 uModel;
+uniform mat4 uView;
+uniform mat4 uProjection;
+
+void main() {
+   mat4 mvp = uProjection * uView * uModel;
+   gl_Position = mvp * vec4(aVertexPosition, 1.0);
+
+   vFragPos = vec3(uModel * vec4(aVertexPosition, 1.0));
+   vVertexNormal = aVertexNormal;
+}
+`
+
+const lightPass_fragmentShaderSource = String.raw`
+#version 100
+
+precision mediump float;
+
+varying vec3 vFragPos;
+varying vec3 vVertexNormal;
+
+const vec3 lightPosition = vec3(0.0, 1.0, -1.0);
+const vec3 materialColor = vec3(0.45, 0.55, 0.60);
+
+bool modIsZero(int numer, int denom) {
+   int div = numer / denom;
+   return numer - div * denom == 0;
+}
+
+void main() {
+   vec3 normal = normalize(vVertexNormal);
+   vec3 lightDirection = normalize(lightPosition - vFragPos);
+   float intensity = max(dot(normal, lightDirection), 0.0);
+
+   if (intensity < 0.1) {
+      intensity = 0.25;
+   }
+   else if (intensity < 0.25) {
+      // interleaved 0.1 and 0.25
+      ivec2 coord = ivec2(gl_FragCoord.xy);
+      if (modIsZero(coord.x, 3) && modIsZero(coord.y, 3)) {
+         intensity = 0.6;
+      }
+      else {
+         intensity = 0.25;
+      }
+   }
+   else if (intensity < 0.6) {
+      intensity = 0.6;
+   }
+   else if (intensity < 0.8) {
+      ivec2 coord = ivec2(gl_FragCoord.xy);
+      if (modIsZero(coord.x, 2) && modIsZero(coord.y, 2)) {
+         intensity = 0.6;
+      }
+      else {
+         intensity = 0.8;
+      }
+   }
+   else {
+      intensity = 1.0;
+   }
+
+   gl_FragColor = vec4(vec3(intensity) * materialColor, 1.0);
+}
+`
+
+const idPass_vertexShaderSource = String.raw`
 #version 100
 
 precision mediump float;
@@ -18,7 +95,7 @@ void main() {
    gl_Position = mvp * vec4(aVertexPosition, 1.0);
 }`
 
-const normalPass_fragmentShaderSource = String.raw`
+const idPass_fragmentShaderSource = String.raw`
 #version 100
 
 precision mediump float;
@@ -74,6 +151,7 @@ const colorPass_fragmentShaderSource = String.raw`
 precision mediump float;
 
 uniform sampler2D uNormalTexture;
+uniform sampler2D uLightTexture;
 uniform vec2 uViewportSize;
 
 bool closeToZero(vec3 v) {
@@ -111,14 +189,14 @@ void main() {
    if (color != sw) { count++; }
    if (color != se) { count++; }
 
-   if (count >= 3) {
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+   if (count > 0) {
+      gl_FragColor = vec4(0.35, 0.65, 0.70, 1.0);
    }
    else if (count != 0) {
-      gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+      gl_FragColor = 0.5 * vec4(0.45, 0.55, 0.60, 1.0);
    }
    else {
-      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      gl_FragColor = texture2D(uLightTexture, uv);
    }
 }
 `
@@ -132,27 +210,62 @@ canvas.height = height
 const gl = canvas.getContext('webgl')
 gl.viewport(0, 0, width, height)
 
-const colorAttachment = gl.createTexture()
-gl.bindTexture(gl.TEXTURE_2D, colorAttachment)
+const lightPass_colorAttachment = gl.createTexture()
+gl.bindTexture(gl.TEXTURE_2D, lightPass_colorAttachment)
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width / 2, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+const lightPass_framebuffer = gl.createFramebuffer()
+gl.bindFramebuffer(gl.FRAMEBUFFER, lightPass_framebuffer)
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, lightPass_colorAttachment, 0)
+const lightPass_depthAttachment = gl.createRenderbuffer()
+gl.bindRenderbuffer(gl.RENDERBUFFER, lightPass_depthAttachment)
+gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width / 2, height)
+gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, lightPass_depthAttachment)
+gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+
+const idPass_colorAttachment = gl.createTexture()
+gl.bindTexture(gl.TEXTURE_2D, idPass_colorAttachment)
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width / 2, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-const framebuffer = gl.createFramebuffer()
-gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, colorAttachment, 0)
-const depthAttachment = gl.createRenderbuffer()
-gl.bindRenderbuffer(gl.RENDERBUFFER, depthAttachment)
+const idPass_framebuffer = gl.createFramebuffer()
+gl.bindFramebuffer(gl.FRAMEBUFFER, idPass_framebuffer)
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, idPass_colorAttachment, 0)
+const idPass_depthAttachment = gl.createRenderbuffer()
+gl.bindRenderbuffer(gl.RENDERBUFFER, idPass_depthAttachment)
 gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width / 2, height)
-gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthAttachment)
+gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, idPass_depthAttachment)
 gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 
+const lightPass_VS = gl.createShader(gl.VERTEX_SHADER)
+gl.shaderSource(lightPass_VS, lightPass_vertexShaderSource)
+gl.compileShader(lightPass_VS)
+const lightPass_FS = gl.createShader(gl.FRAGMENT_SHADER)
+gl.shaderSource(lightPass_FS, lightPass_fragmentShaderSource)
+gl.compileShader(lightPass_FS)
+const lightPass_shaderProgram = gl.createProgram()
+gl.attachShader(lightPass_shaderProgram, lightPass_VS)
+gl.attachShader(lightPass_shaderProgram, lightPass_FS)
+gl.linkProgram(lightPass_shaderProgram)
+
+const lightPass_shaderProgram_Info = {
+   aVertexPosition: gl.getAttribLocation(lightPass_shaderProgram, 'aVertexPosition'),
+   aVertexNormal: gl.getAttribLocation(lightPass_shaderProgram, 'aVertexNormal'),
+   uModel: gl.getUniformLocation(lightPass_shaderProgram, 'uModel'),
+   uView: gl.getUniformLocation(lightPass_shaderProgram, 'uView'),
+   uProjection: gl.getUniformLocation(lightPass_shaderProgram, 'uProjection')
+}
+
 const normalPass_VS = gl.createShader(gl.VERTEX_SHADER)
-gl.shaderSource(normalPass_VS, normalPass_vertexShaderSource)
+gl.shaderSource(normalPass_VS, idPass_vertexShaderSource)
 gl.compileShader(normalPass_VS)
 const normalPass_FS = gl.createShader(gl.FRAGMENT_SHADER)
-gl.shaderSource(normalPass_FS, normalPass_fragmentShaderSource)
+gl.shaderSource(normalPass_FS, idPass_fragmentShaderSource)
 gl.compileShader(normalPass_FS)
 const normalPass_shaderProgram = gl.createProgram()
 gl.attachShader(normalPass_shaderProgram, normalPass_VS)
@@ -198,6 +311,7 @@ gl.linkProgram(colorPass_shaderProgram)
 const colorPass_shaderProgram_Info = {
    aVertexPosition: gl.getAttribLocation(colorPass_shaderProgram, 'aVertexPosition'),
    uNormalTexture: gl.getUniformLocation(colorPass_shaderProgram, 'uNormalTexture'),
+   uLightTexture: gl.getUniformLocation(colorPass_shaderProgram, 'uLightTexture'),
    uViewportSize: gl.getUniformLocation(colorPass_shaderProgram, 'uViewportSize')
 }
 
@@ -256,6 +370,7 @@ const uploadObjectFile = async () => {
    }
 
    const vertices = []
+   const vertexNormals = []
    const vboData = []
    for (const originalLine of objectFileContent.split('\n')) {
       const line = originalLine.trim()
@@ -265,16 +380,28 @@ const uploadObjectFile = async () => {
 
       const parts = line.split(/\s+/)
       if (parts[0] === 'v') {
-         vertices.push(parts.slice(1).map(parseFloat))
-      } else if (parts[0] === "f") {
+         const v = parts.slice(1).map(parseFloat)
+         if (v.length === 3) {
+            v.push(1, 1, 1)
+         }
+         vertices.push(v)
+      }
+      else if (parts[0] === 'vn') {
+         const vn = parts.slice(1).map(parseFloat)
+         vertexNormals.push(vn)
+      }
+      else if (parts[0] === "f") {
          if (parts.length !== 4) {
             alert("只支持三角面!")
             return
          }
 
          for (let i = 1; i < 4; i++) {
-            const vertexIndex = parseInt(parts[i].split('/')[0])
-            vboData.push(...vertices[vertexIndex - 1])
+            const [vertexIndex, _, vertexNormalIndex] = parts[i].split('/').map(x => parseInt(x))
+            vboData.push(
+               ...vertices[vertexIndex - 1],
+               ...vertexNormals[vertexNormalIndex - 1]
+            )
          }
       }
    }
@@ -283,36 +410,47 @@ const uploadObjectFile = async () => {
    gl.bindBuffer(gl.ARRAY_BUFFER, vbo)
    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vboData), gl.STATIC_DRAW)
    vboRef.value = vbo
-   vboRef.vertexCount = vboData.length / 6
+   vboRef.vertexCount = vboData.length / 9
 }
 
 const renderFrame = () => {
    gl.clearColor(0.0, 0.0, 0.0, 1.0)
 
    if (vboRef.value != null) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-      gl.viewport(0, 0, width / 2, height)
-
-      gl.useProgram(normalPass_shaderProgram)
-      gl.enable(gl.DEPTH_TEST)
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-      gl.bindBuffer(gl.ARRAY_BUFFER, vboRef.value)
-      gl.enableVertexAttribArray(normalPass_shaderProgram_Info.aVertexPosition)
-      gl.vertexAttribPointer(normalPass_shaderProgram_Info.aVertexPosition, 3, gl.FLOAT, false, 24, 0)
-      gl.enableVertexAttribArray(normalPass_shaderProgram_Info.aVertexColor)
-      gl.vertexAttribPointer(normalPass_shaderProgram_Info.aVertexColor, 3, gl.FLOAT, false, 24, 12)
-
       const rotateY = parseFloat(document.getElementById("rotate").value)
       const rotateX = parseFloat(document.getElementById("rotateX").value)
 
       const p = glm.perspective(glm.radians(45), 0.5 * width / height, 0.1, 100)
+      const v = glm.lookAt(glm.vec3(0.5, 0, 0.5), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
       const m = glm.rotate(
          glm.rotate(glm.mat4(), glm.radians(rotateY), glm.vec3(0, 1, 0)),
          glm.radians(rotateX),
          glm.vec3(1, 0, 0)
       )
-      const v = glm.lookAt(glm.vec3(0.5, 0, 0.5), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
 
+      gl.bindFramebuffer(gl.FRAMEBUFFER, lightPass_framebuffer)
+      gl.viewport(0, 0, width / 2, height)
+      gl.useProgram(lightPass_shaderProgram)
+      gl.enable(gl.DEPTH_TEST)
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+      gl.bindBuffer(gl.ARRAY_BUFFER, vboRef.value)
+      gl.enableVertexAttribArray(lightPass_shaderProgram_Info.aVertexPosition)
+      gl.vertexAttribPointer(lightPass_shaderProgram_Info.aVertexPosition, 3, gl.FLOAT, false, 36, 0)
+      gl.enableVertexAttribArray(lightPass_shaderProgram_Info.aVertexNormal)
+      gl.vertexAttribPointer(lightPass_shaderProgram_Info.aVertexNormal, 3, gl.FLOAT, false, 36, 24)
+      gl.uniformMatrix4fv(lightPass_shaderProgram_Info.uModel, false, m.elements)
+      gl.uniformMatrix4fv(lightPass_shaderProgram_Info.uView, false, v.elements)
+      gl.uniformMatrix4fv(lightPass_shaderProgram_Info.uProjection, false, p.elements)
+      gl.drawArrays(gl.TRIANGLES, 0, vboRef.vertexCount)
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, idPass_framebuffer)
+      gl.useProgram(normalPass_shaderProgram)
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+      gl.bindBuffer(gl.ARRAY_BUFFER, vboRef.value)
+      gl.enableVertexAttribArray(normalPass_shaderProgram_Info.aVertexPosition)
+      gl.vertexAttribPointer(normalPass_shaderProgram_Info.aVertexPosition, 3, gl.FLOAT, false, 36, 0)
+      gl.enableVertexAttribArray(normalPass_shaderProgram_Info.aVertexColor)
+      gl.vertexAttribPointer(normalPass_shaderProgram_Info.aVertexColor, 3, gl.FLOAT, false, 36, 12)
       gl.uniformMatrix4fv(normalPass_shaderProgram_Info.uModel, false, m.elements)
       gl.uniformMatrix4fv(normalPass_shaderProgram_Info.uView, false, v.elements)
       gl.uniformMatrix4fv(normalPass_shaderProgram_Info.uProjection, false, p.elements)
@@ -328,7 +466,8 @@ const renderFrame = () => {
    gl.enableVertexAttribArray(colorPassCopy_shaderProgram_Info.aVertexPosition)
    gl.vertexAttribPointer(colorPassCopy_shaderProgram_Info.aVertexPosition, 2, gl.FLOAT, false, 0, 0)
    gl.activeTexture(gl.TEXTURE0)
-   gl.bindTexture(gl.TEXTURE_2D, colorAttachment)
+   gl.bindTexture(gl.TEXTURE_2D, idPass_colorAttachment)
+   // gl.bindTexture(gl.TEXTURE_2D, lightPass_colorAttachment)
    gl.uniform1i(colorPassCopy_shaderProgram_Info.uNormalTexture, 0)
    gl.uniform2f(colorPassCopy_shaderProgram_Info.uViewportSize, width / 2, height)
    gl.drawArrays(gl.TRIANGLES, 0, 6)
@@ -338,8 +477,11 @@ const renderFrame = () => {
    gl.enableVertexAttribArray(colorPass_shaderProgram_Info.aVertexPosition)
    gl.vertexAttribPointer(colorPass_shaderProgram_Info.aVertexPosition, 2, gl.FLOAT, false, 0, 0)
    gl.activeTexture(gl.TEXTURE0)
-   gl.bindTexture(gl.TEXTURE_2D, colorAttachment)
+   gl.bindTexture(gl.TEXTURE_2D, idPass_colorAttachment)
+   gl.activeTexture(gl.TEXTURE1)
+   gl.bindTexture(gl.TEXTURE_2D, lightPass_colorAttachment);
    gl.uniform1i(colorPass_shaderProgram_Info.uNormalTexture, 0)
+   gl.uniform1i(colorPass_shaderProgram_Info.uLightTexture, 1)
    gl.uniform2f(colorPass_shaderProgram_Info.uViewportSize, width / 2, height)
    gl.drawArrays(gl.TRIANGLES, 0, 6)
 }
