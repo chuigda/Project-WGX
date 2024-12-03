@@ -26,7 +26,7 @@ import java.util.concurrent.Semaphore;
 
 public final class VulkanRenderEngineContext {
     public final Arena autoArena = Arena.ofAuto();
-    /// 同一帧里最多只允许在渲染线程外额外提交 {@code 4} 个指令缓冲
+    /// 同一时刻，最多只允许在渲染线程外额外提交 {@code 4} 个指令缓冲
     public final Semaphore graphicsQueueSubmitPermission = new Semaphore(4);
 
     public final StaticCommands sCmd;
