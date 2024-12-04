@@ -16,8 +16,8 @@ void main() {
    mat4 mvp = uProjection * uView * uModel;
    gl_Position = mvp * vec4(aVertexPosition, 1.0);
 
-   vFragPos = vec3(uModel * vec4(aVertexPosition, 1.0));
-   vVertexNormal = aVertexNormal;
+   vFragPos = vec3(uView * uModel * vec4(aVertexPosition, 1.0));
+   vVertexNormal = mat3(uView * uModel) * aVertexNormal;
 }
 `
 
@@ -29,7 +29,7 @@ precision mediump float;
 varying vec3 vFragPos;
 varying vec3 vVertexNormal;
 
-const vec3 lightPosition = vec3(0.0, 1.0, -1.0);
+const vec3 lightPosition = vec3(0.0, 0.0, 1.0);
 const vec3 materialColor = vec3(0.45, 0.55, 0.60);
 
 bool modIsZero(int numer, int denom) {
@@ -40,7 +40,8 @@ bool modIsZero(int numer, int denom) {
 void main() {
    vec3 normal = normalize(vVertexNormal);
    vec3 lightDirection = normalize(lightPosition - vFragPos);
-   float intensity = sqrt(max(dot(normal, lightDirection), 0.0));
+
+   float intensity = max(dot(normal, lightDirection), 0.0);
 
    if (intensity < 0.2) {
       // interleaved 0.1 and 0.25
