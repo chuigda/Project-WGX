@@ -1,0 +1,8 @@
+[package]
+name = "model-exporter"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+easy-gltf = { git="https://github.com/chuigda/easy-gltf", rev="6fed09ccf329217aaa641fc4e04d162c73fa9969", features = ["names", "vertex-color"]}
+cgmath = "0.18.0"
