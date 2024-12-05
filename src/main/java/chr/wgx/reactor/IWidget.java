@@ -2,7 +2,8 @@ package chr.wgx.reactor;
 
 import javax.swing.*;
 
-public interface IUserInterface {
+public interface IWidget {
+    String displayName();
     default String qualName() {
         return this.getClass().getName();
     }
