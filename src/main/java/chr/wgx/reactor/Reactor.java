@@ -6,9 +6,13 @@ import java.util.HashMap;
 
 public final class Reactor {
     public final AbstractRenderEngine renderEngine;
-    public final HashMap<String, Object> constantPool = new HashMap<>();
+
+    /// 提交给 Reactor 之后就不会修改的稳定对象
+    public final HashMap<String, Object> stablePool = new HashMap<>();
+    /// 每一 tick 都必然发生变更的挥发性对象
     public final HashMap<String, Object> volatilePool = new HashMap<>();
-    public final HashMap<String, Radioactive> radioactivePool = new HashMap<>();
+    /// 变更时机不定，并且需要监视的放射性对象
+    public final HashMap<String, Radioactive<?>> radioactivePool = new HashMap<>();
 
     public Reactor(AbstractRenderEngine renderEngine) {
         this.renderEngine = renderEngine;
