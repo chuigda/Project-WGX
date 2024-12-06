@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
 
-java --enable-native-access=ALL-UNNAMED -jar wgx.jar
+java \
+  --enable-native-access=ALL-UNNAMED \
+  -XX:+UnlockExperimentalVMOptions \
+  -XX:+TrustFinalNonStaticFields \
+  -jar wgx.jar
