@@ -10,6 +10,9 @@ public final class Drill {
         GLTF gltf = GLTF.load().get();
         var readResult = gltf.read("test.glb").get();
 
-        System.err.println(readResult.models().get(0).modelName());
+        var model = readResult.models().get(0);
+        System.err.println(model.modelName());
+        System.err.println(model.vertexCount());
+        System.err.println(model.indexCount());
     }
 }
