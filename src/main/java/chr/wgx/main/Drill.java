@@ -9,5 +9,7 @@ public final class Drill {
 
         GLTF gltf = GLTF.load().get();
         var readResult = gltf.read("test.glb").get();
+
+        System.err.println(readResult.models().get(0).modelName());
     }
 }

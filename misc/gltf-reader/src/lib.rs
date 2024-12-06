@@ -28,6 +28,7 @@ pub struct GLTFVertex {
     pub id: u32
 }
 
+#[no_mangle]
 pub extern "C" fn gltf_read(file: *const c_char) -> *mut GLTFCollection {
     let Ok(gltf) = easy_gltf::load(unsafe { CStr::from_ptr(file) }.to_str().unwrap()) else {
         return null_mut();
@@ -102,6 +103,7 @@ pub extern "C" fn gltf_read(file: *const c_char) -> *mut GLTFCollection {
     }))
 }
 
+#[no_mangle]
 pub extern "C" fn gltf_free(model: *const GLTFCollection) {
     if model.is_null() {
         return;

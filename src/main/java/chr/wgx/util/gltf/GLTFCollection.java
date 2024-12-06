@@ -16,7 +16,7 @@ public final class GLTFCollection implements IPointer, AutoCloseable {
 
     GLTFCollection(GLTF gltf, MemorySegment segment) {
         this.gltf = gltf;
-        this.segment = segment;
+        this.segment = segment.reinterpret(SIZE);
     }
 
     public long modelCount() {
@@ -51,8 +51,8 @@ public final class GLTFCollection implements IPointer, AutoCloseable {
     );
     static final long SIZE = LAYOUT.byteSize();
 
-    private static final MemoryLayout.PathElement PATH$models = MemoryLayout.PathElement.groupElement("sType");
-    private static final MemoryLayout.PathElement PATH$model_count = MemoryLayout.PathElement.groupElement("pNext");
+    private static final MemoryLayout.PathElement PATH$models = MemoryLayout.PathElement.groupElement("models");
+    private static final MemoryLayout.PathElement PATH$model_count = MemoryLayout.PathElement.groupElement("model_count");
 
     private static final AddressLayout LAYOUT$models = (AddressLayout) LAYOUT.select(PATH$models);
     private static final ValueLayout.OfLong LAYOUT$model_count = (ValueLayout.OfLong) LAYOUT.select(PATH$model_count);
