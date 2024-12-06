@@ -8,6 +8,7 @@ public enum CGType {
     Vec2  (2, 4,  8, VkFormat.VK_FORMAT_R32G32_SFLOAT, false),
     Vec3  (3, 4, 16, VkFormat.VK_FORMAT_R32G32B32_SFLOAT, false),
     Vec4  (4, 4, 16, VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, false),
+    Int   (1, 4,  4, VkFormat.VK_FORMAT_R32_SINT, false),
     Mat2  (2, 4, 16, VkFormat.VK_FORMAT_R32G32_SFLOAT, true),
     Mat3  (3, 4, 16, VkFormat.VK_FORMAT_R32G32B32_SFLOAT, true),
     Mat4  (4, 4, 16, VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT, true);
