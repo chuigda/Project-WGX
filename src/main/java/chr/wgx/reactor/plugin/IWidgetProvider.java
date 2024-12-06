@@ -7,11 +7,11 @@ import java.util.List;
 
 public interface IWidgetProvider extends IPlugin {
     class DockTarget {
-        public final String className;
+        public final String targetName;
         public final long location;
 
-        public DockTarget(String className, long location) {
-            this.className = className;
+        public DockTarget(String targetName, long location) {
+            this.targetName = targetName;
             this.location = location;
         }
     }
