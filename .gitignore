@@ -39,3 +39,10 @@ LICENSE.AGREED
 
 ### Configuration file ###
 config.json
+
+### Native librarys ###
+gltf_reader.dll
+libgltf_reader.so
+
+### Test data ###
+test.glb
