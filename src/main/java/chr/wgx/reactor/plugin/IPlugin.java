@@ -1,12 +1,13 @@
 package chr.wgx.reactor.plugin;
 
-import chr.wgx.reactor.Reactor;
+import java.util.List;
 
 public interface IPlugin {
     default String className() {
         return this.getClass().getName();
     }
 
-    int priority();
-    void tick(Reactor reactor) throws Exception;
+    default List<IPluginBehavior> behaviors() {
+        return List.of();
+    }
 }

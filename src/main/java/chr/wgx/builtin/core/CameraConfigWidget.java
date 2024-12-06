@@ -1,4 +1,4 @@
-package chr.wgx.builtin.common;
+package chr.wgx.builtin.core;
 
 import chr.wgx.reactor.IWidget;
 
