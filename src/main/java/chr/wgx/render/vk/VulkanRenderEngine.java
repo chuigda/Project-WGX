@@ -301,14 +301,13 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             scissor.extent(swapchain.swapExtent);
 
             cx.dCmd.vkCmdBeginRendering(commandBuffer, renderingInfo);
+            cx.dCmd.vkCmdSetViewport(commandBuffer, 0, 1, viewport);
+            cx.dCmd.vkCmdSetScissor(commandBuffer, 0, 1, scissor);
 
             for (RenderTaskInfo task : tasks.values()) {
                 Resource.Pipeline pipeline = Objects.requireNonNull(pipelines.get(task.pipelineHandle.getId()));
 
                 cx.dCmd.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-                cx.dCmd.vkCmdSetViewport(commandBuffer, 0, 1, viewport);
-                cx.dCmd.vkCmdSetScissor(commandBuffer, 0, 1, scissor);
-
                 VkBuffer.Buffer pVertexBuffer = VkBuffer.Buffer.allocate(arena);
                 LongBuffer pOffsets = LongBuffer.allocate(arena);
                 for (int i = 0; i < task.objectHandles.size(); i++) {

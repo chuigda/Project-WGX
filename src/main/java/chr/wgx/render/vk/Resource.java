@@ -196,9 +196,11 @@ public final class Resource {
     public static final class Object {
         public final Buffer buffer;
         public final VertexInputInfo attributeInfo;
-        public final long vertexCount;
+        public final int vertexCount;
 
-        public Object(Buffer buffer, VertexInputInfo attributeInfo, long vertexCount) {
+        // TODO push constant
+
+        public Object(Buffer buffer, VertexInputInfo attributeInfo, int vertexCount) {
             this.buffer = buffer;
             this.attributeInfo = attributeInfo;
             this.vertexCount = vertexCount;

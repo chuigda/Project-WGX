@@ -38,6 +38,11 @@ bool modIsZero(int numer, int denom) {
 }
 
 void main() {
+   if (!gl_FrontFacing) {
+      gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+      return;
+   }
+
    vec3 normal = normalize(vVertexNormal);
    vec3 lightDirection = normalize(lightPosition - vFragPos);
 
@@ -100,7 +105,23 @@ precision mediump float;
 
 varying vec3 vVertexColor;
 
+bool mod2IsZero(int x) {
+   return (x / 2) * 2 == x;
+}
+
 void main() {
+   if (!gl_FrontFacing) {
+      // render some 20x20 black-purple grid
+      int x = int(gl_FragCoord.x) / 20;
+      int y = int(gl_FragCoord.y) / 20;
+      if (mod2IsZero(x) != mod2IsZero(y)) {
+         gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      }
+      else {
+         gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+      }
+      return;
+   }
    gl_FragColor = vec4(vVertexColor, 1.0);
 }`
 
