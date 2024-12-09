@@ -8,8 +8,9 @@ public final class ObjectCreateInfo {
     public final MemorySegment pData;
 
     public ObjectCreateInfo(VertexInputInfo vertexInputInfo, MemorySegment pData) {
+        assert pData.byteSize() % vertexInputInfo.stride == 0;
+
         this.vertexInputInfo = vertexInputInfo;
         this.pData = pData;
-        // TODO: make sure pData.byteSize is multiple of vertexInputInfo.stride
     }
 }

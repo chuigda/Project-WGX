@@ -72,7 +72,7 @@ public abstract class AbstractRenderEngine {
     public abstract Pair<ColorAttachmentHandle, DepthAttachmentHandle> getDefaultAttachments();
 
     public abstract SamplerHandle createTexture(BufferedImage image) throws RenderException;
-    public abstract UniformHandle createUniform(UniformCreateInfo info) throws RenderException;
+    public abstract UniformHandle createUniform(UniformBufferCreateInfo info) throws RenderException;
     public abstract RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException;
     public abstract RenderTaskHandle createTask(RenderTaskInfo info) throws RenderException;
 }

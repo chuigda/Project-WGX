@@ -23,6 +23,7 @@ import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.Arena;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class VulkanRenderEngineContext {
     public final Arena autoArena = Arena.ofAuto();
@@ -56,6 +57,8 @@ public final class VulkanRenderEngineContext {
     public final VkCommandBuffer[] commandBuffers;
     public final VkCommandPool graphicsOnceCommandPool;
     public final Option<VkCommandPool> transferCommandPool;
+
+    public final AtomicBoolean disposed = new AtomicBoolean(false);
 
     VulkanRenderEngineContext(
             StaticCommands sCmd,
@@ -119,6 +122,10 @@ public final class VulkanRenderEngineContext {
         return new VREContextInitialiser().init(glfw, window);
     }
 
+    public boolean isDisposed() {
+        return disposed.get();
+    }
+
     public VkShaderModule createShaderModule(byte[] code) throws RenderException {
         assert code.length % Integer.BYTES == 0;
         try (Arena arena = Arena.ofConfined()) {
@@ -174,6 +181,10 @@ public final class VulkanRenderEngineContext {
     }
 
     public void dispose() {
+        if (!disposed.compareAndSet(false, true)) {
+            return;
+        }
+
         waitDeviceIdle();
 
         vma.vmaDestroyAllocator(vmaAllocator);

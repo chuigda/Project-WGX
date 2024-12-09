@@ -216,7 +216,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public UniformHandle createUniform(UniformCreateInfo info) throws RenderException {
+    public UniformHandle createUniform(UniformBufferCreateInfo info) throws RenderException {
         return null;
     }
 
