@@ -58,7 +58,7 @@ public final class VulkanRenderEngineContext {
     public final VkCommandPool graphicsOnceCommandPool;
     public final Option<VkCommandPool> transferCommandPool;
 
-    public final AtomicBoolean disposed = new AtomicBoolean(false);
+    public boolean disposed = false;
 
     VulkanRenderEngineContext(
             StaticCommands sCmd,
@@ -122,10 +122,6 @@ public final class VulkanRenderEngineContext {
         return new VREContextInitialiser().init(glfw, window);
     }
 
-    public boolean isDisposed() {
-        return disposed.get();
-    }
-
     public VkShaderModule createShaderModule(byte[] code) throws RenderException {
         assert code.length % Integer.BYTES == 0;
         try (Arena arena = Arena.ofConfined()) {
@@ -180,10 +176,8 @@ public final class VulkanRenderEngineContext {
         }
     }
 
-    public void dispose() {
-        if (!disposed.compareAndSet(false, true)) {
-            return;
-        }
+    public synchronized void dispose() {
+        this.disposed = true;
 
         waitDeviceIdle();
 

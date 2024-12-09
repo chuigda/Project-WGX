@@ -2,10 +2,10 @@ package chr.wgx.render.data;
 
 import chr.wgx.render.info.VertexInputInfo;
 
-public abstract class RenderObject implements AutoCloseable {
-    public final VertexInputInfo vertexInputInfo;
+public abstract class RenderObject {
+    public final VertexInputInfo attributeInfo;
 
-    public RenderObject(VertexInputInfo vertexInputInfo) {
-        this.vertexInputInfo = vertexInputInfo;
+    public RenderObject(VertexInputInfo attributeInfo) {
+        this.attributeInfo = attributeInfo;
     }
 }

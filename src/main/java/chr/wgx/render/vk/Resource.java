@@ -120,13 +120,18 @@ public final class Resource {
         }
     }
 
-    public static final class SwapchainImage {
+    public static final class SwapchainImage implements IVkDisposable {
         public final VkImage image;
         public final VkImageView imageView;
 
         private SwapchainImage(VkImage image, VkImageView imageView) {
             this.image = image;
             this.imageView = imageView;
+        }
+
+        @Override
+        public void dispose(VulkanRenderEngineContext cx) {
+            cx.dCmd.vkDestroyImageView(cx.device, imageView, null);
         }
 
         public static SwapchainImage create(
@@ -137,19 +142,20 @@ public final class Resource {
             VkImageView imageView = createImageView(cx, image, format, VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT, 1);
             return new SwapchainImage(image, imageView);
         }
-
-        public void dispose(VulkanRenderEngineContext cx) {
-            cx.dCmd.vkDestroyImageView(cx.device, imageView, null);
-        }
     }
 
-    public static final class Buffer {
+    public static final class Buffer implements IVkDisposable {
         public final VkBuffer buffer;
         public final VmaAllocation allocation;
 
         private Buffer(VkBuffer buffer, VmaAllocation allocation) {
             this.buffer = buffer;
             this.allocation = allocation;
+        }
+
+        @Override
+        public void dispose(VulkanRenderEngineContext cx) {
+            cx.vma.vmaDestroyBuffer(cx.vmaAllocator, buffer, allocation);
         }
 
         public static Buffer create(
@@ -185,10 +191,6 @@ public final class Resource {
 
                 return new Buffer(pBuffer.read(), pAllocation.read());
             }
-        }
-
-        public void dispose(VulkanRenderEngineContext cx) {
-            cx.vma.vmaDestroyBuffer(cx.vmaAllocator, buffer, allocation);
         }
     }
 
