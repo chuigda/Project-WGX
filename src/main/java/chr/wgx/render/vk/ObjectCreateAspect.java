@@ -154,7 +154,7 @@ public final class ObjectCreateAspect {
 
                 long handle = engine.nextHandle();
                 synchronized (engine.objects) {
-                    engine.objects.put(handle, new Resource.Object(vertexBuffer, oci.vertexInputInfo, vertexCount));
+                    engine.objects.put(handle, new Resource.Object(vertexBuffer, oci.vertexInputInfo, (int) vertexCount));
                 }
                 handles.add(new ObjectHandle(handle));
             }
