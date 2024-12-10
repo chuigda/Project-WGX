@@ -1,6 +1,6 @@
 package chr.wgx.render;
 
-import chr.wgx.render.handle.*;
+import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
@@ -11,10 +11,8 @@ import tech.icey.xjbutil.functional.Action2;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractRenderEngine {
-    private final AtomicLong handleCounter = new AtomicLong(1024); // 保留一些低位用于内置对象
     private final Action1<AbstractRenderEngine> onInit;
     private final Action2<Integer, Integer> onResize;
     private final Action0 onBeforeRenderFrame;
@@ -33,10 +31,6 @@ public abstract class AbstractRenderEngine {
         this.onBeforeRenderFrame = onBeforeRenderFrame;
         this.onAfterRenderFrame = onAfterRenderFrame;
         this.onClose = onClose;
-    }
-
-    public final long nextHandle() {
-        return handleCounter.getAndIncrement();
     }
 
     public final void initEngine(GLFW glfw, GLFWwindow window) throws RenderException {
@@ -65,14 +59,12 @@ public abstract class AbstractRenderEngine {
     protected abstract void renderFrame() throws RenderException;
     protected abstract void close();
 
-    public abstract ObjectHandle createObject(ObjectCreateInfo info) throws RenderException;
-    public abstract List<ObjectHandle> createObject(List<ObjectCreateInfo> info) throws RenderException;
-    public abstract Pair<ColorAttachmentHandle, SamplerHandle> createColorAttachment(AttachmentCreateInfo i) throws RenderException;
-    public abstract DepthAttachmentHandle createDepthAttachment(AttachmentCreateInfo i) throws RenderException;
-    public abstract Pair<ColorAttachmentHandle, DepthAttachmentHandle> getDefaultAttachments();
+    public abstract RenderObject createObject(ObjectCreateInfo info) throws RenderException;
+    public abstract List<RenderObject> createObject(List<ObjectCreateInfo> info) throws RenderException;
+    public abstract Pair<Attachment, Texture> createColorAttachment(AttachmentCreateInfo i) throws RenderException;
+    public abstract Attachment createDepthAttachment(AttachmentCreateInfo i) throws RenderException;
+    public abstract Pair<Attachment, Attachment> getDefaultAttachments();
 
-    public abstract SamplerHandle createTexture(BufferedImage image) throws RenderException;
-    public abstract UniformHandle createUniform(UniformBufferCreateInfo info) throws RenderException;
-    public abstract RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException;
-    public abstract RenderTaskHandle createTask(RenderTaskInfo info) throws RenderException;
+    public abstract Texture createTexture(BufferedImage image) throws RenderException;
+    public abstract UniformBuffer createUniform(UniformBufferCreateInfo info) throws RenderException;
 }

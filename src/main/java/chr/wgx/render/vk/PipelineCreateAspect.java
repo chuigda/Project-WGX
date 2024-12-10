@@ -1,10 +1,10 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
-import chr.wgx.render.handle.RenderPipelineHandle;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.ShaderProgram;
 import chr.wgx.render.info.VertexInputInfo;
+import chr.wgx.render.vk.data.VulkanPipeline;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.panama.buffer.IntBuffer;
@@ -28,7 +28,7 @@ public final class PipelineCreateAspect {
         this.engine = engine;
     }
 
-    public RenderPipelineHandle createPipelineImpl(RenderPipelineCreateInfo info) throws RenderException {
+    public VulkanPipeline createPipelineImpl(RenderPipelineCreateInfo info) throws RenderException {
         if (!(info.vulkanShaderProgram instanceof Option.Some<ShaderProgram.Vulkan> someProgram)) {
             throw new RenderException("未提供 Vulkan 渲染器所需的着色器程序");
         }
@@ -187,11 +187,9 @@ public final class PipelineCreateAspect {
             }
             VkPipeline pipeline = pPipeline.read();
 
-            long handle = engine.nextHandle();
-            synchronized (engine.pipelines) {
-                engine.pipelines.put(handle, new Resource.Pipeline(info, pipelineLayout, pipeline));
-            }
-            return new RenderPipelineHandle(handle);
+            VulkanPipeline ret = new VulkanPipeline(info, pipelineLayout, pipeline);
+            engine.pipelines.add(ret);
+            return ret;
         } finally {
             if (vertexShaderModule != null) {
                 cx.dCmd.vkDestroyShaderModule(cx.device, vertexShaderModule, null);

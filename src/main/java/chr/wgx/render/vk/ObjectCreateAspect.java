@@ -1,8 +1,9 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
-import chr.wgx.render.handle.ObjectHandle;
+import chr.wgx.render.data.RenderObject;
 import chr.wgx.render.info.ObjectCreateInfo;
+import chr.wgx.render.vk.data.VulkanRenderObject;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.vk4j.bitmask.VkAccessFlags;
@@ -24,11 +25,11 @@ public final class ObjectCreateAspect {
         this.engine = engine;
     }
 
-    public ObjectHandle createObjectImpl(ObjectCreateInfo info) throws RenderException {
+    public RenderObject createObjectImpl(ObjectCreateInfo info) throws RenderException {
         return createObjectImpl(List.of(info)).getFirst();
     }
 
-    public List<ObjectHandle> createObjectImpl(List<ObjectCreateInfo> info) throws RenderException {
+    public List<RenderObject> createObjectImpl(List<ObjectCreateInfo> info) throws RenderException {
         VulkanRenderEngineContext cx = engine.cx;
 
         List<Long> vertexCounts = info.stream()
@@ -146,19 +147,23 @@ public final class ObjectCreateAspect {
                 });
             }
 
-            List<ObjectHandle> handles = new ArrayList<>();
+            List<RenderObject> ret = new ArrayList<>();
             for (int i = 0; i < info.size(); i++) {
                 ObjectCreateInfo oci = info.get(i);
                 Resource.Buffer vertexBuffer = vertexBuffers.get(i);
                 long vertexCount = vertexCounts.get(i);
 
-                long handle = engine.nextHandle();
-                synchronized (engine.objects) {
-                    engine.objects.put(handle, new Resource.Object(vertexBuffer, oci.vertexInputInfo, (int) vertexCount));
-                }
-                handles.add(new ObjectHandle(handle));
+                VulkanRenderObject renderObject = new VulkanRenderObject(
+                        oci.vertexInputInfo,
+                        vertexBuffer,
+                        null, // TODO force the use of index buffer and supply it here
+                        (int) vertexCount,
+                        0
+                );
+                engine.objects.add(renderObject);
+                ret.add(renderObject);
             }
-            return handles;
+            return ret;
         }
         catch (RenderException e) {
             for (Resource.Buffer buffer : vertexBuffers) {

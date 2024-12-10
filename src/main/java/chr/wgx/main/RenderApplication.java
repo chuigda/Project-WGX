@@ -27,7 +27,8 @@ public final class RenderApplication {
         Config config = Config.config();
         try (VulkanWindow w = new VulkanWindow(glfw, config.windowTitle, config.windowWidth, config.windowHeight)) {
             VulkanRenderEngine engine = new VulkanRenderEngine(
-                    DrillCreateObject::createObjectInThread,
+//                    DrillCreateObject::createObjectInThread,
+                    _ -> {},
                     (width, height) -> logger.info("帧缓冲尺寸已调整至 " + width + "x" + height),
                     () -> {},
                     () -> {},

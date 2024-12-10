@@ -2,10 +2,11 @@ package chr.wgx.render.vk;
 
 import chr.wgx.Config;
 import chr.wgx.render.RenderException;
-import chr.wgx.render.handle.ColorAttachmentHandle;
-import chr.wgx.render.handle.DepthAttachmentHandle;
-import chr.wgx.render.handle.SamplerHandle;
+import chr.wgx.render.data.Attachment;
+import chr.wgx.render.data.Texture;
 import chr.wgx.render.info.AttachmentCreateInfo;
+import chr.wgx.render.vk.data.CombinedImageSampler;
+import chr.wgx.render.vk.data.ImageAttachment;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.bitmask.VkImageAspectFlags;
 import tech.icey.vk4j.bitmask.VkImageUsageFlags;
@@ -13,14 +14,14 @@ import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.enumtype.VkFormat;
 import tech.icey.vk4j.enumtype.VkImageTiling;
 import tech.icey.xjbutil.container.Pair;
+import tech.icey.xjbutil.container.Ref;
 
 public final class AttachmentCreateAspect {
     public AttachmentCreateAspect(VulkanRenderEngine engine) {
         this.engine = engine;
     }
 
-    public Pair<ColorAttachmentHandle, SamplerHandle>
-    createColorAttachmentImpl(AttachmentCreateInfo info) throws RenderException {
+    public Pair<Attachment, Texture> createColorAttachmentImpl(AttachmentCreateInfo info) throws RenderException {
         int actualWidth = info.width;
         int actualHeight = info.height;
         if (actualWidth == -1) {
@@ -45,26 +46,19 @@ public final class AttachmentCreateAspect {
                 VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
                 VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
         );
+        Resource.Sampler sampler = Resource.Sampler.create(engine.cx, 0);
 
-        try {
-            Resource.Attachment attachment = Resource.Attachment.create(engine.cx, info.width, info.height, image);
+        Ref<Resource.Image> imageRef = new Ref<>(image);
+        ImageAttachment attachment = new ImageAttachment(info, imageRef);
+        CombinedImageSampler texture = new CombinedImageSampler(imageRef, sampler);
 
-            long handle = engine.nextHandle();
-            synchronized (engine.colorAttachments) {
-                engine.colorAttachments.put(handle, attachment);
-            }
-            synchronized (engine.samplerIsAttachment) {
-                engine.samplerIsAttachment.put(handle, true);
-            }
+        engine.colorAttachments.add(attachment);
+        engine.textures.add(texture);
 
-            return new Pair<>(new ColorAttachmentHandle(handle), new SamplerHandle(handle));
-        } catch (RenderException e) {
-            image.dispose(engine.cx);
-            throw e;
-        }
+        return new Pair<>(attachment, texture);
     }
 
-    public DepthAttachmentHandle createDepthAttachmentImpl(AttachmentCreateInfo info) throws RenderException {
+    public Attachment createDepthAttachmentImpl(AttachmentCreateInfo info) throws RenderException {
         int actualWidth = info.width;
         int actualHeight = info.height;
         if (actualWidth == -1) {
@@ -85,20 +79,11 @@ public final class AttachmentCreateAspect {
                 VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT
         );
+        Ref<Resource.Image> imageRef = new Ref<>(image);
 
-        try {
-            Resource.Attachment attachment = Resource.Attachment.create(engine.cx, info.width, info.height, image);
-
-            long handle = engine.nextHandle();
-            synchronized (engine.depthAttachments) {
-                engine.depthAttachments.put(handle, attachment);
-            }
-
-            return new DepthAttachmentHandle(handle);
-        } catch (RenderException e) {
-            image.dispose(engine.cx);
-            throw e;
-        }
+        ImageAttachment attachment = new ImageAttachment(info, imageRef);
+        engine.depthAttachments.add(attachment);
+        return attachment;
     }
 
     private final VulkanRenderEngine engine;

@@ -3,7 +3,10 @@ package chr.wgx.render.vk;
 import chr.wgx.Config;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
+import chr.wgx.render.data.Attachment;
+import chr.wgx.render.data.RenderObject;
 import chr.wgx.render.data.Texture;
+import chr.wgx.render.data.UniformBuffer;
 import chr.wgx.render.info.*;
 import chr.wgx.render.vk.data.*;
 import tech.icey.glfw.GLFW;
@@ -11,7 +14,6 @@ import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.NativeLayout;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.panama.buffer.LongBuffer;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.bitmask.*;
 import tech.icey.vk4j.datatype.*;
@@ -25,6 +27,7 @@ import tech.icey.xjbutil.functional.Action2;
 import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
@@ -177,7 +180,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             pipeline.dispose(cx);
         }
 
-        for (Resource.Object object : objects.values()) {
+        for (VulkanRenderObject object : objects) {
             object.dispose(cx);
         }
 
@@ -185,52 +188,38 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public ObjectHandle createObject(ObjectCreateInfo info) throws RenderException {
+    public RenderObject createObject(ObjectCreateInfo info) throws RenderException {
         return objectCreateAspect.createObjectImpl(info);
     }
 
     @Override
-    public List<ObjectHandle> createObject(List<ObjectCreateInfo> infos) throws RenderException {
+    public List<RenderObject> createObject(List<ObjectCreateInfo> infos) throws RenderException {
         return objectCreateAspect.createObjectImpl(infos);
     }
 
     @Override
-    public Pair<ColorAttachmentHandle, SamplerHandle> createColorAttachment(AttachmentCreateInfo info) throws RenderException {
+    public Pair<Attachment, Texture> createColorAttachment(AttachmentCreateInfo info) throws RenderException {
         return attachmentCreateAspect.createColorAttachmentImpl(info);
     }
 
     @Override
-    public DepthAttachmentHandle createDepthAttachment(AttachmentCreateInfo info) throws RenderException {
+    public Attachment createDepthAttachment(AttachmentCreateInfo info) throws RenderException {
         return attachmentCreateAspect.createDepthAttachmentImpl(info);
     }
 
     @Override
-    public Pair<ColorAttachmentHandle, DepthAttachmentHandle> getDefaultAttachments() {
+    public Pair<Attachment, Attachment> getDefaultAttachments() {
         return new Pair<>(DEFAULT_COLOR_ATTACHMENT, DEFAULT_DEPTH_ATTACHMENT);
     }
 
     @Override
-    public SamplerHandle createTexture(BufferedImage image) throws RenderException {
+    public Texture createTexture(BufferedImage image) throws RenderException {
         return null;
     }
 
     @Override
-    public UniformHandle createUniform(UniformBufferCreateInfo info) throws RenderException {
+    public UniformBuffer createUniform(UniformBufferCreateInfo info) throws RenderException {
         return null;
-    }
-
-    @Override
-    public RenderPipelineHandle createPipeline(RenderPipelineCreateInfo info) throws RenderException {
-        return pipelineCreateAspect.createPipelineImpl(info);
-    }
-
-    @Override
-    public RenderTaskHandle createTask(RenderTaskInfo info) throws RenderException {
-        long handle = nextHandle();
-        synchronized (tasks) {
-            tasks.put(handle, info);
-        }
-        return new RenderTaskHandle(handle);
     }
 
     private void resetAndRecordCommandBuffer(
@@ -303,20 +292,20 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             cx.dCmd.vkCmdSetViewport(commandBuffer, 0, 1, viewport);
             cx.dCmd.vkCmdSetScissor(commandBuffer, 0, 1, scissor);
 
-            for (RenderTaskInfo task : tasks.values()) {
-                Resource.Pipeline pipeline = Objects.requireNonNull(pipelines.get(task.pipelineHandle.getId()));
-
-                cx.dCmd.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-                VkBuffer.Buffer pVertexBuffer = VkBuffer.Buffer.allocate(arena);
-                LongBuffer pOffsets = LongBuffer.allocate(arena);
-                for (int i = 0; i < task.objectHandles.size(); i++) {
-                    Resource.Object object = Objects.requireNonNull(objects.get(task.objectHandles.get(i).getId()));
-
-                    pVertexBuffer.write(object.buffer.buffer);
-                    cx.dCmd.vkCmdBindVertexBuffers(commandBuffer, 0, 1, pVertexBuffer, pOffsets);
-                    cx.dCmd.vkCmdDraw(commandBuffer, (int) object.vertexCount, 1, 0, 0);
-                }
-            }
+//            for (RenderTaskInfo task : tasks.values()) {
+//                Resource.Pipeline pipeline = Objects.requireNonNull(pipelines.get(task.pipelineHandle.getId()));
+//
+//                cx.dCmd.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+//                VkBuffer.Buffer pVertexBuffer = VkBuffer.Buffer.allocate(arena);
+//                LongBuffer pOffsets = LongBuffer.allocate(arena);
+//                for (int i = 0; i < task.objectHandles.size(); i++) {
+//                    Resource.Object object = Objects.requireNonNull(objects.get(task.objectHandles.get(i).getId()));
+//
+//                    pVertexBuffer.write(object.buffer.buffer);
+//                    cx.dCmd.vkCmdBindVertexBuffers(commandBuffer, 0, 1, pVertexBuffer, pOffsets);
+//                    cx.dCmd.vkCmdDraw(commandBuffer, (int) object.vertexCount, 1, 0, 0);
+//                }
+//            }
 
             cx.dCmd.vkCmdEndRendering(commandBuffer);
 
@@ -357,14 +346,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     int currentFrameIndex = 0;
     boolean pauseRender = false;
 
-    final Set<VulkanRenderObject> objects = new HashSet<>();
-    final Set<VulkanPipeline> pipelines = new HashSet<>();
-    final Set<ImageAttachment> colorAttachments = new HashSet<>();
-    final Set<ImageAttachment> depthAttachments = new HashSet<>();
-    final Set<Texture> textures = new HashSet<>();
-    final HashMap<Long, Boolean> samplerIsAttachment = new HashMap<>();
-    // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
-    final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
+    final Set<VulkanRenderObject> objects = ConcurrentHashMap.newKeySet();
+    final Set<VulkanPipeline> pipelines = ConcurrentHashMap.newKeySet();
+    final Set<ImageAttachment> colorAttachments = ConcurrentHashMap.newKeySet();
+    final Set<ImageAttachment> depthAttachments = ConcurrentHashMap.newKeySet();
+    final Set<Texture> textures = ConcurrentHashMap.newKeySet();
 
     static final SwapchainColorAttachment DEFAULT_COLOR_ATTACHMENT = new SwapchainColorAttachment();
     static final SwapchainDepthAttachment DEFAULT_DEPTH_ATTACHMENT = new SwapchainDepthAttachment();
