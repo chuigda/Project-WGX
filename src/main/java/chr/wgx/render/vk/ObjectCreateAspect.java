@@ -70,7 +70,7 @@ public final class ObjectCreateAspect {
                         cx,
                         oci.pData.byteSize(),
                         VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT
-                                | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                        | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                         0,
                         null
                 );

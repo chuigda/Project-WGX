@@ -193,25 +193,6 @@ public final class Resource {
         }
     }
 
-    @SuppressWarnings("ClassCanBeRecord")
-    public static final class Object {
-        public final Buffer buffer;
-        public final VertexInputInfo attributeInfo;
-        public final int vertexCount;
-
-        // TODO push constant
-
-        public Object(Buffer buffer, VertexInputInfo attributeInfo, int vertexCount) {
-            this.buffer = buffer;
-            this.attributeInfo = attributeInfo;
-            this.vertexCount = vertexCount;
-        }
-
-        public void dispose(VulkanRenderEngineContext cx) {
-            buffer.dispose(cx);
-        }
-    }
-
     private static Pair<VkImage, VmaAllocation> createImage(
             VulkanRenderEngineContext cx,
             int width,

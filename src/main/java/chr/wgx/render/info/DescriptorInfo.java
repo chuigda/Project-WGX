@@ -24,4 +24,10 @@ public abstract sealed class DescriptorInfo {
             super(stage);
         }
     }
+
+    public static final class Texture extends DescriptorInfo {
+        public Texture(ShaderStage stage) {
+            super(stage);
+        }
+    }
 }
