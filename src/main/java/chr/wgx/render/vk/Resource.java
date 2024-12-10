@@ -211,24 +211,6 @@ public final class Resource {
         }
     }
 
-    @SuppressWarnings("ClassCanBeRecord")
-    public static final class Pipeline {
-        public final RenderPipelineCreateInfo createInfo;
-        public final VkPipelineLayout layout;
-        public final VkPipeline pipeline;
-
-        public Pipeline(RenderPipelineCreateInfo createInfo, VkPipelineLayout layout, VkPipeline pipeline) {
-            this.createInfo = createInfo;
-            this.layout = layout;
-            this.pipeline = pipeline;
-        }
-
-        public void dispose(VulkanRenderEngineContext cx) {
-            cx.dCmd.vkDestroyPipeline(cx.device, pipeline, null);
-            cx.dCmd.vkDestroyPipelineLayout(cx.device, layout, null);
-        }
-    }
-
     private static Pair<VkImage, VmaAllocation> createImage(
             VulkanRenderEngineContext cx,
             int width,

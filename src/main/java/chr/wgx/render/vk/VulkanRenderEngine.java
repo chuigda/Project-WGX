@@ -4,8 +4,8 @@ import chr.wgx.Config;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.data.Texture;
-import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
+import chr.wgx.render.vk.data.*;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.NativeLayout;
@@ -173,7 +173,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         cx.waitDeviceIdle();
         swapchain.dispose(cx);
 
-        for (Resource.Pipeline pipeline : pipelines.values()) {
+        for (VulkanPipeline pipeline : pipelines) {
             pipeline.dispose(cx);
         }
 
@@ -357,17 +357,17 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     int currentFrameIndex = 0;
     boolean pauseRender = false;
 
-    final HashMap<Long, Resource.Object> objects = new HashMap<>();
-    final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
-    final HashMap<Long, Resource.Attachment> colorAttachments = new HashMap<>();
-    final HashMap<Long, Resource.Attachment> depthAttachments = new HashMap<>();
+    final Set<VulkanRenderObject> objects = new HashSet<>();
+    final Set<VulkanPipeline> pipelines = new HashSet<>();
+    final Set<ImageAttachment> colorAttachments = new HashSet<>();
+    final Set<ImageAttachment> depthAttachments = new HashSet<>();
     final Set<Texture> textures = new HashSet<>();
     final HashMap<Long, Boolean> samplerIsAttachment = new HashMap<>();
     // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
     final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
 
-    static final ColorAttachmentHandle DEFAULT_COLOR_ATTACHMENT = new ColorAttachmentHandle(0L);
-    static final DepthAttachmentHandle DEFAULT_DEPTH_ATTACHMENT = new DepthAttachmentHandle(1L);
+    static final SwapchainColorAttachment DEFAULT_COLOR_ATTACHMENT = new SwapchainColorAttachment();
+    static final SwapchainDepthAttachment DEFAULT_DEPTH_ATTACHMENT = new SwapchainDepthAttachment();
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }
