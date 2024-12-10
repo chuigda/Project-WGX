@@ -6,13 +6,13 @@ import chr.wgx.render.vk.IVkDisposable;
 import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 
-public final class VkRenderObject extends RenderObject implements IVkDisposable {
+public final class VulkanRenderObject extends RenderObject implements IVkDisposable {
     public final Resource.Buffer vertexBuffer;
     public final Resource.Buffer indexBuffer;
     public final int vertexCount;
     public final int indexCount;
 
-    public VkRenderObject(
+    public VulkanRenderObject(
             VertexInputInfo attributeInfo,
             Resource.Buffer vertexBuffer,
             Resource.Buffer indexBuffer,

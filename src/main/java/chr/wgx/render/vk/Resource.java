@@ -25,12 +25,16 @@ import tech.icey.xjbutil.container.Pair;
 import java.lang.foreign.Arena;
 
 public final class Resource {
-    public static final class Image {
+    public static final class Image implements IVkDisposable {
         public final VkImage image;
         public final VkImageView imageView;
         public final VmaAllocation allocation;
 
-        private Image(VkImage image, VkImageView imageView, VmaAllocation allocation) {
+        private Image(
+                VkImage image,
+                VkImageView imageView,
+                VmaAllocation allocation
+        ) {
             this.image = image;
             this.imageView = imageView;
             this.allocation = allocation;
@@ -64,29 +68,23 @@ public final class Resource {
             return new Image(image, imageView, allocation);
         }
 
+        @Override
         public void dispose(VulkanRenderEngineContext cx) {
             cx.dCmd.vkDestroyImageView(cx.device, imageView, null);
             cx.vma.vmaDestroyImage(cx.vmaAllocator, image, allocation);
         }
     }
 
-    public static final class Texture {
-        public final Image image;
+    public static final class Sampler implements IVkDisposable {
         public final VkSampler sampler;
 
-        private Texture(Image image, VkSampler sampler) {
-            this.image = image;
+        private Sampler(VkSampler sampler) {
             this.sampler = sampler;
         }
 
+        @Override
         public void dispose(VulkanRenderEngineContext cx) {
-            image.dispose(cx);
             cx.dCmd.vkDestroySampler(cx.device, sampler, null);
-        }
-
-        public static Texture create(VulkanRenderEngineContext cx, Image image, int mipLevels) throws RenderException {
-            VkSampler sampler = createSampler(cx, image.image, mipLevels);
-            return new Texture(image, sampler);
         }
     }
 
@@ -115,7 +113,7 @@ public final class Resource {
                 int height,
                 Image image
         ) throws RenderException {
-            VkSampler sampler = createSampler(cx, image.image, 0);
+            VkSampler sampler = createSampler(cx, 0);
             return new Attachment(width, height, image, sampler);
         }
     }
@@ -306,11 +304,7 @@ public final class Resource {
         }
     }
 
-    public static VkSampler createSampler(
-            VulkanRenderEngineContext cx,
-            VkImage image,
-            int mipLevels
-    ) throws RenderException {
+    public static VkSampler createSampler(VulkanRenderEngineContext cx, int mipLevels) throws RenderException {
         VulkanConfig config = Config.config().vulkanConfig;
 
         try (Arena arena = Arena.ofConfined()) {

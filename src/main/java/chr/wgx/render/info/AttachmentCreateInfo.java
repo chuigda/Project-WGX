@@ -2,7 +2,6 @@ package chr.wgx.render.info;
 
 import chr.wgx.render.common.PixelFormat;
 
-@SuppressWarnings("ClassCanBeRecord")
 public final class AttachmentCreateInfo {
     public final PixelFormat pixelFormat;
     public final int width;
@@ -14,5 +13,9 @@ public final class AttachmentCreateInfo {
         this.pixelFormat = pixelFormat;
         this.width = width;
         this.height = height;
+    }
+
+    public AttachmentCreateInfo(PixelFormat pixelFormat) {
+        this(pixelFormat, -1, -1);
     }
 }

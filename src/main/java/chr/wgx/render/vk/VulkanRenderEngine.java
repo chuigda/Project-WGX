@@ -3,6 +3,7 @@ package chr.wgx.render.vk;
 import chr.wgx.Config;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
+import chr.wgx.render.data.Texture;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;
 import tech.icey.glfw.GLFW;
@@ -23,9 +24,7 @@ import tech.icey.xjbutil.functional.Action2;
 
 import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
@@ -362,7 +361,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final HashMap<Long, Resource.Pipeline> pipelines = new HashMap<>();
     final HashMap<Long, Resource.Attachment> colorAttachments = new HashMap<>();
     final HashMap<Long, Resource.Attachment> depthAttachments = new HashMap<>();
-    final HashMap<Long, Resource.Texture> textures = new HashMap<>();
+    final Set<Texture> textures = new HashSet<>();
     final HashMap<Long, Boolean> samplerIsAttachment = new HashMap<>();
     // TODO this is just a temporary implementation, we need to implement task sorting and dependency resolution in further development
     final HashMap<Long, RenderTaskInfo> tasks = new HashMap<>();
