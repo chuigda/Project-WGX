@@ -16,12 +16,11 @@ module chr.wgx {
     requires xjbutil;
     requires jsr305;
 
-    exports chr.wgx;
+    exports chr.wgx.config;
     exports chr.wgx.reactor;
     exports chr.wgx.reactor.plugin;
     exports chr.wgx.render;
     exports chr.wgx.render.common;
     exports chr.wgx.render.data;
-    exports chr.wgx.render.vk;
-    exports chr.wgx.render.gles2;
+    exports chr.wgx.render.info;
 }

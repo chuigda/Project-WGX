@@ -1,6 +1,6 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.Config;
+import chr.wgx.config.Config;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.data.Attachment;

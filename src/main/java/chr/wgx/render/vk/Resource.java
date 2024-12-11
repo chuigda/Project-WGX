@@ -1,9 +1,8 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.Config;
+import chr.wgx.config.Config;
+import chr.wgx.config.VulkanConfig;
 import chr.wgx.render.RenderException;
-import chr.wgx.render.info.RenderPipelineCreateInfo;
-import chr.wgx.render.info.VertexInputInfo;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.annotation.pointer;

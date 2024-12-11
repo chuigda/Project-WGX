@@ -1,4 +1,4 @@
-package chr.wgx.render.vk;
+package chr.wgx.config;
 
 import java.util.logging.Logger;
 

@@ -1,6 +1,6 @@
 package chr.wgx.ui.config;
 
-import chr.wgx.render.vk.VulkanConfig;
+import chr.wgx.config.VulkanConfig;
 import chr.wgx.ui.SwingUtil;
 import tech.icey.xjbutil.container.Option;
 

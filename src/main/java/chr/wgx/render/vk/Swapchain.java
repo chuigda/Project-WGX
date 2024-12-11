@@ -1,6 +1,6 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.Config;
+import chr.wgx.config.Config;
 import chr.wgx.render.RenderException;
 import tech.icey.panama.NativeLayout;
 import tech.icey.panama.annotation.enumtype;

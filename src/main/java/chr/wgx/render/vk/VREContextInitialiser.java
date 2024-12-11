@@ -1,6 +1,7 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.Config;
+import chr.wgx.config.Config;
+import chr.wgx.config.VulkanConfig;
 import chr.wgx.render.RenderException;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;

@@ -1,6 +1,6 @@
 package chr.wgx.ui.config;
 
-import chr.wgx.Config;
+import chr.wgx.config.Config;
 import chr.wgx.ui.SwingUtil;
 
 import javax.swing.*;

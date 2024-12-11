@@ -1,7 +1,5 @@
-package chr.wgx;
+package chr.wgx.config;
 
-import chr.wgx.render.gles2.GLES2Config;
-import chr.wgx.render.vk.VulkanConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;

@@ -1,4 +1,4 @@
-import chr.wgx.Config;
+import chr.wgx.config.Config;
 import com.google.gson.Gson;
 
 @SuppressWarnings("CallToPrintStackTrace")

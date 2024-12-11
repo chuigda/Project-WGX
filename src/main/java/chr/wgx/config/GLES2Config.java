@@ -1,4 +1,4 @@
-package chr.wgx.render.gles2;
+package chr.wgx.config;
 
 /// GLES2 渲染器配置
 public final class GLES2Config {

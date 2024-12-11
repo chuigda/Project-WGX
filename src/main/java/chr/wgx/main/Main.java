@@ -1,6 +1,6 @@
 package chr.wgx.main;
 
-import chr.wgx.Config;
+import chr.wgx.config.Config;
 import chr.wgx.ui.ControlWindow;
 import chr.wgx.ui.LicenseWindow;
 import chr.wgx.util.JULUtil;
