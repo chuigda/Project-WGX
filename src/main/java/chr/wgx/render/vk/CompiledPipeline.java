@@ -135,22 +135,4 @@ public final class CompiledPipeline {
             );
         }
     }
-
-    private static final class DrawObjects implements CompiledPipelineComponent {
-        private final Resource.Object[] objects;
-        // TODO per-object descriptor sets
-
-        private DrawObjects(Resource.Object[] objects) {
-            this.objects = objects;
-        }
-
-        @Override
-        public void toCommandBuffer(VulkanRenderEngine engine, VkCommandBuffer commandBuffer) {
-            for (Resource.Object object : objects) {
-                // TODO replace with vkCmdDrawIndexed
-                // TODO push constant
-                engine.cx.dCmd.vkCmdDraw(commandBuffer, object.vertexCount, 1, 0, 0);
-            }
-        }
-    }
 }
