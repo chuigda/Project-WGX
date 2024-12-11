@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 java \
-  --enable-native-access=ALL-UNNAMED \
+  --enable-native-access=tech.icey.vk4j,tech.icey.vma,tech.icey.glfw,tech.icey.gles2,tech.icey.panama,chr.wgx \
   -XX:+UnlockExperimentalVMOptions \
   -XX:+TrustFinalNonStaticFields \
   -jar wgx.jar
