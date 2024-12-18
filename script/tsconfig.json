@@ -1,0 +1,20 @@
+{
+   "compilerOptions": {
+      "target": "es5",
+      "useDefineForClassFields": true,
+      "module": "ESNext",
+      "lib": ["es2020"],
+
+      "moduleResolution": "bundler",
+      "allowImportingTsExtensions": true,
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "noEmit": true,
+
+      "strict": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "noFallthroughCasesInSwitch": true,
+   },
+   "include": ["src"]
+}

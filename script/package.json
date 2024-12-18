@@ -1,18 +1,19 @@
 {
   "name": "wgx-scripts",
+  "type": "module",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile-test": "npx tsc --noEmit",
+    "build": "node esbuild/index.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@babel/cli": "^7.26.4",
-    "@babel/core": "^7.26.0"
-  },
-  "dependencies": {
-    "@babel/preset-env": "^7.26.0"
+    "@swc/helpers": "^0.5.15",
+    "esbuild": "^0.24.0",
+    "esbuild-plugin-es5": "^2.1.1",
+    "esbuild-plugin-tsc": "^0.4.0",
+    "typescript": "^5.7.2"
   }
 }
