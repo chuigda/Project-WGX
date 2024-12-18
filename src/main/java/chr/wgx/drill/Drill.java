@@ -1,7 +1,9 @@
 package chr.wgx.drill;
 
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory;
+
 import javax.script.*;
+import java.util.HashMap;
 
 public final class Drill {
     private static final String SOURCE_CODE = """
@@ -47,25 +49,38 @@ function applicationStart() {
 }
 """;
 
+    private static final String SOURCE_CODE_2 = """
+"use strict";
+
+const System = java.lang.System
+
+function applicationStart(cx) {
+    System.out.println(cx)
+}
+
+applicationStart
+""";
+
+    public record ExampleRecord(int a, double b, String c) {}
+
     public static void main(String[] args) {
         NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
         ScriptEngine engine = factory.getScriptEngine("--language=es6");
+        Compilable compilable = (Compilable) engine;
 
         try {
-            engine.eval(SOURCE_CODE);
-            Object entryPoint = engine.get("applicationStart");
-            if (entryPoint == null) {
-                throw new RuntimeException("applicationStart not found");
-            }
+            Object entryPoint = engine.eval(SOURCE_CODE_2);
 
-            engine.eval("const x = applicationStart()");
-            while (true) {
-                Object x = engine.eval("r = x.next(); value = r.value; done = r.done; if (!done) { System.out.println(value) }; done");
-                if (x instanceof Boolean b && b) {
-                    System.err.println("Battle control terminated");
-                    break;
-                }
-            }
+            HashMap<String, Object> cx = new HashMap<>();
+            cx.put("example1", new ExampleRecord(1, 2.0, "3"));
+
+            CompiledScript compiled = compilable.compile("applicationStart(cx)");
+
+            Bindings bindings = engine.createBindings();
+            bindings.put("applicationStart", entryPoint);
+            bindings.put("cx", cx);
+
+            compiled.eval(bindings);
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
