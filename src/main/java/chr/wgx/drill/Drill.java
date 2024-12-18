@@ -49,6 +49,8 @@ function applicationStart() {
 }
 """;
 
+    public record ExampleRecord(int a, double b, String c) {}
+
     private static final String SOURCE_CODE_2 = """
 "use strict";
 
@@ -56,12 +58,17 @@ const System = java.lang.System
 
 function applicationStart(cx) {
     System.out.println(cx)
+    
+    const t = cx.get("example1")
+    System.out.println(t)
+    System.out.println(t.class)
+    System.out.println("t.a = " + t.a)
+    System.out.println("t.b = " + t.b)
+    System.out.println("t.c = " + t.c)
 }
 
 applicationStart
 """;
-
-    public record ExampleRecord(int a, double b, String c) {}
 
     public static void main(String[] args) {
         NashornScriptEngineFactory factory = new NashornScriptEngineFactory();

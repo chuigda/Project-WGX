@@ -24,4 +24,6 @@ module chr.wgx {
     exports chr.wgx.render.common;
     exports chr.wgx.render.data;
     exports chr.wgx.render.info;
+
+    exports chr.wgx.drill;
 }
