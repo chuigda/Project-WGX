@@ -7,6 +7,7 @@ module chr.wgx {
     requires java.desktop;
     requires java.logging;
     requires org.jetbrains.annotations;
+    requires org.openjdk.nashorn;
     requires tech.icey.gles2;
     requires tech.icey.glfw;
     requires tech.icey.panama;
