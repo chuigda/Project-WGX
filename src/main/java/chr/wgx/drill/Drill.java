@@ -115,7 +115,7 @@ public final class Drill {
           System.out.println("Zdravstvuyte, mir!");
           return [
             4,
-            "\u4E00\u5207\u6709\u4E3A\u6CD5"
+            [1, 2, 3, 4]
           ];
         case 1:
           _state.sent();
@@ -127,7 +127,7 @@ public final class Drill {
           _state.sent();
           return [
             4,
-            "\u5982\u9732\u4EA6\u5982\u7535"
+            1314521
           ];
         case 3:
           _state.sent();
@@ -143,6 +143,9 @@ public final class Drill {
       }
     });
   }
+
+  const a = [1145, 2, 3, 114514]
+
   EntryPoint.register(main);
 })();
 
@@ -180,7 +183,7 @@ public final class Drill {
                 Object value = state.get("value");
                 boolean done = (boolean) state.get("done");
 
-                System.err.println("state.next() = { value: " + value + ", done: " + done + "}");
+                System.err.println("state.next() = { value: " + value + " (of type" + value.getClass().getCanonicalName() + "), done: " + done + "}");
                 if (done) {
                     break;
                 }
