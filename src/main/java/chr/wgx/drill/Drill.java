@@ -182,11 +182,11 @@ public final class Drill {
                 state = (ScriptObjectMirror) stepScript.eval(bindings);
                 Object value = state.get("value");
                 boolean done = (boolean) state.get("done");
-
-                System.err.println("state.next() = { value: " + value + " (of type" + value.getClass().getCanonicalName() + "), done: " + done + "}");
                 if (done) {
                     break;
                 }
+
+                System.err.println("state.next() = { value: " + value + " (of type" + value.getClass().getCanonicalName() + ") }");
             }
         } catch (ScriptException e) {
             throw new RuntimeException(e);
