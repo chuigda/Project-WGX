@@ -226,7 +226,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public Pipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException {
+    public RenderPipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException {
         return pipelineCreateAspect.createPipelineImpl(info);
     }
 

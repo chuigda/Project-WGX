@@ -1,11 +1,11 @@
 package chr.wgx.render;
 
-import chr.wgx.render.data.Pipeline;
+import chr.wgx.render.data.RenderPipeline;
 
 public abstract class AbstractPipelineBindPoint {
-    public final Pipeline pipeline;
+    public final RenderPipeline pipeline;
 
-    protected AbstractPipelineBindPoint(Pipeline pipeline) {
+    protected AbstractPipelineBindPoint(RenderPipeline pipeline) {
         this.pipeline = pipeline;
     }
 }

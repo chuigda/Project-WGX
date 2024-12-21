@@ -68,5 +68,5 @@ public abstract class AbstractRenderEngine {
     public abstract UniformBuffer createUniform(UniformBufferCreateInfo info) throws RenderException;
 
     public abstract DescriptorSetLayout createDescriptorSetLayout(DescriptorSetLayoutCreateInfo info) throws RenderException;
-    public abstract Pipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException;
+    public abstract RenderPipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException;
 }

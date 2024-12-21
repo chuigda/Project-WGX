@@ -1,13 +1,13 @@
 package chr.wgx.render.vk.data;
 
-import chr.wgx.render.data.Pipeline;
+import chr.wgx.render.data.RenderPipeline;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.vk.IVkDisposable;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import tech.icey.vk4j.handle.VkPipeline;
 import tech.icey.vk4j.handle.VkPipelineLayout;
 
-public class VulkanPipeline extends Pipeline implements IVkDisposable {
+public class VulkanPipeline extends RenderPipeline implements IVkDisposable {
     public final VkPipelineLayout pipelineLayout;
     public final VkPipeline pipeline;
 
