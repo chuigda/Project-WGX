@@ -19,7 +19,7 @@ public final class ASPECT_DescriptorSetCreate {
         this.engine = engine;
     }
 
-    public VulkanDescriptorSet createDescriptorSet(DescriptorSetCreateInfo createInfo) throws RenderException {
+    public VulkanDescriptorSet createDescriptorSetImpl(DescriptorSetCreateInfo createInfo) throws RenderException {
         if (!(createInfo.layout instanceof VulkanDescriptorSetLayout vulkanLayout)) {
             throw new IllegalArgumentException("DescriptorSetCreateInfo::layout 不是 VulkanDescriptorSetLayout, 是否错误地混用了不同的渲染引擎?");
         }

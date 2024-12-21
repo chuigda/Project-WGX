@@ -71,5 +71,6 @@ public abstract class AbstractRenderEngine {
             DescriptorSetLayoutCreateInfo info,
             int maxSets
     ) throws RenderException;
+    public abstract DescriptorSet createDescriptorSet(DescriptorSetCreateInfo info) throws RenderException;
     public abstract RenderPipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException;
 }

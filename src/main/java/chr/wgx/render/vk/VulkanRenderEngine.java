@@ -39,6 +39,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         objectCreateAspect = new ASPECT_ObjectCreate(this);
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
         descriptorSetLayoutCreateAspect = new ASPECT_DescriptorSetLayoutCreate(this);
+        descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
     }
 
@@ -239,9 +240,15 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public DescriptorSetLayout createDescriptorSetLayout(
-            DescriptorSetLayoutCreateInfo info, int maxSets
+            DescriptorSetLayoutCreateInfo info,
+            int maxSets
     ) throws RenderException {
         return descriptorSetLayoutCreateAspect.createDescriptorSetLayoutImpl(info, maxSets);
+    }
+
+    @Override
+    public DescriptorSet createDescriptorSet(DescriptorSetCreateInfo info) throws RenderException {
+        return descriptorSetCreateAspect.createDescriptorSetImpl(info);
     }
 
     @Override
@@ -367,6 +374,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private final ASPECT_ObjectCreate objectCreateAspect;
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
     private final ASPECT_DescriptorSetLayoutCreate descriptorSetLayoutCreateAspect;
+    private final ASPECT_DescriptorSetCreate descriptorSetCreateAspect;
     private final ASPECT_PipelineCreate pipelineCreateAspect;
 
     // TODO resolve the nullability issue of cx/swapchain
