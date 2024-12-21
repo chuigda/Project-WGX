@@ -64,7 +64,9 @@ public abstract class AbstractRenderEngine {
     public abstract Pair<Attachment, Texture> createColorAttachment(AttachmentCreateInfo i) throws RenderException;
     public abstract Attachment createDepthAttachment(AttachmentCreateInfo i) throws RenderException;
     public abstract Pair<Attachment, Attachment> getDefaultAttachments();
-
     public abstract Texture createTexture(BufferedImage image) throws RenderException;
     public abstract UniformBuffer createUniform(UniformBufferCreateInfo info) throws RenderException;
+
+    public abstract DescriptorSetLayout createDescriptorSetLayout(DescriptorSetLayoutCreateInfo info) throws RenderException;
+    public abstract Pipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException;
 }

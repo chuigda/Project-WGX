@@ -1,5 +1,6 @@
 package chr.wgx.render.info;
 
+import chr.wgx.render.data.DescriptorSetLayout;
 import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
@@ -7,8 +8,8 @@ import java.util.List;
 @SuppressWarnings("ClassCanBeRecord")
 public final class RenderPipelineCreateInfo {
     public final VertexInputInfo vertexInputInfo;
-    public final List<DescriptorSetLayoutInfo> descriptorSetLayouts;
-    public final List<UniformBufferBindingInfo> pushConstantLayouts;
+    public final List<DescriptorSetLayout> descriptorSetLayouts;
+    public final List<PushConstantRange> pushConstants;
     public final Option<ShaderProgram.Vulkan> vulkanShaderProgram;
     public final Option<ShaderProgram.GLES2> gles2ShaderProgram;
     public final int colorAttachmentCount;
@@ -16,8 +17,8 @@ public final class RenderPipelineCreateInfo {
 
     public RenderPipelineCreateInfo(
             VertexInputInfo vertexInputInfo,
-            List<DescriptorSetLayoutInfo> descriptorSetLayouts,
-            List<UniformBufferBindingInfo> pushConstantLayouts,
+            List<DescriptorSetLayout> descriptorSetLayouts,
+            List<PushConstantRange> pushConstants,
             Option<ShaderProgram.Vulkan> vulkanShaderProgram,
             Option<ShaderProgram.GLES2> gles2ShaderProgram,
             int colorAttachmentCount,
@@ -25,7 +26,7 @@ public final class RenderPipelineCreateInfo {
     ) {
         this.vertexInputInfo = vertexInputInfo;
         this.descriptorSetLayouts = descriptorSetLayouts;
-        this.pushConstantLayouts = pushConstantLayouts;
+        this.pushConstants = pushConstants;
         this.vulkanShaderProgram = vulkanShaderProgram;
         this.gles2ShaderProgram = gles2ShaderProgram;
         this.colorAttachmentCount = colorAttachmentCount;

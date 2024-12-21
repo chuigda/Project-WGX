@@ -5,10 +5,13 @@ import chr.wgx.render.common.UniformUpdateFrequency;
 @SuppressWarnings("ClassCanBeRecord")
 public final class UniformBufferCreateInfo {
     public final UniformUpdateFrequency updateFrequency;
-    public final int size;
+    public final UniformBufferBindingInfo bindingInfo;
 
-    public UniformBufferCreateInfo(UniformUpdateFrequency updateFrequency, int size) {
+    public UniformBufferCreateInfo(
+            UniformUpdateFrequency updateFrequency,
+            UniformBufferBindingInfo bindingInfo
+    ) {
         this.updateFrequency = updateFrequency;
-        this.size = size;
+        this.bindingInfo = bindingInfo;
     }
 }

@@ -4,6 +4,7 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.info.FieldInfo;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.ShaderProgram;
+import chr.wgx.render.vk.data.VulkanDescriptorSetLayout;
 import chr.wgx.render.vk.data.VulkanPipeline;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.annotation.enumtype;
@@ -16,6 +17,7 @@ import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.bitmask.VkShaderStageFlags;
 import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
+import tech.icey.vk4j.handle.VkDescriptorSetLayout;
 import tech.icey.vk4j.handle.VkPipeline;
 import tech.icey.vk4j.handle.VkPipelineLayout;
 import tech.icey.vk4j.handle.VkShaderModule;
@@ -141,7 +143,18 @@ public final class PipelineCreateAspect {
             }
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.allocate(arena);
-            // TODO add push constant and descriptor set layout then
+            pipelineLayoutInfo.setLayoutCount(info.descriptorSetLayouts.size());
+            if (!info.descriptorSetLayouts.isEmpty()) {
+                VkDescriptorSetLayout.Buffer pSetLayouts = VkDescriptorSetLayout.Buffer.allocate(
+                        arena,
+                        info.descriptorSetLayouts.size()
+                );
+                for (int i = 0; i < info.descriptorSetLayouts.size(); i++) {
+                    pSetLayouts.write(i, ((VulkanDescriptorSetLayout) info.descriptorSetLayouts.get(i)).layout);
+                }
+                pipelineLayoutInfo.pSetLayouts(pSetLayouts);
+            }
+            // TODO add push constants then
             VkPipelineLayout.Buffer pPipelineLayout = VkPipelineLayout.Buffer.allocate(arena);
             @enumtype(VkResult.class) int result = cx.dCmd.vkCreatePipelineLayout(
                     cx.device,

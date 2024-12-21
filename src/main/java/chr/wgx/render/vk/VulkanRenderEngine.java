@@ -3,10 +3,7 @@ package chr.wgx.render.vk;
 import chr.wgx.config.Config;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
-import chr.wgx.render.data.Attachment;
-import chr.wgx.render.data.RenderObject;
-import chr.wgx.render.data.Texture;
-import chr.wgx.render.data.UniformBuffer;
+import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
 import chr.wgx.render.vk.data.*;
 import tech.icey.glfw.GLFW;
@@ -41,6 +38,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
         objectCreateAspect = new ObjectCreateAspect(this);
         attachmentCreateAspect = new AttachmentCreateAspect(this);
+        descriptorSetLayoutCreateAspect = new DescriptorSetLayoutCreateAspect(this);
         pipelineCreateAspect = new PipelineCreateAspect(this);
     }
 
@@ -222,6 +220,16 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         return null;
     }
 
+    @Override
+    public DescriptorSetLayout createDescriptorSetLayout(DescriptorSetLayoutCreateInfo info) throws RenderException {
+        return descriptorSetLayoutCreateAspect.createDescriptorSetLayoutImpl(info);
+    }
+
+    @Override
+    public Pipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException {
+        return pipelineCreateAspect.createPipelineImpl(info);
+    }
+
     private void resetAndRecordCommandBuffer(
             VulkanRenderEngineContext cx,
             VkCommandBuffer commandBuffer,
@@ -339,8 +347,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     private final ObjectCreateAspect objectCreateAspect;
     private final AttachmentCreateAspect attachmentCreateAspect;
+    private final DescriptorSetLayoutCreateAspect descriptorSetLayoutCreateAspect;
     private final PipelineCreateAspect pipelineCreateAspect;
 
+    // TODO resolve the nullability issue of cx/swapchain
     VulkanRenderEngineContext cx;
     Swapchain swapchain;
     int currentFrameIndex = 0;
