@@ -1,4 +1,4 @@
-package chr.wgx.render;
+package chr.wgx.render.pipeline;
 
 import chr.wgx.render.data.Attachment;
 

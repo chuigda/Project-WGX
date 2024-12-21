@@ -67,6 +67,9 @@ public abstract class AbstractRenderEngine {
     public abstract Texture createTexture(BufferedImage image) throws RenderException;
     public abstract UniformBuffer createUniform(UniformBufferCreateInfo info) throws RenderException;
 
-    public abstract DescriptorSetLayout createDescriptorSetLayout(DescriptorSetLayoutCreateInfo info) throws RenderException;
+    public abstract DescriptorSetLayout createDescriptorSetLayout(
+            DescriptorSetLayoutCreateInfo info,
+            int maxSets
+    ) throws RenderException;
     public abstract RenderPipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException;
 }

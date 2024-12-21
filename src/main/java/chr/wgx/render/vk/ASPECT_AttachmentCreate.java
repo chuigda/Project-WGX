@@ -16,8 +16,8 @@ import tech.icey.vk4j.enumtype.VkImageTiling;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.container.Ref;
 
-public final class AttachmentCreateAspect {
-    public AttachmentCreateAspect(VulkanRenderEngine engine) {
+public final class ASPECT_AttachmentCreate {
+    public ASPECT_AttachmentCreate(VulkanRenderEngine engine) {
         this.engine = engine;
     }
 

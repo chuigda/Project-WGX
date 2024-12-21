@@ -27,4 +27,5 @@ module chr.wgx {
     exports chr.wgx.render.info;
 
     exports chr.wgx.drill;
+    exports chr.wgx.render.pipeline;
 }

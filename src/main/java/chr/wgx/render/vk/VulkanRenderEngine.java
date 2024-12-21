@@ -36,10 +36,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             Action0 onClose
     ) {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
-        objectCreateAspect = new ObjectCreateAspect(this);
-        attachmentCreateAspect = new AttachmentCreateAspect(this);
-        descriptorSetLayoutCreateAspect = new DescriptorSetLayoutCreateAspect(this);
-        pipelineCreateAspect = new PipelineCreateAspect(this);
+        objectCreateAspect = new ASPECT_ObjectCreate(this);
+        attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
+        descriptorSetLayoutCreateAspect = new ASPECT_DescriptorSetLayoutCreate(this);
+        pipelineCreateAspect = new ASPECT_PipelineCreate(this);
     }
 
     @Override
@@ -182,6 +182,23 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             object.dispose(cx);
         }
 
+        for (ImageAttachment attachment : colorAttachments) {
+            attachment.dispose(cx);
+        }
+
+        for (ImageAttachment attachment : depthAttachments) {
+            attachment.dispose(cx);
+        }
+
+        for (CombinedImageSampler texture : textures) {
+            texture.dispose(cx);
+        }
+
+        for (Map.Entry<VulkanDescriptorSetLayout, VkDescriptorPool> entry : descriptorPools.entrySet()) {
+            cx.dCmd.vkDestroyDescriptorPool(cx.device, entry.getValue(), null);
+            cx.dCmd.vkDestroyDescriptorSetLayout(cx.device, entry.getKey().layout, null);
+        }
+
         cx.dispose();
     }
 
@@ -221,8 +238,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public DescriptorSetLayout createDescriptorSetLayout(DescriptorSetLayoutCreateInfo info) throws RenderException {
-        return descriptorSetLayoutCreateAspect.createDescriptorSetLayoutImpl(info);
+    public DescriptorSetLayout createDescriptorSetLayout(
+            DescriptorSetLayoutCreateInfo info, int maxSets
+    ) throws RenderException {
+        return descriptorSetLayoutCreateAspect.createDescriptorSetLayoutImpl(info, maxSets);
     }
 
     @Override
@@ -345,10 +364,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
     }
 
-    private final ObjectCreateAspect objectCreateAspect;
-    private final AttachmentCreateAspect attachmentCreateAspect;
-    private final DescriptorSetLayoutCreateAspect descriptorSetLayoutCreateAspect;
-    private final PipelineCreateAspect pipelineCreateAspect;
+    private final ASPECT_ObjectCreate objectCreateAspect;
+    private final ASPECT_AttachmentCreate attachmentCreateAspect;
+    private final ASPECT_DescriptorSetLayoutCreate descriptorSetLayoutCreateAspect;
+    private final ASPECT_PipelineCreate pipelineCreateAspect;
 
     // TODO resolve the nullability issue of cx/swapchain
     VulkanRenderEngineContext cx;
@@ -360,7 +379,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<VulkanPipeline> pipelines = ConcurrentHashMap.newKeySet();
     final Set<ImageAttachment> colorAttachments = ConcurrentHashMap.newKeySet();
     final Set<ImageAttachment> depthAttachments = ConcurrentHashMap.newKeySet();
-    final Set<Texture> textures = ConcurrentHashMap.newKeySet();
+    final Set<CombinedImageSampler> textures = ConcurrentHashMap.newKeySet();
+    final ConcurrentHashMap<VulkanDescriptorSetLayout, VkDescriptorPool> descriptorPools = new ConcurrentHashMap<>();
+    final Set<VulkanDescriptorSet> descriptorSets = ConcurrentHashMap.newKeySet();
 
     static final SwapchainColorAttachment DEFAULT_COLOR_ATTACHMENT = new SwapchainColorAttachment();
     static final SwapchainDepthAttachment DEFAULT_DEPTH_ATTACHMENT = new SwapchainDepthAttachment();
