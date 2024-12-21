@@ -16,6 +16,7 @@ module chr.wgx {
 
     requires xjbutil;
     requires jsr305;
+    requires org.objectweb.asm.tree.analysis;
 
     exports chr.wgx.config;
     exports chr.wgx.reactor;

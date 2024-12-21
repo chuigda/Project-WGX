@@ -1,51 +1,25 @@
 package chr.wgx.render.info;
 
-import chr.wgx.render.common.CGType;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public final class VertexInputInfo {
-    @SuppressWarnings("ClassCanBeRecord")
-    public static final class AttributeIn {
-        public final String name;
-        public final CGType type;
-
-        public AttributeIn(String name, CGType type) {
-            this.name = name;
-            this.type = type;
-        }
-    }
-
-    public static final class Attribute {
-        public final String name;
-        public final CGType type;
-
-        public final int location;
-        public final int byteOffset;
-
-        Attribute(String name, CGType type, int location, int byteOffset) {
-            this.name = name;
-            this.type = type;
-            this.location = location;
-            this.byteOffset = byteOffset;
-        }
-    }
-
-    public final List<Attribute> attributes;
-    public final HashMap<String, Attribute> attributeMap;
+    public final List<FieldInfo> attributes;
+    public final HashMap<String, FieldInfo> attributeMap;
     public final int stride;
 
-    public VertexInputInfo(List<AttributeIn> attributes) {
+    public VertexInputInfo(List<FieldInfoInput> attributes) {
         int currentLocation = 0;
         int currentOffset = 0;
 
         this.attributes = new ArrayList<>();
         this.attributeMap = new HashMap<>();
 
-        for (AttributeIn attribute : attributes) {
-            Attribute newAttribute = new Attribute(attribute.name, attribute.type, currentLocation, currentOffset);
+        for (FieldInfoInput attribute : attributes) {
+            assert !attribute.type.isMat;
+
+            FieldInfo newAttribute = new FieldInfo(attribute.name, attribute.type, currentLocation, currentOffset);
             this.attributes.add(newAttribute);
             this.attributeMap.put(attribute.name, newAttribute);
 

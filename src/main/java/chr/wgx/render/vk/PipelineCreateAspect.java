@@ -1,10 +1,11 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
+import chr.wgx.render.info.FieldInfo;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.ShaderProgram;
-import chr.wgx.render.info.VertexInputInfo;
 import chr.wgx.render.vk.data.VulkanPipeline;
+import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.panama.buffer.IntBuffer;
@@ -36,8 +37,8 @@ public final class PipelineCreateAspect {
 
         VulkanRenderEngineContext cx = engine.cx;
 
-        VkShaderModule vertexShaderModule = null;
-        VkShaderModule fragmentShaderModule = null;
+        @Nullable VkShaderModule vertexShaderModule = null;
+        @Nullable VkShaderModule fragmentShaderModule = null;
         try (Arena arena = Arena.ofConfined()) {
             vertexShaderModule = cx.createShaderModule(program.vertexShader);
             fragmentShaderModule = cx.createShaderModule(program.fragmentShader);
@@ -58,7 +59,7 @@ public final class PipelineCreateAspect {
             VkVertexInputAttributeDescription[] attributeDescriptions =
                     VkVertexInputAttributeDescription.allocate(arena, info.vertexInputInfo.attributes.size());
             for (int i = 0; i < attributeDescriptions.length; i++) {
-                VertexInputInfo.Attribute attribute = info.vertexInputInfo.attributes.get(i);
+                FieldInfo attribute = info.vertexInputInfo.attributes.get(i);
 
                 attributeDescriptions[i].binding(0);
                 attributeDescriptions[i].location(attribute.location);
