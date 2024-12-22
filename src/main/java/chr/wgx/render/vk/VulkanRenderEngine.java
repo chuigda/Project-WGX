@@ -38,6 +38,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
         objectCreateAspect = new ASPECT_ObjectCreate(this);
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
+        uniformCreateAspect = new ASPECT_UniformCreate(this);
         descriptorSetLayoutCreateAspect = new ASPECT_DescriptorSetLayoutCreate(this);
         descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
@@ -195,9 +196,17 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             texture.dispose(cx);
         }
 
+        for (VulkanUniformBuffer uniform : framelyUpdatedUniforms) {
+            uniform.dispose(cx);
+        }
+
+        for (VulkanUniformBuffer uniform : manuallyUpdatedUniforms) {
+            uniform.dispose(cx);
+        }
+
         for (Map.Entry<VulkanDescriptorSetLayout, VkDescriptorPool> entry : descriptorPools.entrySet()) {
             cx.dCmd.vkDestroyDescriptorPool(cx.device, entry.getValue(), null);
-            cx.dCmd.vkDestroyDescriptorSetLayout(cx.device, entry.getKey().layout, null);
+            entry.getKey().dispose(cx);
         }
 
         cx.dispose();
@@ -235,7 +244,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public UniformBuffer createUniform(UniformBufferCreateInfo info) throws RenderException {
-        return null;
+        return uniformCreateAspect.createUniformImpl(info);
     }
 
     @Override
@@ -373,6 +382,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     private final ASPECT_ObjectCreate objectCreateAspect;
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
+    private final ASPECT_UniformCreate uniformCreateAspect;
     private final ASPECT_DescriptorSetLayoutCreate descriptorSetLayoutCreateAspect;
     private final ASPECT_DescriptorSetCreate descriptorSetCreateAspect;
     private final ASPECT_PipelineCreate pipelineCreateAspect;
@@ -387,6 +397,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<VulkanPipeline> pipelines = ConcurrentHashMap.newKeySet();
     final Set<ImageAttachment> colorAttachments = ConcurrentHashMap.newKeySet();
     final Set<ImageAttachment> depthAttachments = ConcurrentHashMap.newKeySet();
+    final Set<VulkanUniformBuffer> framelyUpdatedUniforms = ConcurrentHashMap.newKeySet();
+    final Set<VulkanUniformBuffer> manuallyUpdatedUniforms = ConcurrentHashMap.newKeySet();
     final Set<CombinedImageSampler> textures = ConcurrentHashMap.newKeySet();
     final ConcurrentHashMap<VulkanDescriptorSetLayout, VkDescriptorPool> descriptorPools = new ConcurrentHashMap<>();
     final Set<VulkanDescriptorSet> descriptorSets = ConcurrentHashMap.newKeySet();

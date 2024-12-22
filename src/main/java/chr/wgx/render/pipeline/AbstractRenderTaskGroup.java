@@ -6,14 +6,19 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractRenderTaskGroup {
-    public final AtomicBoolean enabled;
     public final HashMap<Integer, DescriptorSet> sharedDescriptorSets;
 
-    protected AbstractRenderTaskGroup(
-            AtomicBoolean enabled,
-            HashMap<Integer, DescriptorSet> sharedDescriptorSets
-    ) {
-        this.enabled = enabled;
+    public final AtomicBoolean enabled = new AtomicBoolean(true);
+
+    protected AbstractRenderTaskGroup(HashMap<Integer, DescriptorSet> sharedDescriptorSets) {
         this.sharedDescriptorSets = sharedDescriptorSets;
+    }
+
+    public final void setEnabled(boolean enabled) {
+        this.enabled.set(enabled);
+    }
+
+    public final boolean isEnabled() {
+        return this.enabled.get();
     }
 }
