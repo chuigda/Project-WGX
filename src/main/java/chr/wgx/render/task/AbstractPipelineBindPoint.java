@@ -1,9 +1,11 @@
 package chr.wgx.render.task;
 
 import chr.wgx.render.data.Attachment;
+import chr.wgx.render.data.DescriptorSet;
 import chr.wgx.render.data.RenderPipeline;
 import tech.icey.xjbutil.container.Option;
 
+import java.util.HashMap;
 import java.util.List;
 
 public abstract class AbstractPipelineBindPoint {
@@ -24,4 +26,8 @@ public abstract class AbstractPipelineBindPoint {
         this.colorAttachments = colorAttachments;
         this.depthAttachment = depthAttachment;
     }
+
+    public abstract AbstractRenderTaskGroup addRenderTaskGroup(
+            HashMap<Integer, DescriptorSet> sharedDescriptorSets
+    );
 }
