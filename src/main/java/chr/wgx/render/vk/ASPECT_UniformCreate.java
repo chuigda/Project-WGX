@@ -51,7 +51,14 @@ public final class ASPECT_UniformCreate {
                 }
             }
 
-            VulkanUniformBuffer ret = new VulkanUniformBuffer(info, buffers, mappedMemory);
+            VulkanUniformBuffer ret = new VulkanUniformBuffer(
+                    info,
+                    buffers,
+                    mappedMemory,
+                    info.updateFrequency == UniformUpdateFrequency.PER_FRAME
+                            ? Option.none()
+                            : Option.some(engine.uniformManuallyUpdated)
+            );
             if (info.updateFrequency == UniformUpdateFrequency.PER_FRAME) {
                 engine.framelyUpdatedUniforms.add(ret);
             }

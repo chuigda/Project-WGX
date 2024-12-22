@@ -25,6 +25,7 @@ import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
@@ -86,6 +87,17 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     protected void renderFrame() throws RenderException {
         if (pauseRender) {
             return;
+        }
+
+        if (uniformManuallyUpdated.getAndSet(false)) {
+            cx.dCmd.vkDeviceWaitIdle(cx.device);
+            for (VulkanUniformBuffer uniform : manuallyUpdatedUniforms) {
+                uniform.updateGPU();
+            }
+        }
+
+        for (VulkanUniformBuffer uniform : framelyUpdatedUniforms) {
+            uniform.updateGPU(currentFrameIndex);
         }
 
         VkFence inFlightFence = cx.inFlightFences[currentFrameIndex];
@@ -399,6 +411,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<ImageAttachment> depthAttachments = ConcurrentHashMap.newKeySet();
     final Set<VulkanUniformBuffer> framelyUpdatedUniforms = ConcurrentHashMap.newKeySet();
     final Set<VulkanUniformBuffer> manuallyUpdatedUniforms = ConcurrentHashMap.newKeySet();
+    final AtomicBoolean uniformManuallyUpdated = new AtomicBoolean(false);
     final Set<CombinedImageSampler> textures = ConcurrentHashMap.newKeySet();
     final ConcurrentHashMap<VulkanDescriptorSetLayout, VkDescriptorPool> descriptorPools = new ConcurrentHashMap<>();
     final Set<VulkanDescriptorSet> descriptorSets = ConcurrentHashMap.newKeySet();

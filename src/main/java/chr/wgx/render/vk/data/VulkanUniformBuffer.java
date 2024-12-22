@@ -6,6 +6,7 @@ import chr.wgx.render.info.UniformBufferCreateInfo;
 import chr.wgx.render.vk.IVkDisposable;
 import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
+import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.MemorySegment;
@@ -17,18 +18,35 @@ public final class VulkanUniformBuffer extends UniformBuffer implements IVkDispo
     public final List<MemorySegment> mappedMemory;
     public final byte[] cpuBufferBack;
     public final MemorySegment cpuBuffer;
-    public final AtomicBoolean updated = new AtomicBoolean(false);
+
+    public final Option<AtomicBoolean> updated;
 
     public VulkanUniformBuffer(
             UniformBufferCreateInfo createInfo,
             List<Resource.Buffer> underlyingBuffer,
-            List<MemorySegment> mappedMemory
+            List<MemorySegment> mappedMemory,
+            Option<AtomicBoolean> updated
     ) {
         super(createInfo);
         this.underlyingBuffer = underlyingBuffer;
         this.mappedMemory = mappedMemory;
         this.cpuBufferBack = new byte[createInfo.bindingInfo.bufferSize];
         this.cpuBuffer = MemorySegment.ofArray(cpuBufferBack);
+
+        this.updated = updated;
+    }
+
+    public synchronized void updateGPU(int frameIndex) {
+        assert createInfo.updateFrequency == UniformUpdateFrequency.PER_FRAME;
+
+        mappedMemory.get(frameIndex).copyFrom(cpuBuffer);
+    }
+
+    public synchronized void updateGPU() {
+        assert createInfo.updateFrequency == UniformUpdateFrequency.MANUAL;
+        assert mappedMemory.size() == 1;
+
+        mappedMemory.getFirst().copyFrom(cpuBuffer);
     }
 
     @Override
@@ -37,8 +55,8 @@ public final class VulkanUniformBuffer extends UniformBuffer implements IVkDispo
             cpuBuffer.copyFrom(segment);
         }
 
-        if (createInfo.updateFrequency != UniformUpdateFrequency.PER_FRAME) {
-            updated.set(true);
+        if (updated instanceof Option.Some<AtomicBoolean> some) {
+            some.value.set(true);
         }
     }
 
@@ -48,8 +66,8 @@ public final class VulkanUniformBuffer extends UniformBuffer implements IVkDispo
             updateAction.apply(cpuBuffer);
         }
 
-        if (createInfo.updateFrequency != UniformUpdateFrequency.PER_FRAME) {
-            updated.set(true);
+        if (updated instanceof Option.Some<AtomicBoolean> some) {
+            some.value.set(true);
         }
     }
 
