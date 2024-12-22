@@ -1,4 +1,4 @@
-package chr.wgx.render.pipeline;
+package chr.wgx.render.task;
 
 import chr.wgx.render.data.DescriptorSet;
 

@@ -1,10 +1,9 @@
-package chr.wgx.render.pipeline;
+package chr.wgx.render.task;
 
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
 import tech.icey.xjbutil.container.Option;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractPipelineBindPoint {
@@ -13,8 +12,6 @@ public abstract class AbstractPipelineBindPoint {
     public final RenderPipeline pipeline;
     public final List<Attachment> colorAttachments;
     public final Option<Attachment> depthAttachment;
-
-    public final List<AbstractRenderTaskGroup> objectGroups = new ArrayList<>();
 
     protected AbstractPipelineBindPoint(
             int priority,
