@@ -295,78 +295,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));
             }
 
-            VkImageMemoryBarrier presentToDrawBarrier = VkImageMemoryBarrier.allocate(arena);
-            presentToDrawBarrier.srcAccessMask(0);
-            presentToDrawBarrier.dstAccessMask(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-            presentToDrawBarrier.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
-            presentToDrawBarrier.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            presentToDrawBarrier.image(swapchainImage.image);
-            presentToDrawBarrier.subresourceRange().aspectMask(VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT);
-            presentToDrawBarrier.subresourceRange().baseMipLevel(0);
-            presentToDrawBarrier.subresourceRange().levelCount(1);
-            presentToDrawBarrier.subresourceRange().baseArrayLayer(0);
-            presentToDrawBarrier.subresourceRange().layerCount(1);
-            cx.dCmd.vkCmdPipelineBarrier(
-                    commandBuffer,
-                    VkPipelineStageFlags.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                    VkPipelineStageFlags.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                    0,
-                    0, null,
-                    0, null,
-                    1, presentToDrawBarrier
-            );
-
-            // TODO: just very premature and temporary implementation, we need to implement task sorting and dependency resolution in further development
-            VkRenderingAttachmentInfo attachmentInfo = VkRenderingAttachmentInfo.allocate(arena);
-            attachmentInfo.imageView(swapchainImage.imageView);
-            attachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            attachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
-            attachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE);
-            VkRenderingAttachmentInfo depthAttachmentInfo = VkRenderingAttachmentInfo.allocate(arena);
-            depthAttachmentInfo.imageView(swapchain.depthImage.imageView);
-            depthAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-            depthAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
-            depthAttachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            depthAttachmentInfo.clearValue().depthStencil().depth(1.0f);
-
-            VkRenderingInfo renderingInfo = VkRenderingInfo.allocate(arena);
-            renderingInfo.renderArea().extent(swapchain.swapExtent);
-            renderingInfo.layerCount(1);
-            renderingInfo.colorAttachmentCount(1);
-            renderingInfo.pColorAttachments(attachmentInfo);
-            renderingInfo.pDepthAttachment(depthAttachmentInfo);
-            VkViewport viewport = VkViewport.allocate(arena);
-            viewport.x(0.0f);
-            viewport.y(0.0f);
-            viewport.width(swapchain.swapExtent.width());
-            viewport.height(swapchain.swapExtent.height());
-            viewport.minDepth(0.0f);
-            viewport.maxDepth(1.0f);
-            VkRect2D scissor = VkRect2D.allocate(arena);
-            scissor.offset().x(0);
-            scissor.offset().y(0);
-            scissor.extent(swapchain.swapExtent);
-
-            cx.dCmd.vkCmdBeginRendering(commandBuffer, renderingInfo);
-            cx.dCmd.vkCmdSetViewport(commandBuffer, 0, 1, viewport);
-            cx.dCmd.vkCmdSetScissor(commandBuffer, 0, 1, scissor);
-
-//            for (RenderTaskInfo task : tasks.values()) {
-//                Resource.Pipeline pipeline = Objects.requireNonNull(pipelines.get(task.pipelineHandle.getId()));
-//
-//                cx.dCmd.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-//                VkBuffer.Buffer pVertexBuffer = VkBuffer.Buffer.allocate(arena);
-//                LongBuffer pOffsets = LongBuffer.allocate(arena);
-//                for (int i = 0; i < task.objectHandles.size(); i++) {
-//                    Resource.Object object = Objects.requireNonNull(objects.get(task.objectHandles.get(i).getId()));
-//
-//                    pVertexBuffer.write(object.buffer.buffer);
-//                    cx.dCmd.vkCmdBindVertexBuffers(commandBuffer, 0, 1, pVertexBuffer, pOffsets);
-//                    cx.dCmd.vkCmdDraw(commandBuffer, (int) object.vertexCount, 1, 0, 0);
-//                }
-//            }
-
-            cx.dCmd.vkCmdEndRendering(commandBuffer);
+            for (CompiledRenderPassOp op : compiledRenderPassOps) {
+                op.recordToCommandBuffer(cx, commandBuffer, currentFrameIndex);
+            }
 
             VkImageMemoryBarrier drawToPresentBarrier = VkImageMemoryBarrier.allocate(arena);
             drawToPresentBarrier.srcAccessMask(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
