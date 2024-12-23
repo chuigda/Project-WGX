@@ -62,7 +62,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
         swapchainColorAttachment = new VulkanSwapchainAttachment(
                 pseudoColorAttachmentInfo,
-                swapchain.swapchainImages,
+                swapchain.swapchainImages[0],
                 swapchain.msaaColorImage
         );
         swapchainDepthAttachment = new VulkanImageAttachment(
@@ -97,6 +97,23 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         } catch (RenderException e) {
             logger.severe("无法重新创建交换链: " + e.getMessage());
             throw e;
+        }
+
+        swapchainColorAttachment.msaaColorImage = swapchain.msaaColorImage;
+        swapchainDepthAttachment.image.value = swapchain.depthImage;
+
+        for (VulkanImageAttachment attachment : colorAttachments) {
+            attachment.image.value.dispose(cx);
+            attachment.image.value = attachmentCreateAspect.createDepthAttachmentImage(
+                    attachment.createInfo
+            );
+        }
+
+        for (VulkanImageAttachment attachment : depthAttachments) {
+            attachment.image.value.dispose(cx);
+            attachment.image.value = attachmentCreateAspect.createDepthAttachmentImage(
+                    attachment.createInfo
+            );
         }
     }
 
@@ -298,6 +315,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             VkCommandBuffer commandBuffer,
             Resource.SwapchainImage swapchainImage
     ) throws RenderException {
+        swapchainColorAttachment.swapchainImage = swapchainImage;
+
         cx.dCmd.vkResetCommandBuffer(commandBuffer, 0);
 
         try (Arena arena = Arena.ofConfined()) {

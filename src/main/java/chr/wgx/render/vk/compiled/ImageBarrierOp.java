@@ -65,11 +65,12 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
             VkImageMemoryBarrier barrier = barriers[i];
 
             switch (attachment) {
-                case VulkanImageAttachment imageAttachment -> barrier.image(imageAttachment.image.value.image);
-                case VulkanSwapchainAttachment swapchainAttachment -> {
-                    Resource.SwapchainImage swapchainImage = swapchainAttachment.swapchainImages[frameIndex];
-                    barrier.image(swapchainImage.image);
-                }
+                case VulkanImageAttachment imageAttachment -> barrier.image(
+                        imageAttachment.image.value.image
+                );
+                case VulkanSwapchainAttachment swapchainAttachment -> barrier.image(
+                        swapchainAttachment.swapchainImage.image
+                );
             }
         }
 

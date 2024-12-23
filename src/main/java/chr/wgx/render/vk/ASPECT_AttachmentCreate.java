@@ -59,6 +59,15 @@ public final class ASPECT_AttachmentCreate {
     }
 
     public Attachment createDepthAttachmentImpl(AttachmentCreateInfo info) throws RenderException {
+        Resource.Image image = createDepthAttachmentImage(info);
+        Ref<Resource.Image> imageRef = new Ref<>(image);
+
+        VulkanImageAttachment attachment = new VulkanImageAttachment(info, imageRef);
+        engine.depthAttachments.add(attachment);
+        return attachment;
+    }
+
+    public Resource.Image createDepthAttachmentImage(AttachmentCreateInfo info) throws RenderException {
         int actualWidth = info.width;
         int actualHeight = info.height;
         if (actualWidth == -1) {
@@ -68,7 +77,7 @@ public final class ASPECT_AttachmentCreate {
             actualHeight = engine.swapchain.swapExtent.height();
         }
 
-        Resource.Image image = Resource.Image.create(
+        return Resource.Image.create(
                 engine.cx,
                 actualWidth,
                 actualHeight,
@@ -79,11 +88,6 @@ public final class ASPECT_AttachmentCreate {
                 VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT
         );
-        Ref<Resource.Image> imageRef = new Ref<>(image);
-
-        VulkanImageAttachment attachment = new VulkanImageAttachment(info, imageRef);
-        engine.depthAttachments.add(attachment);
-        return attachment;
     }
 
     private final VulkanRenderEngine engine;
