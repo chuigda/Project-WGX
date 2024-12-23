@@ -1,7 +1,6 @@
 package chr.wgx.render.vk.data;
 
 import chr.wgx.render.common.PixelFormat;
-import chr.wgx.render.data.Attachment;
 import chr.wgx.render.info.AttachmentCreateInfo;
 
 public class SwapchainDepthAttachment extends VulkanAttachment {

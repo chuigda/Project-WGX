@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
@@ -420,6 +421,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     final Set<VulkanRenderPass> renderPasses = new ConcurrentSkipListSet<>();
     final AtomicBoolean renderPassesNeedRecalculation = new AtomicBoolean(false);
+    final AtomicReference<List<CompiledRenderPassOp>> compiledRenderPassOps = new AtomicReference<>(Collections.emptyList());
 
     static final SwapchainColorAttachment DEFAULT_COLOR_ATTACHMENT = new SwapchainColorAttachment();
     static final SwapchainDepthAttachment DEFAULT_DEPTH_ATTACHMENT = new SwapchainDepthAttachment();
