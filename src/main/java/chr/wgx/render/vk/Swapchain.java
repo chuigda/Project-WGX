@@ -304,7 +304,7 @@ public final class Swapchain {
             int width,
             int height
     ) {
-        VkExtent2D actualExtent = VkExtent2D.allocate(cx.autoArena);
+        VkExtent2D actualExtent = VkExtent2D.allocate(cx.prefabArena);
         if (capabilities.currentExtent().width() != NativeLayout.UINT32_MAX) {
             actualExtent.segment().copyFrom(capabilities.currentExtent().segment());
         } else {

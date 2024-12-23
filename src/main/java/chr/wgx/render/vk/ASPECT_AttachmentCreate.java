@@ -6,7 +6,6 @@ import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.info.AttachmentCreateInfo;
 import chr.wgx.render.vk.data.CombinedImageSampler;
-import chr.wgx.render.vk.data.ImageAttachment;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.bitmask.VkImageAspectFlags;
 import tech.icey.vk4j.bitmask.VkImageUsageFlags;

@@ -23,10 +23,9 @@ import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.Arena;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class VulkanRenderEngineContext {
-    public final Arena autoArena = Arena.ofAuto();
+    public final Arena prefabArena = Arena.ofAuto();
     /// 同一时刻，最多只允许在渲染线程外额外提交 {@code 4} 个指令缓冲
     public final Semaphore graphicsQueueSubmitPermission = new Semaphore(4);
 
