@@ -7,11 +7,11 @@ import chr.wgx.render.vk.VulkanRenderEngineContext;
 import tech.icey.vk4j.handle.VkPipeline;
 import tech.icey.vk4j.handle.VkPipelineLayout;
 
-public class VulkanPipeline extends RenderPipeline implements IVkDisposable {
+public class VulkanRenderPipeline extends RenderPipeline implements IVkDisposable {
     public final VkPipelineLayout pipelineLayout;
     public final VkPipeline pipeline;
 
-    public VulkanPipeline(RenderPipelineCreateInfo createInfo, VkPipelineLayout pipelineLayout, VkPipeline pipeline) {
+    public VulkanRenderPipeline(RenderPipelineCreateInfo createInfo, VkPipelineLayout pipelineLayout, VkPipeline pipeline) {
         super(createInfo);
         this.pipelineLayout = pipelineLayout;
         this.pipeline = pipeline;

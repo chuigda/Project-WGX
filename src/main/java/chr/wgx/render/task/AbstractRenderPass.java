@@ -6,27 +6,19 @@ import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
 
-public abstract class AbstractRenderPass {
+public abstract class AbstractRenderPass implements Comparable<AbstractRenderPass> {
     public final String renderPassName;
     public final int priority;
 
-    protected AbstractRenderPass(
-            String renderPassName,
-            int priority,
-            List<Attachment> inputAttachments,
-            List<Attachment> outputAttachments
-    ) {
+    protected AbstractRenderPass(String renderPassName, int priority) {
         this.renderPassName = renderPassName;
         this.priority = priority;
-
-        this.addInputAttachment(inputAttachments);
-        this.addOutputAttachment(outputAttachments);
     }
 
-    public abstract void addInputAttachment(Attachment... attachments);
-    public abstract void addOutputAttachment(Attachment... attachments);
-    public abstract void addInputAttachment(List<Attachment> attachments);
-    public abstract void addOutputAttachment(List<Attachment> attachments);
+    public abstract void addAttachments(
+            List<Attachment> inputAttachments,
+            List<Attachment> outputAttachments
+    );
 
     public abstract AbstractPipelineBindPoint addPipelineBindPoint(
             int priority,
@@ -34,4 +26,9 @@ public abstract class AbstractRenderPass {
             List<Attachment> colorAttachments,
             Option<Attachment> depthAttachment
     );
+
+    @Override
+    public int compareTo(AbstractRenderPass o) {
+        return Integer.compare(priority, o.priority);
+    }
 }

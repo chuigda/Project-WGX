@@ -5,7 +5,7 @@ import chr.wgx.render.info.FieldInfo;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.ShaderProgram;
 import chr.wgx.render.vk.data.VulkanDescriptorSetLayout;
-import chr.wgx.render.vk.data.VulkanPipeline;
+import chr.wgx.render.vk.data.VulkanRenderPipeline;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.ByteBuffer;
@@ -31,7 +31,7 @@ public final class ASPECT_PipelineCreate {
         this.engine = engine;
     }
 
-    public VulkanPipeline createPipelineImpl(RenderPipelineCreateInfo info) throws RenderException {
+    public VulkanRenderPipeline createPipelineImpl(RenderPipelineCreateInfo info) throws RenderException {
         if (!(info.vulkanShaderProgram instanceof Option.Some<ShaderProgram.Vulkan> someProgram)) {
             throw new RenderException("未提供 Vulkan 渲染器所需的着色器程序");
         }
@@ -201,7 +201,7 @@ public final class ASPECT_PipelineCreate {
             }
             VkPipeline pipeline = pPipeline.read();
 
-            VulkanPipeline ret = new VulkanPipeline(info, pipelineLayout, pipeline);
+            VulkanRenderPipeline ret = new VulkanRenderPipeline(info, pipelineLayout, pipeline);
             engine.pipelines.add(ret);
             return ret;
         } finally {

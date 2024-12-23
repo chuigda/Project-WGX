@@ -6,6 +6,7 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
 import chr.wgx.render.vk.data.*;
+import chr.wgx.render.vk.task.VulkanRenderPass;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.NativeLayout;
@@ -25,6 +26,7 @@ import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
@@ -188,7 +190,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         cx.waitDeviceIdle();
         swapchain.dispose(cx);
 
-        for (VulkanPipeline pipeline : pipelines) {
+        for (VulkanRenderPipeline pipeline : pipelines) {
             pipeline.dispose(cx);
         }
 
@@ -406,7 +408,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     boolean pauseRender = false;
 
     final Set<VulkanRenderObject> objects = ConcurrentHashMap.newKeySet();
-    final Set<VulkanPipeline> pipelines = ConcurrentHashMap.newKeySet();
+    final Set<VulkanRenderPipeline> pipelines = ConcurrentHashMap.newKeySet();
     final Set<ImageAttachment> colorAttachments = ConcurrentHashMap.newKeySet();
     final Set<ImageAttachment> depthAttachments = ConcurrentHashMap.newKeySet();
     final Set<VulkanUniformBuffer> framelyUpdatedUniforms = ConcurrentHashMap.newKeySet();
@@ -415,6 +417,9 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<CombinedImageSampler> textures = ConcurrentHashMap.newKeySet();
     final ConcurrentHashMap<VulkanDescriptorSetLayout, VkDescriptorPool> descriptorPools = new ConcurrentHashMap<>();
     final Set<VulkanDescriptorSet> descriptorSets = ConcurrentHashMap.newKeySet();
+
+    final Set<VulkanRenderPass> renderPasses = new ConcurrentSkipListSet<>();
+    final AtomicBoolean renderPassesNeedRecalculation = new AtomicBoolean(false);
 
     static final SwapchainColorAttachment DEFAULT_COLOR_ATTACHMENT = new SwapchainColorAttachment();
     static final SwapchainDepthAttachment DEFAULT_DEPTH_ATTACHMENT = new SwapchainDepthAttachment();
