@@ -5,6 +5,7 @@ import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
+import chr.wgx.render.vk.compiled.CompiledRenderPassOp;
 import chr.wgx.render.vk.data.*;
 import chr.wgx.render.vk.task.VulkanRenderPass;
 import tech.icey.glfw.GLFW;
@@ -421,7 +422,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     final Set<VulkanRenderPass> renderPasses = new ConcurrentSkipListSet<>();
     final AtomicBoolean renderPassesNeedRecalculation = new AtomicBoolean(false);
-    final AtomicReference<List<CompiledRenderPassOp>> compiledRenderPassOps = new AtomicReference<>(Collections.emptyList());
+    final List<CompiledRenderPassOp> compiledRenderPassOps = Collections.emptyList();
 
     static final SwapchainColorAttachment DEFAULT_COLOR_ATTACHMENT = new SwapchainColorAttachment();
     static final SwapchainDepthAttachment DEFAULT_DEPTH_ATTACHMENT = new SwapchainDepthAttachment();
