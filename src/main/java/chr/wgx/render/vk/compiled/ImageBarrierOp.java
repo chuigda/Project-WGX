@@ -1,8 +1,11 @@
 package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.common.PixelFormat;
+import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanAttachment;
+import chr.wgx.render.vk.data.VulkanImageAttachment;
+import chr.wgx.render.vk.data.VulkanSwapchainAttachment;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.bitmask.VkImageAspectFlags;
@@ -10,10 +13,12 @@ import tech.icey.vk4j.bitmask.VkPipelineStageFlags;
 import tech.icey.vk4j.datatype.VkImageMemoryBarrier;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.vk4j.handle.VkCommandBuffer;
+import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
 
 public final class ImageBarrierOp implements CompiledRenderPassOp {
+    public final List<VulkanAttachment> attachments;
     public final VkImageMemoryBarrier[] barriers;
 
     public ImageBarrierOp(
@@ -25,6 +30,7 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
         assert attachments.size() == oldLayout.size()
                && attachments.size() == newLayout.size();
 
+        this.attachments = attachments;
         barriers = VkImageMemoryBarrier.allocate(cx.prefabArena, attachments.size());
         for (int i = 0; i < attachments.size(); i++) {
             VulkanAttachment attachment = attachments.get(i);
@@ -39,7 +45,6 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
             barrier.newLayout(newLayout.get(i));
             barrier.srcQueueFamilyIndex(Constants.VK_QUEUE_FAMILY_IGNORED);
             barrier.dstQueueFamilyIndex(Constants.VK_QUEUE_FAMILY_IGNORED);
-            barrier.image(attachment.image.value.image);
             barrier.subresourceRange().aspectMask(aspectMask);
             barrier.subresourceRange().baseMipLevel(0);
             barrier.subresourceRange().levelCount(1);
@@ -50,6 +55,23 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
 
     @Override
     public void recordToCommandBuffer(VulkanRenderEngineContext cx, VkCommandBuffer cmdbuf, int frameIndex) {
+        for (int i = 0; i < attachments.size(); i++) {
+            VulkanAttachment attachment = attachments.get(i);
+            VkImageMemoryBarrier barrier = barriers[i];
+
+            switch (attachment) {
+                case VulkanImageAttachment imageAttachment -> barrier.image(imageAttachment.image.value.image);
+                case VulkanSwapchainAttachment swapchainAttachment -> {
+                    if (!(swapchainAttachment.swapchainImages instanceof Option.Some<Resource.SwapchainImage[]> some)) {
+                        throw new IllegalStateException("预期之外未初始化的交换链图像");
+                    }
+
+                    Resource.SwapchainImage swapchainImage = some.value[frameIndex];
+                    barrier.image(swapchainImage.image);
+                }
+            }
+        }
+
         cx.dCmd.vkCmdPipelineBarrier(
                 cmdbuf,
                 VkPipelineStageFlags.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,

@@ -200,11 +200,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             object.dispose(cx);
         }
 
-        for (VulkanAttachment attachment : colorAttachments) {
+        for (VulkanImageAttachment attachment : colorAttachments) {
             attachment.dispose(cx);
         }
 
-        for (VulkanAttachment attachment : depthAttachments) {
+        for (VulkanImageAttachment attachment : depthAttachments) {
             attachment.dispose(cx);
         }
 
@@ -250,7 +250,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     @Override
     public Pair<Attachment, Attachment> getDefaultAttachments() {
-        return new Pair<>(DEFAULT_COLOR_ATTACHMENT, DEFAULT_DEPTH_ATTACHMENT);
+        return new Pair<>(swapchainColorAttachment, swapchainDepthAttachment);
     }
 
     @Override
@@ -342,8 +342,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
     final Set<VulkanRenderObject> objects = ConcurrentHashMap.newKeySet();
     final Set<VulkanRenderPipeline> pipelines = ConcurrentHashMap.newKeySet();
-    final Set<VulkanAttachment> colorAttachments = ConcurrentHashMap.newKeySet();
-    final Set<VulkanAttachment> depthAttachments = ConcurrentHashMap.newKeySet();
+    final Set<VulkanImageAttachment> colorAttachments = ConcurrentHashMap.newKeySet();
+    final Set<VulkanImageAttachment> depthAttachments = ConcurrentHashMap.newKeySet();
     final Set<VulkanUniformBuffer> framelyUpdatedUniforms = ConcurrentHashMap.newKeySet();
     final Set<VulkanUniformBuffer> manuallyUpdatedUniforms = ConcurrentHashMap.newKeySet();
     final AtomicBoolean uniformManuallyUpdated = new AtomicBoolean(false);
@@ -355,8 +355,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final AtomicBoolean renderPassesNeedRecalculation = new AtomicBoolean(false);
     final List<CompiledRenderPassOp> compiledRenderPassOps = Collections.emptyList();
 
-//    static final VulkanAttachment DEFAULT_COLOR_ATTACHMENT = new VulkanAttachment(new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1), ?);
-//    static final VulkanAttachment DEFAULT_DEPTH_ATTACHMENT = new VulkanAttachment(new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1), ?);
+    final VulkanSwapchainAttachment swapchainColorAttachment = new VulkanSwapchainAttachment(new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1));
+    final VulkanSwapchainAttachment swapchainDepthAttachment = new VulkanSwapchainAttachment(new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1));
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }

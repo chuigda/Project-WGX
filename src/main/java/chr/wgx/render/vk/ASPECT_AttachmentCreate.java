@@ -6,6 +6,7 @@ import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.info.AttachmentCreateInfo;
 import chr.wgx.render.vk.data.CombinedImageSampler;
+import chr.wgx.render.vk.data.VulkanImageAttachment;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.bitmask.VkImageAspectFlags;
 import tech.icey.vk4j.bitmask.VkImageUsageFlags;
@@ -48,7 +49,7 @@ public final class ASPECT_AttachmentCreate {
         Resource.Sampler sampler = Resource.Sampler.create(engine.cx, 0);
 
         Ref<Resource.Image> imageRef = new Ref<>(image);
-        ImageAttachment attachment = new ImageAttachment(info, imageRef);
+        VulkanImageAttachment attachment = new VulkanImageAttachment(info, imageRef);
         CombinedImageSampler texture = new CombinedImageSampler(imageRef, sampler);
 
         engine.colorAttachments.add(attachment);
@@ -80,7 +81,7 @@ public final class ASPECT_AttachmentCreate {
         );
         Ref<Resource.Image> imageRef = new Ref<>(image);
 
-        ImageAttachment attachment = new ImageAttachment(info, imageRef);
+        VulkanImageAttachment attachment = new VulkanImageAttachment(info, imageRef);
         engine.depthAttachments.add(attachment);
         return attachment;
     }
