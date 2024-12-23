@@ -2,6 +2,7 @@ package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.vk.Resource;
+import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
@@ -13,7 +14,6 @@ import tech.icey.vk4j.bitmask.VkPipelineStageFlags;
 import tech.icey.vk4j.datatype.VkImageMemoryBarrier;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.vk4j.handle.VkCommandBuffer;
-import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
 
@@ -54,7 +54,12 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
     }
 
     @Override
-    public void recordToCommandBuffer(VulkanRenderEngineContext cx, VkCommandBuffer cmdBuf, int frameIndex) {
+    public void recordToCommandBuffer(
+            VulkanRenderEngineContext cx,
+            Swapchain swapchain,
+            VkCommandBuffer cmdBuf,
+            int frameIndex
+    ) {
         for (int i = 0; i < attachments.size(); i++) {
             VulkanAttachment attachment = attachments.get(i);
             VkImageMemoryBarrier barrier = barriers[i];

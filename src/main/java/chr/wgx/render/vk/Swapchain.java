@@ -39,7 +39,7 @@ public final class Swapchain {
 
             int imageCount = swapchainSupportDetails.capabilities().minImageCount() + 1;
             if (swapchainSupportDetails.capabilities().maxImageCount() > 0 &&
-                    imageCount > swapchainSupportDetails.capabilities().maxImageCount()) {
+                imageCount > swapchainSupportDetails.capabilities().maxImageCount()) {
                 imageCount = swapchainSupportDetails.capabilities().maxImageCount();
             }
 

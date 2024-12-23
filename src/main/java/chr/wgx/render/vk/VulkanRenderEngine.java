@@ -60,8 +60,15 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         AttachmentCreateInfo pseudoColorAttachmentInfo = new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1);
         AttachmentCreateInfo pseudoDepthAttachmentInfo = new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1);
 
-        swapchainColorAttachment = new VulkanSwapchainAttachment(pseudoColorAttachmentInfo, swapchain.swapchainImages);
-        swapchainDepthAttachment = new VulkanImageAttachment(pseudoDepthAttachmentInfo, new Ref<>(swapchain.depthImage));
+        swapchainColorAttachment = new VulkanSwapchainAttachment(
+                pseudoColorAttachmentInfo,
+                swapchain.swapchainImages,
+                swapchain.msaaColorImage
+        );
+        swapchainDepthAttachment = new VulkanImageAttachment(
+                pseudoDepthAttachmentInfo,
+                new Ref<>(swapchain.depthImage)
+        );
 
         objectCreateAspect = new ASPECT_ObjectCreate(this);
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
@@ -138,7 +145,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             cx.dCmd.vkResetFences(cx.device, 1, pFence);
 
             int imageIndex = pImageIndex.read(0);
-            resetAndRecordCommandBuffer(cx, commandBuffer, swapchain.swapchainImages[imageIndex]);
+            resetAndRecordCommandBuffer(commandBuffer, swapchain.swapchainImages[imageIndex]);
 
             VkSemaphore.Buffer pWaitSemaphore = VkSemaphore.Buffer.allocate(arena);
             pWaitSemaphore.write(imageAvailableSemaphore);
@@ -288,7 +295,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     private void resetAndRecordCommandBuffer(
-            VulkanRenderEngineContext cx,
             VkCommandBuffer commandBuffer,
             Resource.SwapchainImage swapchainImage
     ) throws RenderException {
@@ -302,7 +308,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             }
 
             for (CompiledRenderPassOp op : compiledRenderPassOps) {
-                op.recordToCommandBuffer(cx, commandBuffer, currentFrameIndex);
+                op.recordToCommandBuffer(cx, swapchain, commandBuffer, currentFrameIndex);
             }
 
             VkImageMemoryBarrier drawToPresentBarrier = VkImageMemoryBarrier.allocate(arena);
