@@ -200,11 +200,11 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             object.dispose(cx);
         }
 
-        for (ImageAttachment attachment : colorAttachments) {
+        for (VulkanAttachment attachment : colorAttachments) {
             attachment.dispose(cx);
         }
 
-        for (ImageAttachment attachment : depthAttachments) {
+        for (VulkanAttachment attachment : depthAttachments) {
             attachment.dispose(cx);
         }
 
@@ -355,8 +355,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final AtomicBoolean renderPassesNeedRecalculation = new AtomicBoolean(false);
     final List<CompiledRenderPassOp> compiledRenderPassOps = Collections.emptyList();
 
-    static final VulkanAttachment DEFAULT_COLOR_ATTACHMENT = new VulkanAttachment(new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1), ?);
-    static final VulkanAttachment DEFAULT_DEPTH_ATTACHMENT = new VulkanAttachment(new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1), ?);
+//    static final VulkanAttachment DEFAULT_COLOR_ATTACHMENT = new VulkanAttachment(new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1), ?);
+//    static final VulkanAttachment DEFAULT_DEPTH_ATTACHMENT = new VulkanAttachment(new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1), ?);
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }
