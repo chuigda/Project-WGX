@@ -54,7 +54,7 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
     }
 
     @Override
-    public void recordToCommandBuffer(VulkanRenderEngineContext cx, VkCommandBuffer cmdbuf, int frameIndex) {
+    public void recordToCommandBuffer(VulkanRenderEngineContext cx, VkCommandBuffer cmdBuf, int frameIndex) {
         for (int i = 0; i < attachments.size(); i++) {
             VulkanAttachment attachment = attachments.get(i);
             VkImageMemoryBarrier barrier = barriers[i];
@@ -62,18 +62,14 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
             switch (attachment) {
                 case VulkanImageAttachment imageAttachment -> barrier.image(imageAttachment.image.value.image);
                 case VulkanSwapchainAttachment swapchainAttachment -> {
-                    if (!(swapchainAttachment.swapchainImages instanceof Option.Some<Resource.SwapchainImage[]> some)) {
-                        throw new IllegalStateException("预期之外未初始化的交换链图像");
-                    }
-
-                    Resource.SwapchainImage swapchainImage = some.value[frameIndex];
+                    Resource.SwapchainImage swapchainImage = swapchainAttachment.swapchainImages[frameIndex];
                     barrier.image(swapchainImage.image);
                 }
             }
         }
 
         cx.dCmd.vkCmdPipelineBarrier(
-                cmdbuf,
+                cmdBuf,
                 VkPipelineStageFlags.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                 VkPipelineStageFlags.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                 0,

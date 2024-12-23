@@ -9,11 +9,5 @@ public sealed interface CompiledRenderPassOp permits
         RenderingEndOp,
         RenderOp
 {
-    default void recordToCommandBuffer(
-            VulkanRenderEngineContext cx,
-            VkCommandBuffer cmdbuf,
-            int frameIndex
-    ) {
-        // TODO
-    }
+    void recordToCommandBuffer(VulkanRenderEngineContext cx, VkCommandBuffer cmdBuf, int frameIndex);
 }

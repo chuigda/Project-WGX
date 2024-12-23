@@ -2,8 +2,6 @@ package chr.wgx.render;
 
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
-import tech.icey.glfw.GLFW;
-import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
@@ -33,11 +31,6 @@ public abstract class AbstractRenderEngine {
         this.onClose = onClose;
     }
 
-    public final void initEngine(GLFW glfw, GLFWwindow window) throws RenderException {
-        init(glfw, window);
-        onInit.apply(this);
-    }
-
     public final void resizeEngine(int width, int height) throws RenderException {
         resize(width, height);
         onResize.apply(width, height);
@@ -54,7 +47,6 @@ public abstract class AbstractRenderEngine {
         onClose.apply();
     }
 
-    protected abstract void init(GLFW glfw, GLFWwindow window) throws RenderException;
     protected abstract void resize(int width, int height) throws RenderException;
     protected abstract void renderFrame() throws RenderException;
     protected abstract void close();

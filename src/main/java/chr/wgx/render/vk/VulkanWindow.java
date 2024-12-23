@@ -20,9 +20,9 @@ import java.lang.invoke.MethodHandles;
 import java.util.logging.Logger;
 
 public final class VulkanWindow implements AutoCloseable {
-    private final GLFW glfw;
-    private final @NotNull GLFWwindow rawWindow;
-    private boolean framebufferResized = false;
+    public final GLFW glfw;
+    public final GLFWwindow rawWindow;
+    public boolean framebufferResized = false;
 
     public VulkanWindow(GLFW glfw, String title, int width, int height) throws RenderException {
         if (glfw.glfwVulkanSupported() != GLFWConstants.GLFW_TRUE) {
@@ -68,7 +68,6 @@ public final class VulkanWindow implements AutoCloseable {
     }
 
     public void mainLoop(VulkanRenderEngine renderer) throws RenderException {
-        renderer.initEngine(glfw, rawWindow);
         while (glfw.glfwWindowShouldClose(rawWindow) != GLFWConstants.GLFW_TRUE) {
             if (framebufferResized) {
                 framebufferResized = false;

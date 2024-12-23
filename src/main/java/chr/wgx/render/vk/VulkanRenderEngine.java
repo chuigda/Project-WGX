@@ -20,6 +20,7 @@ import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
 import tech.icey.vk4j.handle.*;
 import tech.icey.xjbutil.container.Pair;
+import tech.icey.xjbutil.container.Ref;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
@@ -34,25 +35,18 @@ import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends AbstractRenderEngine {
     public VulkanRenderEngine(
+            GLFW glfw,
+            GLFWwindow window,
+
             Action1<AbstractRenderEngine> onInit,
             Action2<Integer, Integer> onResize,
             Action0 onBeforeRenderFrame,
             Action0 onAfterRenderFrame,
             Action0 onClose
-    ) {
+    ) throws RenderException {
         super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
-        objectCreateAspect = new ASPECT_ObjectCreate(this);
-        attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
-        uniformCreateAspect = new ASPECT_UniformCreate(this);
-        descriptorSetLayoutCreateAspect = new ASPECT_DescriptorSetLayoutCreate(this);
-        descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
-        pipelineCreateAspect = new ASPECT_PipelineCreate(this);
-    }
 
-    @Override
-    protected void init(GLFW glfw, GLFWwindow window) throws RenderException {
         cx = VulkanRenderEngineContext.create(glfw, window);
-
         try (Arena arena = Arena.ofConfined()) {
             IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
             glfw.glfwGetFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));
@@ -61,10 +55,22 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             int height = pWidthHeight.read(1);
             swapchain = Swapchain.create(cx, width, height);
             logger.info("交换链已创建");
-        } catch (RenderException e) {
-            logger.severe("无法创建交换链: " + e.getMessage());
-            logger.warning("程序会继续运行, 但渲染结果将不会被输出");
         }
+
+        AttachmentCreateInfo pseudoColorAttachmentInfo = new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1);
+        AttachmentCreateInfo pseudoDepthAttachmentInfo = new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1);
+
+        swapchainColorAttachment = new VulkanSwapchainAttachment(pseudoColorAttachmentInfo, swapchain.swapchainImages);
+        swapchainDepthAttachment = new VulkanImageAttachment(pseudoDepthAttachmentInfo, new Ref<>(swapchain.depthImage));
+
+        objectCreateAspect = new ASPECT_ObjectCreate(this);
+        attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
+        uniformCreateAspect = new ASPECT_UniformCreate(this);
+        descriptorSetLayoutCreateAspect = new ASPECT_DescriptorSetLayoutCreate(this);
+        descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
+        pipelineCreateAspect = new ASPECT_PipelineCreate(this);
+
+        onInit.apply(this);
     }
 
     @Override
@@ -334,9 +340,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private final ASPECT_DescriptorSetCreate descriptorSetCreateAspect;
     private final ASPECT_PipelineCreate pipelineCreateAspect;
 
-    // TODO resolve the nullability issue of cx/swapchain
     VulkanRenderEngineContext cx;
     Swapchain swapchain;
+    final VulkanSwapchainAttachment swapchainColorAttachment;
+    final VulkanImageAttachment swapchainDepthAttachment;
     int currentFrameIndex = 0;
     boolean pauseRender = false;
 
@@ -354,9 +361,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<VulkanRenderPass> renderPasses = new ConcurrentSkipListSet<>();
     final AtomicBoolean renderPassesNeedRecalculation = new AtomicBoolean(false);
     final List<CompiledRenderPassOp> compiledRenderPassOps = Collections.emptyList();
-
-    final VulkanSwapchainAttachment swapchainColorAttachment = new VulkanSwapchainAttachment(new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1));
-    final VulkanSwapchainAttachment swapchainDepthAttachment = new VulkanSwapchainAttachment(new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1));
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }
