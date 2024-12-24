@@ -124,19 +124,28 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             return;
         }
 
-        if (renderPassNeedCompilation.getAndSet(false)) {
-            logger.info("正在开始重新编译渲染通道");
-            long startTime = System.nanoTime();
-            cx.dCmd.vkDeviceWaitIdle(cx.device);
-            renderPassCompilationAspect.recompileRenderPasses();
-            long endTime = System.nanoTime();
-            logger.info("已重新编译渲染通道, 共耗时 %d 毫秒".formatted((endTime - startTime) / 1_000_000));
-        }
+        boolean recompile = renderPassNeedCompilation.getAndSet(false);
+        boolean updateUniform = uniformManuallyUpdated.getAndSet(false);
 
-        if (uniformManuallyUpdated.getAndSet(false)) {
+        if (recompile || updateUniform) {
             cx.dCmd.vkDeviceWaitIdle(cx.device);
-            for (VulkanUniformBuffer uniform : manuallyUpdatedUniforms) {
-                uniform.updateGPU();
+
+            if (recompile) {
+                logger.info("正在开始重新编译渲染通道");
+                long startTime = System.nanoTime();
+                renderPassCompilationAspect.recompileRenderPasses();
+                long endTime = System.nanoTime();
+                logger.info("已重新编译渲染通道, 共耗时 %d 毫秒".formatted((endTime - startTime) / 1_000_000));
+            }
+
+            if (updateUniform) {
+                logger.info("正在更新标记为手动更新的 uniform 缓冲区");
+                long startTime = System.nanoTime();
+                for (VulkanUniformBuffer uniform : manuallyUpdatedUniforms) {
+                    uniform.updateGPU();
+                }
+                long endTime = System.nanoTime();
+                logger.info("已更新标记为手动更新的 uniform 缓冲区, 共耗时 %d 毫秒".formatted((endTime - startTime) / 1_000_000));
             }
         }
 
