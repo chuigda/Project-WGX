@@ -4,18 +4,20 @@ import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.CGType;
 import chr.wgx.render.data.Attachment;
+import chr.wgx.render.data.RenderObject;
 import chr.wgx.render.data.RenderPipeline;
-import chr.wgx.render.info.FieldInfoInput;
-import chr.wgx.render.info.RenderPipelineCreateInfo;
-import chr.wgx.render.info.ShaderProgram;
-import chr.wgx.render.info.VertexInputInfo;
+import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
+import chr.wgx.render.task.RenderPipelineBind;
+import chr.wgx.render.task.RenderTaskGroup;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -54,7 +56,16 @@ public class DrillCreateObject {
                         List.of(defaultAttachments.first()),
                         Option.some(defaultAttachments.second())
                 );
-                renderPass.addPipelineBindPoint(0, pipeline);
+                RenderPipelineBind pipelineBind = renderPass.createPipelineBind(0, pipeline);
+                RenderTaskGroup taskGroup = pipelineBind.createRenderTaskGroup(List.of());
+
+                logger.info("运行测试项目: 创建对象");
+                RenderObject object1 = engine.createObject(new ObjectCreateInfo(
+                        vii,
+                        MemorySegment.ofArray(VERTICES_OBJ1),
+                        MemorySegment.ofArray(INDICES_OBJ1)
+                ));
+                logger.info("对象已创建: " + object1);
             } catch (RenderException e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();

@@ -3,19 +3,15 @@ package chr.wgx.render.task;
 import chr.wgx.render.data.DescriptorSet;
 import chr.wgx.render.data.RenderObject;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class RenderTaskGroup {
-    public final HashMap<Integer, DescriptorSet> sharedDescriptorSets;
-
-    protected RenderTaskGroup(HashMap<Integer, DescriptorSet> sharedDescriptorSets) {
-        this.sharedDescriptorSets = sharedDescriptorSets;
-    }
+    protected RenderTaskGroup() {}
 
     public abstract RenderTask addRenderTask(
             RenderObject renderObject,
-            HashMap<Integer, DescriptorSet> descriptorSets
+            List<DescriptorSet> descriptorSets
             // TODO push constants
     );
 

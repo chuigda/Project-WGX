@@ -344,6 +344,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 priority,
                 colorAttachments.stream().map(attachment -> (VulkanAttachment) attachment).toList(),
                 depthAttachment.map(attachment -> (VulkanImageAttachment) attachment),
+                this.cx.prefabArena,
                 this.renderPassNeedCompilation
         );
         this.renderPasses.add(ret);

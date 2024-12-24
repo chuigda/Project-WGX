@@ -2,7 +2,7 @@ package chr.wgx.render.task;
 
 import chr.wgx.render.data.DescriptorSet;
 
-import java.util.HashMap;
+import java.util.List;
 
 public abstract class RenderPipelineBind implements Comparable<RenderPipelineBind> {
     public final int priority;
@@ -11,7 +11,7 @@ public abstract class RenderPipelineBind implements Comparable<RenderPipelineBin
         this.priority = priority;
     }
 
-    public abstract RenderTaskGroup addRenderTaskGroup(HashMap<Integer, DescriptorSet> sharedDescriptorSets);
+    public abstract RenderTaskGroup createRenderTaskGroup(List<DescriptorSet> sharedDescriptorSets);
 
     @Override
     public final int compareTo(RenderPipelineBind o) {

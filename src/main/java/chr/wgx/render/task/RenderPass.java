@@ -16,7 +16,7 @@ public abstract class RenderPass implements Comparable<RenderPass> {
 
     public abstract void addInputAttachments(List<Attachment> attachments);
 
-    public abstract RenderPipelineBind addPipelineBindPoint(int priority, RenderPipeline pipeline);
+    public abstract RenderPipelineBind createPipelineBind(int priority, RenderPipeline pipeline);
 
     @Override
     public final int compareTo(RenderPass o) {

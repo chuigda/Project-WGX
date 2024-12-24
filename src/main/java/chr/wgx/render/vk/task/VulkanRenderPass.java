@@ -9,7 +9,9 @@ import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.data.VulkanRenderPipeline;
 import tech.icey.xjbutil.container.Option;
 
+import java.lang.foreign.Arena;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,9 +19,10 @@ public final class VulkanRenderPass extends RenderPass {
     public final List<VulkanAttachment> colorAttachments;
     public final Option<VulkanImageAttachment> depthAttachment;
 
-    public final HashSet<VulkanAttachment> inputAttachments = new HashSet<>();
+    public final Set<VulkanAttachment> inputAttachments = ConcurrentHashMap.newKeySet();
     public final ConcurrentSkipListSet<VulkanRenderRenderPipelineBind> bindList = new ConcurrentSkipListSet<>();
 
+    private final Arena prefabArena;
     private final AtomicBoolean renderPassesNeedRecalculation;
 
     public VulkanRenderPass(
@@ -27,28 +30,33 @@ public final class VulkanRenderPass extends RenderPass {
             int priority,
             List<VulkanAttachment> colorAttachments,
             Option<VulkanImageAttachment> depthAttachment,
+            Arena prefabArena,
             AtomicBoolean renderPassesNeedRecalculation
     ) {
         super(renderPassName, priority);
         this.colorAttachments = colorAttachments;
         this.depthAttachment = depthAttachment;
-        this.renderPassesNeedRecalculation = renderPassesNeedRecalculation;
 
+        this.prefabArena = prefabArena;
+        this.renderPassesNeedRecalculation = renderPassesNeedRecalculation;
         renderPassesNeedRecalculation.set(true);
     }
 
     @Override
-    public synchronized void addInputAttachments(List<Attachment> attachments) {
+    public void addInputAttachments(List<Attachment> attachments) {
         for (Attachment attachment : attachments) {
             inputAttachments.add((VulkanAttachment) attachment);
         }
-
         renderPassesNeedRecalculation.set(true);
     }
 
     @Override
-    public RenderPipelineBind addPipelineBindPoint(int priority, RenderPipeline pipeline) {
-        VulkanRenderRenderPipelineBind bind = new VulkanRenderRenderPipelineBind(priority, (VulkanRenderPipeline) pipeline);
+    public RenderPipelineBind createPipelineBind(int priority, RenderPipeline pipeline) {
+        VulkanRenderRenderPipelineBind bind = new VulkanRenderRenderPipelineBind(
+                priority,
+                (VulkanRenderPipeline) pipeline,
+                prefabArena
+        );
         bindList.add(bind);
         return bind;
     }
