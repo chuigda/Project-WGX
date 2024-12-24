@@ -6,6 +6,7 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
+import chr.wgx.render.task.AbstractRenderPass;
 import chr.wgx.render.vk.compiled.CompiledRenderPassOp;
 import chr.wgx.render.vk.data.*;
 import chr.wgx.render.vk.task.VulkanRenderPass;
@@ -19,6 +20,7 @@ import tech.icey.vk4j.bitmask.*;
 import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
 import tech.icey.vk4j.handle.*;
+import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.container.Ref;
 import tech.icey.xjbutil.functional.Action0;
@@ -328,6 +330,24 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     @Override
     public RenderPipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException {
         return pipelineCreateAspect.createPipelineImpl(info);
+    }
+
+    @Override
+    public AbstractRenderPass createRenderPass(
+            String renderPassName,
+            int priority,
+            List<Attachment> colorAttachments,
+            Option<Attachment> depthAttachment
+    ) {
+        VulkanRenderPass ret = new VulkanRenderPass(
+                renderPassName,
+                priority,
+                colorAttachments.stream().map(attachment -> (VulkanAttachment) attachment).toList(),
+                depthAttachment.map(attachment -> (VulkanImageAttachment) attachment),
+                this.renderPassNeedCompilation
+        );
+        this.renderPasses.add(ret);
+        return ret;
     }
 
     private void resetAndRecordCommandBuffer(

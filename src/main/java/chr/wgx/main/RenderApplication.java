@@ -29,7 +29,7 @@ public final class RenderApplication {
             VulkanRenderEngine engine = new VulkanRenderEngine(
                     glfw,
                     w.rawWindow,
-                    DrillCreateObject::s,
+                    DrillCreateObject::createObjectInThread,
                     (width, height) -> logger.info("帧缓冲尺寸已调整至 " + width + "x" + height),
                     () -> {},
                     () -> {},

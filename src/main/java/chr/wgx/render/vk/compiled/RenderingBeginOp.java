@@ -83,6 +83,7 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             return info;
         });
 
+        renderingInfo.layerCount(1);
         renderingInfo.colorAttachmentCount(colorAttachmentInfos.length);
         renderingInfo.pColorAttachments(colorAttachmentInfos[0]);
         if (depthAttachmentInfo instanceof Option.Some<VkRenderingAttachmentInfo> some) {

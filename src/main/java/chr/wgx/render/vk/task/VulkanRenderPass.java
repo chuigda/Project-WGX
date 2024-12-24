@@ -33,6 +33,8 @@ public final class VulkanRenderPass extends AbstractRenderPass {
         this.colorAttachments = colorAttachments;
         this.depthAttachment = depthAttachment;
         this.renderPassesNeedRecalculation = renderPassesNeedRecalculation;
+
+        renderPassesNeedRecalculation.set(true);
     }
 
     @Override

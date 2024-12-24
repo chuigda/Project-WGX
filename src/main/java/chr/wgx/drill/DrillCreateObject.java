@@ -3,12 +3,16 @@ package chr.wgx.drill;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.CGType;
+import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
 import chr.wgx.render.info.FieldInfoInput;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.ShaderProgram;
 import chr.wgx.render.info.VertexInputInfo;
+import chr.wgx.render.task.AbstractRenderPass;
+import org.jetbrains.annotations.Nullable;
 import tech.icey.xjbutil.container.Option;
+import tech.icey.xjbutil.container.Pair;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +20,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class DrillCreateObject {
-    public static void s(AbstractRenderEngine engine) {
+    public static void createObjectInThread(AbstractRenderEngine engine) {
         new Thread(() -> {
             try {
                 VertexInputInfo vii = new VertexInputInfo(List.of(
@@ -38,12 +42,24 @@ public class DrillCreateObject {
                         1,
                         true
                 );
+
+                logger.info("运行测试项目: 创建渲染管线");
                 RenderPipeline pipeline = engine.createPipeline(rpci);
+
+                Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
+
+                AbstractRenderPass renderPass = engine.createRenderPass(
+                        "FINAL_outputToSwapchain",
+                        5000,
+                        List.of(defaultAttachments.first()),
+                        Option.some(defaultAttachments.second())
+                );
+                renderPass.addPipelineBindPoint(0, pipeline);
             } catch (RenderException e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();
             }
-        });
+        }).start();
     }
 
 //    public static void createObjectInThread(AbstractRenderEngine engine) {
@@ -141,7 +157,7 @@ public class DrillCreateObject {
 //    }
 
     private static byte[] DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader(String path) {
-        try (InputStream stream  = DrillCreateObject.class.getResourceAsStream(path)) {
+        try (@Nullable InputStream stream = DrillCreateObject.class.getResourceAsStream(path)) {
             if (stream == null) {
                 throw new RuntimeException("找不到文件: " + path);
             }
@@ -153,7 +169,7 @@ public class DrillCreateObject {
     }
 
     private static String DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShaderText(String path) {
-        try (InputStream stream  = DrillCreateObject.class.getResourceAsStream(path)) {
+        try (@Nullable InputStream stream = DrillCreateObject.class.getResourceAsStream(path)) {
             if (stream == null) {
                 throw new RuntimeException("找不到文件: " + path);
             }

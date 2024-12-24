@@ -19,7 +19,7 @@ public abstract class AbstractRenderPass implements Comparable<AbstractRenderPas
     public abstract AbstractPipelineBind addPipelineBindPoint(int priority, RenderPipeline pipeline);
 
     @Override
-    public int compareTo(AbstractRenderPass o) {
+    public final int compareTo(AbstractRenderPass o) {
         return Integer.compare(priority, o.priority);
     }
 }

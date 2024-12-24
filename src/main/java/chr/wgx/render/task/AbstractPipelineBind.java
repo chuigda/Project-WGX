@@ -14,7 +14,7 @@ public abstract class AbstractPipelineBind implements Comparable<AbstractPipelin
     public abstract AbstractRenderTaskGroup addRenderTaskGroup(HashMap<Integer, DescriptorSet> sharedDescriptorSets);
 
     @Override
-    public int compareTo(AbstractPipelineBind o) {
+    public final int compareTo(AbstractPipelineBind o) {
         return Integer.compare(priority, o.priority);
     }
 }
