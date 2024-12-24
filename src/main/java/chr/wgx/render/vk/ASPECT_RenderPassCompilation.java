@@ -4,10 +4,14 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.vk.compiled.CompiledRenderPassOp;
 import chr.wgx.render.vk.compiled.ImageBarrierOp;
+import chr.wgx.render.vk.compiled.RenderingBeginOp;
+import chr.wgx.render.vk.compiled.RenderingEndOp;
 import chr.wgx.render.vk.data.VulkanAttachment;
+import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.task.VulkanRenderPass;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkImageLayout;
+import tech.icey.xjbutil.container.Option;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,15 +29,6 @@ public final class ASPECT_RenderPassCompilation {
         List<CompiledRenderPassOp> compiled = new ArrayList<>();
         HashMap<VulkanAttachment, Integer> currentLayouts = new HashMap<>();
         HashSet<VulkanAttachment> attachmentInitialized = new HashSet<>();
-
-        currentLayouts.put(
-                engine.swapchainColorAttachment,
-                VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-        );
-        currentLayouts.put(
-                engine.swapchainDepthAttachment,
-                VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL
-        );
 
         for (VulkanRenderPass renderPass : engine.renderPasses) {
             List<VulkanAttachment> transformedAttachments = new ArrayList<>();
@@ -57,26 +52,67 @@ public final class ASPECT_RenderPassCompilation {
                     newLayout.add(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                 }
             }
-            // 将所有输出附件的布局转换为可供颜色附件使用的布局
-            for (VulkanAttachment outputAttachment : renderPass.outputAttachments) {
-                if (outputAttachment.createInfo.pixelFormat == PixelFormat.DEPTH_BUFFER_OPTIMAL) {
-                    continue;
-                }
 
+            // 将所有输出附件的布局转换为可供颜色附件使用的布局
+            for (VulkanAttachment colorAttachment : renderPass.colorAttachments) {
                 @enumtype(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
-                        outputAttachment,
+                        colorAttachment,
                         VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
                 );
                 if (currentLayout != VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-                    transformedAttachments.add(outputAttachment);
+                    transformedAttachments.add(colorAttachment);
                     oldLayout.add(currentLayout);
                     newLayout.add(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
                 }
+
+                currentLayouts.put(colorAttachment, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             }
 
             if (!transformedAttachments.isEmpty()) {
                 compiled.add(new ImageBarrierOp(engine.cx, transformedAttachments, oldLayout, newLayout));
             }
+
+            List<Boolean> colorAttachmentInitialized = renderPass.colorAttachments.stream()
+                    .map(attachmentInitialized::contains)
+                    .toList();
+            List<Boolean> colorAttachmentUsedInFuture = renderPass.colorAttachments.stream()
+                    // TODO: implement analysis of further usage of images written to
+                    .map(_ -> true)
+                    .toList();
+            attachmentInitialized.addAll(renderPass.colorAttachments);
+            boolean depthAttachmentInitialized;
+            if (renderPass.depthAttachment instanceof Option.Some<VulkanImageAttachment> some) {
+                depthAttachmentInitialized = attachmentInitialized.contains(some.value);
+            } else {
+                depthAttachmentInitialized = false;
+            }
+            boolean depthAttachmentUsedInFuture = true; // TODO
+
+            compiled.add(new RenderingBeginOp(
+                    engine.cx,
+                    renderPass.colorAttachments,
+                    renderPass.depthAttachment,
+                    colorAttachmentInitialized,
+                    colorAttachmentUsedInFuture,
+                    depthAttachmentInitialized,
+                    depthAttachmentUsedInFuture
+            ));
+
+            // TODO actual rendering ops
+
+            compiled.add(new RenderingEndOp());
         }
+
+        compiled.add(new ImageBarrierOp(
+                engine.cx,
+                List.of(engine.swapchainColorAttachment),
+                List.of(currentLayouts.getOrDefault(
+                        engine.swapchainColorAttachment,
+                        VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
+                )),
+                List.of(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+        ));
+
+        engine.compiledRenderPassOps = compiled;
     }
 }

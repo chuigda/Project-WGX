@@ -15,10 +15,7 @@ public abstract class AbstractRenderPass implements Comparable<AbstractRenderPas
         this.priority = priority;
     }
 
-    public abstract void addAttachments(
-            List<Attachment> inputAttachments,
-            List<Attachment> outputAttachments
-    );
+    public abstract void addInputAttachments(List<Attachment> attachments);
 
     public abstract AbstractPipelineBindPoint addPipelineBindPoint(
             int priority,

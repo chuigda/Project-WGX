@@ -125,7 +125,12 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
 
         if (renderPassNeedCompilation.getAndSet(false)) {
+            logger.info("正在开始重新编译渲染通道");
+            long startTime = System.nanoTime();
+            cx.dCmd.vkDeviceWaitIdle(cx.device);
             renderPassCompilationAspect.recompileRenderPasses();
+            long endTime = System.nanoTime();
+            logger.info("已重新编译渲染通道, 共耗时 %d 毫秒".formatted((endTime - startTime) / 1_000_000));
         }
 
         if (uniformManuallyUpdated.getAndSet(false)) {
@@ -335,27 +340,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 op.recordToCommandBuffer(cx, swapchain, commandBuffer, currentFrameIndex);
             }
 
-            VkImageMemoryBarrier drawToPresentBarrier = VkImageMemoryBarrier.allocate(arena);
-            drawToPresentBarrier.srcAccessMask(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-            drawToPresentBarrier.dstAccessMask(0);
-            drawToPresentBarrier.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            drawToPresentBarrier.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-            drawToPresentBarrier.image(swapchainImage.image);
-            drawToPresentBarrier.subresourceRange().aspectMask(VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT);
-            drawToPresentBarrier.subresourceRange().baseMipLevel(0);
-            drawToPresentBarrier.subresourceRange().levelCount(1);
-            drawToPresentBarrier.subresourceRange().baseArrayLayer(0);
-            drawToPresentBarrier.subresourceRange().layerCount(1);
-            cx.dCmd.vkCmdPipelineBarrier(
-                    commandBuffer,
-                    VkPipelineStageFlags.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                    VkPipelineStageFlags.VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                    0,
-                    0, null,
-                    0, null,
-                    1, drawToPresentBarrier
-            );
-
             result = cx.dCmd.vkEndCommandBuffer(commandBuffer);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RenderException("无法结束指令缓冲记录, 错误代码: " + VkResult.explain(result));
@@ -390,8 +374,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<VulkanDescriptorSet> descriptorSets = ConcurrentHashMap.newKeySet();
 
     final Set<VulkanRenderPass> renderPasses = new ConcurrentSkipListSet<>();
-    final AtomicBoolean renderPassNeedCompilation = new AtomicBoolean(false);
-    final List<CompiledRenderPassOp> compiledRenderPassOps = Collections.emptyList();
+    final AtomicBoolean renderPassNeedCompilation = new AtomicBoolean(true);
+    List<CompiledRenderPassOp> compiledRenderPassOps = Collections.emptyList();
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
 }
