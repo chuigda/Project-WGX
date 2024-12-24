@@ -2,10 +2,11 @@ package chr.wgx.render.vk.task;
 
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
-import chr.wgx.render.task.AbstractPipelineBindPoint;
+import chr.wgx.render.task.AbstractPipelineBind;
 import chr.wgx.render.task.AbstractRenderPass;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
+import chr.wgx.render.vk.data.VulkanRenderPipeline;
 import tech.icey.xjbutil.container.Option;
 
 import java.util.*;
@@ -17,7 +18,7 @@ public final class VulkanRenderPass extends AbstractRenderPass {
     public final Option<VulkanImageAttachment> depthAttachment;
 
     public final HashSet<VulkanAttachment> inputAttachments = new HashSet<>();
-    private final ConcurrentSkipListSet<VulkanRenderPipelineBindPoint> pipelineBindPoints = new ConcurrentSkipListSet<>();
+    public final ConcurrentSkipListSet<VulkanRenderPipelineBind> bindList = new ConcurrentSkipListSet<>();
 
     private final AtomicBoolean renderPassesNeedRecalculation;
 
@@ -44,12 +45,9 @@ public final class VulkanRenderPass extends AbstractRenderPass {
     }
 
     @Override
-    public synchronized AbstractPipelineBindPoint addPipelineBindPoint(
-            int priority,
-            RenderPipeline pipeline,
-            List<Attachment> colorAttachments,
-            Option<Attachment> depthAttachment
-    ) {
-        return null;
+    public AbstractPipelineBind addPipelineBindPoint(int priority, RenderPipeline pipeline) {
+        VulkanRenderPipelineBind bind = new VulkanRenderPipelineBind(priority, (VulkanRenderPipeline) pipeline);
+        bindList.add(bind);
+        return bind;
     }
 }

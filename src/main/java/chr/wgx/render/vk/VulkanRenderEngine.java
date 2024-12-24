@@ -135,7 +135,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                 long startTime = System.nanoTime();
                 renderPassCompilationAspect.recompileRenderPasses();
                 long endTime = System.nanoTime();
-                logger.info("已重新编译渲染通道, 共耗时 %d 毫秒".formatted((endTime - startTime) / 1_000_000));
+                logger.info("已重新编译渲染通道, 共耗时 %d 微秒".formatted((endTime - startTime) / 1_000));
             }
 
             if (updateUniform) {
@@ -145,7 +145,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
                     uniform.updateGPU();
                 }
                 long endTime = System.nanoTime();
-                logger.info("已更新标记为手动更新的 uniform 缓冲区, 共耗时 %d 毫秒".formatted((endTime - startTime) / 1_000_000));
+                logger.info("已更新标记为手动更新的 uniform 缓冲区, 共耗时 %d 微秒".formatted((endTime - startTime) / 1_000));
             }
         }
 

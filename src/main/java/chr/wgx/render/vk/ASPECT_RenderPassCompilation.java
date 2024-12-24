@@ -2,13 +2,11 @@ package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.PixelFormat;
-import chr.wgx.render.vk.compiled.CompiledRenderPassOp;
-import chr.wgx.render.vk.compiled.ImageBarrierOp;
-import chr.wgx.render.vk.compiled.RenderingBeginOp;
-import chr.wgx.render.vk.compiled.RenderingEndOp;
+import chr.wgx.render.vk.compiled.*;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.task.VulkanRenderPass;
+import chr.wgx.render.vk.task.VulkanRenderPipelineBind;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.xjbutil.container.Option;
@@ -98,11 +96,14 @@ public final class ASPECT_RenderPassCompilation {
                     depthAttachmentUsedInFuture
             ));
 
-            // TODO actual rendering ops
+            for (VulkanRenderPipelineBind bindPoint : renderPass.bindList) {
+                compiled.add(new RenderOp(bindPoint));
+            }
 
             compiled.add(new RenderingEndOp());
         }
 
+        // 将交换链颜色附件的布局转换为可供呈现使用的布局
         compiled.add(new ImageBarrierOp(
                 engine.cx,
                 List.of(engine.swapchainColorAttachment),

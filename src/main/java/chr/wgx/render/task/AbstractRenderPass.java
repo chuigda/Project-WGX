@@ -2,7 +2,6 @@ package chr.wgx.render.task;
 
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
-import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
 
@@ -17,12 +16,7 @@ public abstract class AbstractRenderPass implements Comparable<AbstractRenderPas
 
     public abstract void addInputAttachments(List<Attachment> attachments);
 
-    public abstract AbstractPipelineBindPoint addPipelineBindPoint(
-            int priority,
-            RenderPipeline pipeline,
-            List<Attachment> colorAttachments,
-            Option<Attachment> depthAttachment
-    );
+    public abstract AbstractPipelineBind addPipelineBindPoint(int priority, RenderPipeline pipeline);
 
     @Override
     public int compareTo(AbstractRenderPass o) {
