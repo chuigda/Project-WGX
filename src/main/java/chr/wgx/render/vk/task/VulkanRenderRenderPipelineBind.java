@@ -3,6 +3,7 @@ package chr.wgx.render.vk.task;
 import chr.wgx.render.data.DescriptorSet;
 import chr.wgx.render.task.RenderPipelineBind;
 import chr.wgx.render.task.RenderTaskGroup;
+import chr.wgx.render.vk.data.VulkanDescriptorSet;
 import chr.wgx.render.vk.data.VulkanRenderPipeline;
 
 import java.lang.foreign.Arena;
@@ -24,7 +25,10 @@ public final class VulkanRenderRenderPipelineBind extends RenderPipelineBind {
 
     @Override
     public RenderTaskGroup createRenderTaskGroup(List<DescriptorSet> sharedDescriptorSets) {
-        VulkanRenderTaskGroup ret = new VulkanRenderTaskGroup(sharedDescriptorSets, prefabArena);
+        VulkanRenderTaskGroup ret = new VulkanRenderTaskGroup(
+                sharedDescriptorSets.stream().map(ds -> (VulkanDescriptorSet) ds).toList(),
+                prefabArena
+        );
         renderTaskGroups.add(ret);
         return ret;
     }

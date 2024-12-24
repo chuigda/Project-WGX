@@ -9,6 +9,7 @@ import chr.wgx.render.data.RenderPipeline;
 import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
 import chr.wgx.render.task.RenderPipelineBind;
+import chr.wgx.render.task.RenderTask;
 import chr.wgx.render.task.RenderTaskGroup;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.xjbutil.container.Option;
@@ -66,6 +67,10 @@ public class DrillCreateObject {
                         MemorySegment.ofArray(INDICES_OBJ1)
                 ));
                 logger.info("对象已创建: " + object1);
+
+                logger.info("运行测试项目: 添加渲染任务");
+                RenderTask task = taskGroup.addRenderTask(object1, List.of());
+                logger.info("渲染任务已添加");
             } catch (RenderException e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();
