@@ -115,8 +115,9 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
                         colorAttachmentInfo.imageView(swapchainAttachment.swapchainImage.imageView);
                     }
                 }
-                case VulkanImageAttachment imageAttachment ->
-                        colorAttachmentInfo.imageView(imageAttachment.image.value.imageView);
+                case VulkanImageAttachment imageAttachment -> colorAttachmentInfo.imageView(
+                        imageAttachment.image.value.imageView
+                );
             }
         }
 
@@ -127,18 +128,26 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
 
         cx.dCmd.vkCmdBeginRendering(cmdBuf, renderingInfo);
 
+        int renderAreaWidth = colorAttachments.getFirst().createInfo.width;
+        int renderAreaHeight = colorAttachments.getFirst().createInfo.height;
+        if (renderAreaWidth == -1) {
+            renderAreaWidth = swapchain.swapExtent.width();
+            renderAreaHeight = swapchain.swapExtent.height();
+        }
+
         try (Arena arena = Arena.ofConfined()) {
             VkViewport viewport = VkViewport.allocate(arena);
             viewport.x(0.0f);
             viewport.y(0.0f);
-            viewport.width(swapchain.swapExtent.width());
-            viewport.height(swapchain.swapExtent.height());
+            viewport.width(renderAreaWidth);
+            viewport.height(renderAreaHeight);
             viewport.minDepth(0.0f);
             viewport.maxDepth(1.0f);
             cx.dCmd.vkCmdSetViewport(cmdBuf, 0, 1, viewport);
 
             VkRect2D scissor = VkRect2D.allocate(arena);
-            scissor.extent(swapchain.swapExtent);
+            scissor.extent().width(renderAreaWidth);
+            scissor.extent().height(renderAreaHeight);
             cx.dCmd.vkCmdSetScissor(cmdBuf, 0, 1, scissor);
         }
     }

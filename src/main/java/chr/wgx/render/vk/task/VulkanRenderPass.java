@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class VulkanRenderPass extends RenderPass {
     public final List<VulkanAttachment> colorAttachments;
     public final Option<VulkanImageAttachment> depthAttachment;
+    public final int renderAreaWidth;
+    public final int renderAreaHeight;
 
     public final Set<VulkanAttachment> inputAttachments = ConcurrentHashMap.newKeySet();
     public final ConcurrentSkipListSet<VulkanRenderRenderPipelineBind> bindList = new ConcurrentSkipListSet<>();
@@ -36,10 +38,14 @@ public final class VulkanRenderPass extends RenderPass {
         super(renderPassName, priority);
         this.colorAttachments = colorAttachments;
         this.depthAttachment = depthAttachment;
+        this.renderAreaWidth = colorAttachments.getFirst().createInfo.width;
+        this.renderAreaHeight = colorAttachments.getFirst().createInfo.height;
 
         this.prefabArena = prefabArena;
         this.renderPassesNeedRecalculation = renderPassesNeedRecalculation;
         renderPassesNeedRecalculation.set(true);
+
+        assert sanitize();
     }
 
     @Override
@@ -59,5 +65,22 @@ public final class VulkanRenderPass extends RenderPass {
         );
         bindList.add(bind);
         return bind;
+    }
+
+    private boolean sanitize() {
+        int width = colorAttachments.getFirst().createInfo.width;
+        int height = colorAttachments.getFirst().createInfo.height;
+
+        for (VulkanAttachment attachment : colorAttachments) {
+            assert attachment.createInfo.width == width;
+            assert attachment.createInfo.height == height;
+        }
+
+        if (depthAttachment instanceof Option.Some<VulkanImageAttachment> some) {
+            assert some.value.createInfo.width == width;
+            assert some.value.createInfo.height == height;
+        }
+
+        return true;
     }
 }
