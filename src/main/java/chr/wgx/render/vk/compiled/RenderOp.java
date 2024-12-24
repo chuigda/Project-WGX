@@ -2,12 +2,12 @@ package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
-import chr.wgx.render.vk.task.VulkanRenderPipelineBind;
+import chr.wgx.render.vk.task.VulkanRenderRenderPipelineBind;
 import tech.icey.vk4j.enumtype.VkPipelineBindPoint;
 import tech.icey.vk4j.handle.VkCommandBuffer;
 
 public final class RenderOp implements CompiledRenderPassOp {
-    public RenderOp(VulkanRenderPipelineBind bindPoint) {
+    public RenderOp(VulkanRenderRenderPipelineBind bindPoint) {
         this.bindPoint = bindPoint;
     }
 
@@ -25,5 +25,5 @@ public final class RenderOp implements CompiledRenderPassOp {
         );
     }
 
-    private final VulkanRenderPipelineBind bindPoint;
+    private final VulkanRenderRenderPipelineBind bindPoint;
 }

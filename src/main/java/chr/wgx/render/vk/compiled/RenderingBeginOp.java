@@ -2,7 +2,6 @@ package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.Swapchain;
-import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;

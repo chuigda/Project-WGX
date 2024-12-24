@@ -6,14 +6,14 @@ import chr.wgx.render.data.RenderObject;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class AbstractRenderTask {
+public abstract class RenderTask {
     public final RenderObject renderObject;
     public final HashMap<Integer, DescriptorSet> descriptorSets;
     // TODO push constant
 
     public final AtomicBoolean enabled = new AtomicBoolean(true);
 
-    protected AbstractRenderTask(
+    protected RenderTask(
             RenderObject renderObject,
             HashMap<Integer, DescriptorSet> descriptorSets
     ) {

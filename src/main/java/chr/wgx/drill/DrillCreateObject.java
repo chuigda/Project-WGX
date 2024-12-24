@@ -9,7 +9,7 @@ import chr.wgx.render.info.FieldInfoInput;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.ShaderProgram;
 import chr.wgx.render.info.VertexInputInfo;
-import chr.wgx.render.task.AbstractRenderPass;
+import chr.wgx.render.task.RenderPass;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
@@ -48,7 +48,7 @@ public class DrillCreateObject {
 
                 Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
 
-                AbstractRenderPass renderPass = engine.createRenderPass(
+                RenderPass renderPass = engine.createRenderPass(
                         "FINAL_outputToSwapchain",
                         5000,
                         List.of(defaultAttachments.first()),

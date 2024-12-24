@@ -6,7 +6,7 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
-import chr.wgx.render.task.AbstractRenderPass;
+import chr.wgx.render.task.RenderPass;
 import chr.wgx.render.vk.compiled.CompiledRenderPassOp;
 import chr.wgx.render.vk.data.*;
 import chr.wgx.render.vk.task.VulkanRenderPass;
@@ -333,7 +333,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public AbstractRenderPass createRenderPass(
+    public RenderPass createRenderPass(
             String renderPassName,
             int priority,
             List<Attachment> colorAttachments,

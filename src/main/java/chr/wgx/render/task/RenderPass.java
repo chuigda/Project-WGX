@@ -5,21 +5,21 @@ import chr.wgx.render.data.RenderPipeline;
 
 import java.util.List;
 
-public abstract class AbstractRenderPass implements Comparable<AbstractRenderPass> {
+public abstract class RenderPass implements Comparable<RenderPass> {
     public final String renderPassName;
     public final int priority;
 
-    protected AbstractRenderPass(String renderPassName, int priority) {
+    protected RenderPass(String renderPassName, int priority) {
         this.renderPassName = renderPassName;
         this.priority = priority;
     }
 
     public abstract void addInputAttachments(List<Attachment> attachments);
 
-    public abstract AbstractPipelineBind addPipelineBindPoint(int priority, RenderPipeline pipeline);
+    public abstract RenderPipelineBind addPipelineBindPoint(int priority, RenderPipeline pipeline);
 
     @Override
-    public final int compareTo(AbstractRenderPass o) {
+    public final int compareTo(RenderPass o) {
         return Integer.compare(priority, o.priority);
     }
 }

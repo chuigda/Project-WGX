@@ -2,7 +2,7 @@ package chr.wgx.render;
 
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
-import chr.wgx.render.task.AbstractRenderPass;
+import chr.wgx.render.task.RenderPass;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.functional.Action0;
@@ -68,7 +68,7 @@ public abstract class AbstractRenderEngine {
     public abstract DescriptorSet createDescriptorSet(DescriptorSetCreateInfo info) throws RenderException;
     public abstract RenderPipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException;
 
-    public abstract AbstractRenderPass createRenderPass(
+    public abstract RenderPass createRenderPass(
             String renderPassName,
             int priority,
             List<Attachment> colorAttachments,

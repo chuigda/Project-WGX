@@ -6,14 +6,14 @@ import chr.wgx.render.data.RenderObject;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class AbstractRenderTaskGroup {
+public abstract class RenderTaskGroup {
     public final HashMap<Integer, DescriptorSet> sharedDescriptorSets;
 
-    protected AbstractRenderTaskGroup(HashMap<Integer, DescriptorSet> sharedDescriptorSets) {
+    protected RenderTaskGroup(HashMap<Integer, DescriptorSet> sharedDescriptorSets) {
         this.sharedDescriptorSets = sharedDescriptorSets;
     }
 
-    public abstract AbstractRenderTask addRenderTask(
+    public abstract RenderTask addRenderTask(
             RenderObject renderObject,
             HashMap<Integer, DescriptorSet> descriptorSets
             // TODO push constants
