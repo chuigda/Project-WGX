@@ -71,6 +71,16 @@ public class DrillCreateObject {
                 logger.info("运行测试项目: 添加渲染任务");
                 RenderTask task = taskGroup.addRenderTask(object1, List.of());
                 logger.info("渲染任务已添加");
+
+                while (true) {
+                    try {
+                        Thread.sleep(500);
+                        task.setEnabled(!task.isEnabled());
+                    } catch (InterruptedException e) {
+                        //noinspection CallToPrintStackTrace
+                        e.printStackTrace();
+                    }
+                }
             } catch (RenderException e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();

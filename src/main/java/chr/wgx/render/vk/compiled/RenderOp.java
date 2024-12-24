@@ -70,6 +70,14 @@ public final class RenderOp implements CompiledRenderPassOp {
                         0,
                         VkIndexType.VK_INDEX_TYPE_UINT32
                 );
+                cx.dCmd.vkCmdDrawIndexed(
+                        cmdBuf,
+                        renderTask.renderObject.indexCount,
+                        1,
+                        0,
+                        0,
+                        0
+                );
             }
         }
     }

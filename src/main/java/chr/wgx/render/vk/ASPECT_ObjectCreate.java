@@ -32,11 +32,18 @@ public final class ASPECT_ObjectCreate {
     public List<RenderObject> createObjectImpl(List<ObjectCreateInfo> info) throws RenderException {
         VulkanRenderEngineContext cx = engine.cx;
 
-        List<Long> vertexCounts = info.stream()
+        List<Integer> vertexCounts = info.stream()
                 .map(i -> {
                     long bufferSize = i.pVertices.byteSize();
                     assert bufferSize % i.vertexInputInfo.stride == 0;
-                    return bufferSize / i.vertexInputInfo.stride;
+                    return (int) (bufferSize / i.vertexInputInfo.stride);
+                })
+                .toList();
+        List<Integer> indexCounts = info.stream()
+                .map(i -> {
+                    long bufferSize = i.pIndices.byteSize();
+                    assert bufferSize % Integer.BYTES == 0;
+                    return (int) (bufferSize / Integer.BYTES);
                 })
                 .toList();
         List<Resource.Buffer> vertexStagingBuffers = new ArrayList<>();
@@ -230,14 +237,15 @@ public final class ASPECT_ObjectCreate {
                 ObjectCreateInfo oci = info.get(i);
                 Resource.Buffer vertexBuffer = vertexBuffers.get(i);
                 Resource.Buffer indexBuffer = indexBuffers.get(i);
-                long vertexCount = vertexCounts.get(i);
+                int vertexCount = vertexCounts.get(i);
+                int indexCount = indexCounts.get(i);
 
                 VulkanRenderObject renderObject = new VulkanRenderObject(
                         oci.vertexInputInfo,
                         vertexBuffer,
                         indexBuffer,
-                        (int) vertexCount,
-                        0
+                        vertexCount,
+                        indexCount
                 );
                 engine.objects.add(renderObject);
                 ret.add(renderObject);

@@ -7,14 +7,17 @@ import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.data.VulkanSwapchainAttachment;
 import tech.icey.vk4j.bitmask.VkResolveModeFlags;
+import tech.icey.vk4j.datatype.VkRect2D;
 import tech.icey.vk4j.datatype.VkRenderingAttachmentInfo;
 import tech.icey.vk4j.datatype.VkRenderingInfo;
+import tech.icey.vk4j.datatype.VkViewport;
 import tech.icey.vk4j.enumtype.VkAttachmentLoadOp;
 import tech.icey.vk4j.enumtype.VkAttachmentStoreOp;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.vk4j.handle.VkCommandBuffer;
 import tech.icey.xjbutil.container.Option;
 
+import java.lang.foreign.Arena;
 import java.util.List;
 
 public final class RenderingBeginOp implements CompiledRenderPassOp {
@@ -123,5 +126,20 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
         }
 
         cx.dCmd.vkCmdBeginRendering(cmdBuf, renderingInfo);
+
+        try (Arena arena = Arena.ofConfined()) {
+            VkViewport viewport = VkViewport.allocate(arena);
+            viewport.x(0.0f);
+            viewport.y(0.0f);
+            viewport.width(swapchain.swapExtent.width());
+            viewport.height(swapchain.swapExtent.height());
+            viewport.minDepth(0.0f);
+            viewport.maxDepth(1.0f);
+            cx.dCmd.vkCmdSetViewport(cmdBuf, 0, 1, viewport);
+
+            VkRect2D scissor = VkRect2D.allocate(arena);
+            scissor.extent(swapchain.swapExtent);
+            cx.dCmd.vkCmdSetScissor(cmdBuf, 0, 1, scissor);
+        }
     }
 }
