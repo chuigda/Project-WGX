@@ -1,6 +1,7 @@
 package chr.wgx.main;
 
 import chr.wgx.config.Config;
+import chr.wgx.drill.DrillCreateObject;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.render.vk.VulkanWindow;
@@ -28,7 +29,7 @@ public final class RenderApplication {
             VulkanRenderEngine engine = new VulkanRenderEngine(
                     glfw,
                     w.rawWindow,
-                    _ -> {},
+                    DrillCreateObject::s,
                     (width, height) -> logger.info("帧缓冲尺寸已调整至 " + width + "x" + height),
                     () -> {},
                     () -> {},

@@ -1,10 +1,51 @@
 package chr.wgx.drill;
 
+import chr.wgx.render.AbstractRenderEngine;
+import chr.wgx.render.RenderException;
+import chr.wgx.render.common.CGType;
+import chr.wgx.render.data.RenderPipeline;
+import chr.wgx.render.info.FieldInfoInput;
+import chr.wgx.render.info.RenderPipelineCreateInfo;
+import chr.wgx.render.info.ShaderProgram;
+import chr.wgx.render.info.VertexInputInfo;
+import tech.icey.xjbutil.container.Option;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class DrillCreateObject {
+    public static void s(AbstractRenderEngine engine) {
+        new Thread(() -> {
+            try {
+                VertexInputInfo vii = new VertexInputInfo(List.of(
+                        new FieldInfoInput("position", CGType.Vec3),
+                        new FieldInfoInput("color", CGType.Vec3)
+                ));
+
+                ShaderProgram.Vulkan shaderProgram1 = new ShaderProgram.Vulkan(
+                        DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill.vert.spv"),
+                        DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill.frag.spv")
+                );
+
+                RenderPipelineCreateInfo rpci = new RenderPipelineCreateInfo(
+                        vii,
+                        List.of(),
+                        List.of(),
+                        Option.some(shaderProgram1),
+                        Option.none(),
+                        1,
+                        true
+                );
+                RenderPipeline pipeline = engine.createPipeline(rpci);
+            } catch (RenderException e) {
+                //noinspection CallToPrintStackTrace
+                e.printStackTrace();
+            }
+        });
+    }
+
 //    public static void createObjectInThread(AbstractRenderEngine engine) {
 //        new Thread(() -> {
 //            try {
@@ -128,6 +169,10 @@ public class DrillCreateObject {
             -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
             0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.5f,   0.5f, 0.0f, 0.0f, 1.0f,
+    };
+
+    private static final int[] INDICES_OBJ1 = {
+            0, 1, 2
     };
 
     private static final float[] VERTICES_OBJ2 = {
