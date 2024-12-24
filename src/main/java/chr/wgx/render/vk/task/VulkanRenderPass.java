@@ -12,8 +12,8 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class VulkanRenderPass extends AbstractRenderPass {
-    private final HashSet<VulkanAttachment> inputAttachments = new HashSet<>();
-    private final HashSet<VulkanAttachment> outputAttachments = new HashSet<>();
+    public final HashSet<VulkanAttachment> inputAttachments = new HashSet<>();
+    public final HashSet<VulkanAttachment> outputAttachments = new HashSet<>();
     private final ConcurrentSkipListSet<VulkanRenderPipelineBindPoint> pipelineBindPoints = new ConcurrentSkipListSet<>();
 
     private final AtomicBoolean renderPassesNeedRecalculation;

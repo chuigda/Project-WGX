@@ -2,6 +2,7 @@ package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.Swapchain;
+import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
@@ -31,7 +32,9 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             Option<VulkanImageAttachment> depthAttachment,
 
             List<Boolean> colorAttachmentInitialized,
-            List<Boolean> colorAttachmentUsedInFuture
+            List<Boolean> colorAttachmentUsedInFuture,
+            boolean depthAttachmentInitialized,
+            boolean depthAttachmentUsedInFuture
     ) {
         this.colorAttachments = colorAttachments;
         this.depthAttachment = depthAttachment;
@@ -63,12 +66,20 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             }
         }
 
-        depthAttachmentInfo = depthAttachment.map(attachment -> {
+        depthAttachmentInfo = depthAttachment.map(_ -> {
             VkRenderingAttachmentInfo info = VkRenderingAttachmentInfo.allocate(cx.prefabArena);
             info.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-            info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
-            info.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            info.clearValue().depthStencil().depth(1.0f);
+            if (depthAttachmentInitialized) {
+                info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
+            } else {
+                info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
+                info.clearValue().depthStencil().depth(1.0f);
+            }
+            if (depthAttachmentUsedInFuture) {
+                info.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE);
+            } else {
+                info.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            }
             return info;
         });
 

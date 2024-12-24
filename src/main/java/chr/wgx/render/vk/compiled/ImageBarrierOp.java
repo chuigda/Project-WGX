@@ -1,7 +1,6 @@
 package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.common.PixelFormat;
-import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanAttachment;

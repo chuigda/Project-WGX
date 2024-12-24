@@ -43,7 +43,8 @@ public final class ASPECT_AttachmentCreate {
                 format,
                 VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
                 VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
+                VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+                | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
                 VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
         );
         Resource.Sampler sampler = Resource.Sampler.create(engine.cx, 0);

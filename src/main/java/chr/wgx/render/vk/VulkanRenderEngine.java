@@ -76,6 +76,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         descriptorSetLayoutCreateAspect = new ASPECT_DescriptorSetLayoutCreate(this);
         descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
+        renderPassCompilationAspect = new ASPECT_RenderPassCompilation(this);
 
         onInit.apply(this);
     }
@@ -121,6 +122,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     protected void renderFrame() throws RenderException {
         if (pauseRender) {
             return;
+        }
+
+        if (renderPassNeedCompilation.getAndSet(false)) {
+            renderPassCompilationAspect.recompileRenderPasses();
         }
 
         if (uniformManuallyUpdated.getAndSet(false)) {
@@ -364,6 +369,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private final ASPECT_DescriptorSetLayoutCreate descriptorSetLayoutCreateAspect;
     private final ASPECT_DescriptorSetCreate descriptorSetCreateAspect;
     private final ASPECT_PipelineCreate pipelineCreateAspect;
+    private final ASPECT_RenderPassCompilation renderPassCompilationAspect;
 
     VulkanRenderEngineContext cx;
     Swapchain swapchain;
@@ -384,7 +390,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<VulkanDescriptorSet> descriptorSets = ConcurrentHashMap.newKeySet();
 
     final Set<VulkanRenderPass> renderPasses = new ConcurrentSkipListSet<>();
-    final AtomicBoolean renderPassesNeedRecalculation = new AtomicBoolean(false);
+    final AtomicBoolean renderPassNeedCompilation = new AtomicBoolean(false);
     final List<CompiledRenderPassOp> compiledRenderPassOps = Collections.emptyList();
 
     private static final Logger logger = Logger.getLogger(VulkanRenderEngine.class.getName());
