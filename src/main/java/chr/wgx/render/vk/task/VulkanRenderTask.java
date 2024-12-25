@@ -14,7 +14,7 @@ public final class VulkanRenderTask extends RenderTask {
     public final VulkanRenderObject renderObject;
     public final List<VulkanDescriptorSet> descriptorSets;
 
-    public final VkDescriptorSet.Buffer descriptorSetsVk;
+    public final VkDescriptorSet.Buffer[] descriptorSetsVk;
     public final VkBuffer.Buffer pBuffer;
     public final LongBuffer pOffsets;
 
@@ -22,9 +22,22 @@ public final class VulkanRenderTask extends RenderTask {
         this.renderObject = renderObject;
         this.descriptorSets = descriptorSets;
 
-        this.descriptorSetsVk = VkDescriptorSet.Buffer.allocate(prefabArena, descriptorSets.size());
-        for (int i = 0; i < descriptorSets.size(); i++) {
-            descriptorSetsVk.write(i, descriptorSets.get(i).descriptorSet);
+        int descriptorSetsPerFrame = descriptorSets.stream()
+                .map(descriptorSet -> descriptorSet.descriptorSets.length)
+                .max(Integer::compareTo)
+                .orElse(1);
+        this.descriptorSetsVk = new VkDescriptorSet.Buffer[descriptorSetsPerFrame];
+        for (int i = 0; i < descriptorSetsPerFrame; i++) {
+            this.descriptorSetsVk[i] = VkDescriptorSet.Buffer.allocate(prefabArena, descriptorSets.size());
+            for (int j = 0; j < descriptorSets.size(); j++) {
+                if (descriptorSets.get(j).descriptorSets.length == 1) {
+                    // this descriptor set uses 1 vk descriptor set for all frames
+                    this.descriptorSetsVk[i].write(j, descriptorSets.get(j).descriptorSets[0]);
+                } else {
+                    // this descriptor set uses multiple vk descriptor sets for different frames
+                    this.descriptorSetsVk[i].write(j, descriptorSets.get(j).descriptorSets[i]);
+                }
+            }
         }
 
         this.pBuffer = VkBuffer.Buffer.allocate(prefabArena);

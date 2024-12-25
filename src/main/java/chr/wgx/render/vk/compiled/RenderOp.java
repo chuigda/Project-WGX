@@ -8,6 +8,7 @@ import chr.wgx.render.vk.task.VulkanRenderTaskGroup;
 import tech.icey.vk4j.enumtype.VkIndexType;
 import tech.icey.vk4j.enumtype.VkPipelineBindPoint;
 import tech.icey.vk4j.handle.VkCommandBuffer;
+import tech.icey.vk4j.handle.VkDescriptorSet;
 
 public final class RenderOp implements CompiledRenderPassOp {
     public RenderOp(VulkanRenderRenderPipelineBind bindPoint) {
@@ -33,13 +34,20 @@ public final class RenderOp implements CompiledRenderPassOp {
             }
 
             if (!renderTaskGroup.sharedDescriptorSets.isEmpty()) {
+                VkDescriptorSet.Buffer pDescriptorSetVk;
+                if (renderTaskGroup.sharedDescriptorSets.size() == 1) {
+                    pDescriptorSetVk = renderTaskGroup.sharedDescriptorSetsVk[0];
+                } else {
+                    pDescriptorSetVk = renderTaskGroup.sharedDescriptorSetsVk[frameIndex];
+                }
+
                 cx.dCmd.vkCmdBindDescriptorSets(
                         cmdBuf,
                         VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
                         bindPoint.pipeline.pipelineLayout,
                         0,
                         renderTaskGroup.sharedDescriptorSets.size(),
-                        renderTaskGroup.sharedDescriptorSetsVk,
+                        pDescriptorSetVk,
                         0,
                         null
                 );
@@ -50,6 +58,13 @@ public final class RenderOp implements CompiledRenderPassOp {
                     continue;
                 }
 
+                VkDescriptorSet.Buffer pDescriptorSetVk;
+                if (renderTask.descriptorSets.size() == 1) {
+                    pDescriptorSetVk = renderTask.descriptorSetsVk[0];
+                } else {
+                    pDescriptorSetVk = renderTask.descriptorSetsVk[frameIndex];
+                }
+
                 if (!renderTask.descriptorSets.isEmpty()) {
                     cx.dCmd.vkCmdBindDescriptorSets(
                             cmdBuf,
@@ -57,7 +72,7 @@ public final class RenderOp implements CompiledRenderPassOp {
                             bindPoint.pipeline.pipelineLayout,
                             renderTaskGroup.sharedDescriptorSets.size(),
                             renderTask.descriptorSets.size(),
-                            renderTask.descriptorSetsVk,
+                            pDescriptorSetVk,
                             0,
                             null
                     );

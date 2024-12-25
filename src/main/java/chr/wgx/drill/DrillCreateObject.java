@@ -41,7 +41,7 @@ public class DrillCreateObject {
                         ShaderStage.VERTEX
                 );
                 DescriptorSetLayoutCreateInfo dslci = new DescriptorSetLayoutCreateInfo(List.of(ubbi));
-                DescriptorSetLayout layout = engine.createDescriptorSetLayout(dslci, 1);
+                DescriptorSetLayout layout = engine.createDescriptorSetLayout(dslci, 8);
                 UniformBuffer ub = engine.createUniform(new UniformBufferCreateInfo(UniformUpdateFrequency.PER_FRAME, ubbi));
                 ub.updateBufferContent(MemorySegment.ofArray(new float[]{1.0f, 0.0f, 0.0f}));
                 DescriptorSet descriptorSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(layout, List.of(ub)));

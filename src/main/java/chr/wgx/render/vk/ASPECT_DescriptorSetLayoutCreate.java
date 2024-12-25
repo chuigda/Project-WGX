@@ -65,9 +65,9 @@ public final class ASPECT_DescriptorSetLayoutCreate {
 
             VkDescriptorPoolSize[] descriptorPoolSize = VkDescriptorPoolSize.allocate(arena, 2);
             descriptorPoolSize[0].type(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            descriptorPoolSize[0].descriptorCount(uniformBufferCount);
+            descriptorPoolSize[0].descriptorCount(uniformBufferCount * maxDescriptorSetCount);
             descriptorPoolSize[1].type(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            descriptorPoolSize[1].descriptorCount(combinedImageSamplerCount);
+            descriptorPoolSize[1].descriptorCount(combinedImageSamplerCount * maxDescriptorSetCount);
 
             VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = VkDescriptorPoolCreateInfo.allocate(arena);
             descriptorPoolCreateInfo.maxSets(maxDescriptorSetCount);

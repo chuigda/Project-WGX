@@ -24,6 +24,7 @@ import tech.icey.vk4j.handle.VkDescriptorSet;
 import tech.icey.vk4j.handle.VkDescriptorSetLayout;
 
 import java.lang.foreign.Arena;
+import java.util.Arrays;
 
 public final class ASPECT_DescriptorSetCreate {
     ASPECT_DescriptorSetCreate(VulkanRenderEngine engine) {
@@ -35,6 +36,14 @@ public final class ASPECT_DescriptorSetCreate {
             throw new IllegalArgumentException("DescriptorSetCreateInfo::layout 不是 VulkanDescriptorSetLayout, 是否错误地混用了不同的渲染引擎?");
         }
 
+        int descriptorSetsPerFrame = createInfo.descriptors.stream()
+                .map(descriptor -> switch (descriptor) {
+                    case Texture texture -> 1;
+                    case UniformBuffer uniformBuffer -> ((VulkanUniformBuffer) uniformBuffer).underlyingBuffer.size();
+                })
+                .max(Integer::compareTo)
+                .orElse(1);
+
         @Nullable VkDescriptorPool descriptorPool = engine.descriptorPools.get(vulkanLayout);
         if (descriptorPool == null) {
             throw new IllegalArgumentException("未找到对应的 VkDescriptorPool, 是否未正确创建?");
@@ -42,60 +51,72 @@ public final class ASPECT_DescriptorSetCreate {
 
         VulkanRenderEngineContext cx = engine.cx;
         try (Arena arena = Arena.ofConfined()) {
-            VkDescriptorSetLayout.Buffer pSetLayouts = VkDescriptorSetLayout.Buffer.allocate(arena);
-            pSetLayouts.write(vulkanLayout.layout);
+            VkDescriptorSetLayout.Buffer pSetLayouts = VkDescriptorSetLayout.Buffer.allocate(arena, descriptorSetsPerFrame);
+            for (int i = 0; i < descriptorSetsPerFrame; i++) {
+                pSetLayouts.write(i, vulkanLayout.layout);
+            }
 
             VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.allocate(arena);
             allocInfo.descriptorPool(descriptorPool);
-            allocInfo.descriptorSetCount(1);
+            allocInfo.descriptorSetCount(descriptorSetsPerFrame);
             allocInfo.pSetLayouts(pSetLayouts);
 
-            VkDescriptorSet.Buffer pDescriptorSet = VkDescriptorSet.Buffer.allocate(arena);
+            VkDescriptorSet.Buffer pDescriptorSet = VkDescriptorSet.Buffer.allocate(arena, descriptorSetsPerFrame);
             @enumtype(VkResult.class) int result = cx.dCmd.vkAllocateDescriptorSets(cx.device, allocInfo, pDescriptorSet);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RenderException("无法分配描述符集, 错误代码: " + VkResult.explain(result));
             }
 
-            VkDescriptorSet descriptorSet = pDescriptorSet.read();
+            VkDescriptorSet[] descriptorSets = pDescriptorSet.readAll();
+            System.err.println(Arrays.toString(descriptorSets));
             VkWriteDescriptorSet[] descriptorSetWrite = VkWriteDescriptorSet.allocate(arena, createInfo.descriptors.size());
-            for (int i = 0; i < createInfo.descriptors.size(); i++) {
-                Descriptor descriptor = createInfo.descriptors.get(i);
-                VkWriteDescriptorSet write = descriptorSetWrite[i];
+            for (int i = 0; i < descriptorSetsPerFrame; i++) {
+                VkDescriptorSet descriptorSet = descriptorSets[i];
 
-                write.dstSet(descriptorSet);
-                write.dstBinding(i);
-                write.dstArrayElement(0);
-                write.descriptorCount(1);
+                for (int j = 0; j < createInfo.descriptors.size(); j++) {
+                    Descriptor descriptor = createInfo.descriptors.get(j);
+                    VkWriteDescriptorSet write = descriptorSetWrite[j];
 
-                switch (descriptor) {
-                    case Texture texture -> {
-                        write.descriptorType(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                    write.dstSet(descriptorSet);
+                    write.dstBinding(j);
+                    write.dstArrayElement(0);
+                    write.descriptorCount(1);
 
-                        CombinedImageSampler combinedImageSampler = (CombinedImageSampler) texture;
-                        VkDescriptorImageInfo imageInfo = VkDescriptorImageInfo.allocate(arena);
-                        imageInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                        imageInfo.imageView(combinedImageSampler.image.value.imageView);
-                        imageInfo.sampler(combinedImageSampler.sampler.sampler);
+                    switch (descriptor) {
+                        case Texture texture -> {
+                            write.descriptorType(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
-                        write.pImageInfo(imageInfo);
+                            CombinedImageSampler combinedImageSampler = (CombinedImageSampler) texture;
+                            VkDescriptorImageInfo imageInfo = VkDescriptorImageInfo.allocate(arena);
+                            imageInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                            imageInfo.imageView(combinedImageSampler.image.value.imageView);
+                            imageInfo.sampler(combinedImageSampler.sampler.sampler);
+
+                            write.pImageInfo(imageInfo);
+                        }
+                        case UniformBuffer uniformBuffer -> {
+                            write.descriptorType(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+
+                            VulkanUniformBuffer vulkanUniformBuffer = (VulkanUniformBuffer) uniformBuffer;
+                            VkDescriptorBufferInfo bufferInfo = VkDescriptorBufferInfo.allocate(arena);
+                            if (vulkanUniformBuffer.underlyingBuffer.size() == 1) {
+                                // this uniform buffer uses 1 vk buffer for all frames
+                                bufferInfo.buffer(vulkanUniformBuffer.underlyingBuffer.getFirst().buffer);
+                            } else {
+                                // this uniform buffer uses multiple vk buffers for different frames
+                                bufferInfo.buffer(vulkanUniformBuffer.underlyingBuffer.get(i).buffer);
+                            }
+                            bufferInfo.range(Constants.VK_WHOLE_SIZE);
+
+                            write.pBufferInfo(bufferInfo);
+                        }
                     }
-                    case UniformBuffer uniformBuffer -> {
-                        write.descriptorType(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
-                        VulkanUniformBuffer vulkanUniformBuffer = (VulkanUniformBuffer) uniformBuffer;
-                        VkDescriptorBufferInfo bufferInfo = VkDescriptorBufferInfo.allocate(arena);
-                        // TODO
-                        bufferInfo.buffer(vulkanUniformBuffer.underlyingBuffer.getFirst().buffer);
-                        bufferInfo.range(Constants.VK_WHOLE_SIZE);
-
-                        write.pBufferInfo(bufferInfo);
-                    }
+                    cx.dCmd.vkUpdateDescriptorSets(cx.device, 1, write, 0, null);
                 }
-
-                cx.dCmd.vkUpdateDescriptorSets(cx.device, 1, write, 0, null);
             }
 
-            VulkanDescriptorSet ret = new VulkanDescriptorSet(createInfo, descriptorSet);
+            VulkanDescriptorSet ret = new VulkanDescriptorSet(createInfo, descriptorSets);
             engine.descriptorSets.add(ret);
             return ret;
         }

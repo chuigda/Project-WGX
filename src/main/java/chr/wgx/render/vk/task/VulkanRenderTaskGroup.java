@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class VulkanRenderTaskGroup extends RenderTaskGroup {
     public final ConcurrentLinkedQueue<VulkanRenderTask> renderTasks = new ConcurrentLinkedQueue<>();
     public final List<VulkanDescriptorSet> sharedDescriptorSets;
-    public final VkDescriptorSet.Buffer sharedDescriptorSetsVk;
+    public final VkDescriptorSet.Buffer[] sharedDescriptorSetsVk;
 
     private final Arena prefabArena;
 
@@ -23,9 +23,23 @@ public final class VulkanRenderTaskGroup extends RenderTaskGroup {
         this.prefabArena = prefabArena;
 
         this.sharedDescriptorSets = sharedDescriptorSets;
-        this.sharedDescriptorSetsVk = VkDescriptorSet.Buffer.allocate(prefabArena, sharedDescriptorSets.size());
-        for (int i = 0; i < sharedDescriptorSets.size(); i++) {
-            sharedDescriptorSetsVk.write(i, sharedDescriptorSets.get(i).descriptorSet);
+        int descriptorSetsPerFrame = sharedDescriptorSets.stream()
+                .map(descriptorSet -> descriptorSet.descriptorSets.length)
+                .max(Integer::compareTo)
+                .orElse(1);
+
+        this.sharedDescriptorSetsVk = new VkDescriptorSet.Buffer[descriptorSetsPerFrame];
+        for (int i = 0; i < descriptorSetsPerFrame; i++) {
+            this.sharedDescriptorSetsVk[i] = VkDescriptorSet.Buffer.allocate(prefabArena, sharedDescriptorSets.size());
+            for (int j = 0; j < sharedDescriptorSets.size(); j++) {
+                if (sharedDescriptorSets.get(j).descriptorSets.length == 1) {
+                    // this descriptor set uses 1 vk descriptor set for all frames
+                    this.sharedDescriptorSetsVk[i].write(j, sharedDescriptorSets.get(j).descriptorSets[0]);
+                } else {
+                    // this descriptor set uses multiple vk descriptor sets for different frames
+                    this.sharedDescriptorSetsVk[i].write(j, sharedDescriptorSets.get(j).descriptorSets[i]);
+                }
+            }
         }
     }
 
