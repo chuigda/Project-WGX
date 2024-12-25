@@ -3,6 +3,7 @@ package chr.wgx.drill;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.CGType;
+import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.common.ShaderStage;
 import chr.wgx.render.common.UniformUpdateFrequency;
 import chr.wgx.render.data.*;
@@ -13,6 +14,7 @@ import chr.wgx.render.task.RenderTask;
 import chr.wgx.render.task.RenderTaskGroup;
 import chr.wgx.util.ColorUtil;
 import chr.wgx.util.ImageUtil;
+import chr.wgx.util.ResourceUtil;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
@@ -37,10 +39,24 @@ public class DrillCreateObject {
                         new FieldInfoInput("texCoord", CGType.Vec2)
                 ));
 
-                ShaderProgram.Vulkan shaderProgram1 = new ShaderProgram.Vulkan(
-                        DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill.vert.spv"),
-                        DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader("/resources/shader/vk/drill.frag.spv")
+                byte[] vertexShader = ResourceUtil.readBinaryFile("/resources/shader/vk/drill.vert.spv");
+                byte[] fragmentShader1 = ResourceUtil.readBinaryFile("/resources/shader/vk/drill.frag.spv");
+                byte[] fragmentShader2 = ResourceUtil.readBinaryFile("/resources/shader/vk/drill2.frag.spv");
+
+                ShaderProgram.Vulkan shaderProgram1 = new ShaderProgram.Vulkan(vertexShader, fragmentShader1);
+                Pair<Attachment, Texture> rttColorAttachment = engine.createColorAttachment(new AttachmentCreateInfo(
+                        PixelFormat.RGBA8888_FLOAT,
+                        640,
+                        640
+                ));
+                RenderPass renderPass1 = engine.createRenderPass(
+                        "FIRST_renderToTexture",
+                        1000,
+                        List.of(rttColorAttachment.first()),
+                        Option.none()
                 );
+
+                ShaderProgram.Vulkan shaderProgram2 = new ShaderProgram.Vulkan(vertexShader, fragmentShader2);
 
                 UniformBufferBindingInfo ubbi = new UniformBufferBindingInfo(
                         List.of(new FieldInfoInput("color", CGType.Vec3)),
@@ -49,31 +65,30 @@ public class DrillCreateObject {
                 TextureBindingInfo tbi = new TextureBindingInfo(ShaderStage.FRAGMENT);
                 DescriptorSetLayoutCreateInfo dslci = new DescriptorSetLayoutCreateInfo(List.of(ubbi, tbi));
                 DescriptorSetLayout layout = engine.createDescriptorSetLayout(dslci, 8);
+
                 UniformBuffer ub = engine.createUniform(new UniformBufferCreateInfo(UniformUpdateFrequency.PER_FRAME, ubbi));
                 ub.updateBufferContent(MemorySegment.ofArray(new float[]{1.0f, 0.0f, 0.0f}));
                 DescriptorSet descriptorSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
                         layout, List.of(ub, tex)
                 ));
 
-                RenderPipelineCreateInfo rpci = new RenderPipelineCreateInfo(
+                logger.info("运行测试项目: 创建渲染管线");
+                RenderPipeline pipeline = engine.createPipeline(new RenderPipelineCreateInfo(
                         vii,
                         List.of(layout),
                         List.of(),
                         Option.some(shaderProgram1),
                         Option.none(),
                         1,
-                        true
-                );
-
-                logger.info("运行测试项目: 创建渲染管线");
-                RenderPipeline pipeline = engine.createPipeline(rpci);
+                        false
+                ));
                 Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
 
                 RenderPass renderPass = engine.createRenderPass(
                         "FINAL_outputToSwapchain",
                         5000,
                         List.of(defaultAttachments.first()),
-                        Option.some(defaultAttachments.second())
+                        Option.none()
                 );
                 RenderPipelineBind pipelineBind = renderPass.createPipelineBind(0, pipeline);
                 RenderTaskGroup taskGroup = pipelineBind.createRenderTaskGroup(List.of());

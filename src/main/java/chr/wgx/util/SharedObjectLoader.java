@@ -1,5 +1,7 @@
 package chr.wgx.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,7 +9,7 @@ import java.nio.file.Files;
 
 public final class SharedObjectLoader {
     public static void loadFromResources(String resourcePath, String librarySuffix) {
-        try (InputStream in = SharedObjectLoader.class.getResourceAsStream(resourcePath)) {
+        try (@Nullable InputStream in = SharedObjectLoader.class.getResourceAsStream(resourcePath)) {
             if (in == null) {
                 throw new IOException("Resource not found: " + resourcePath);
             }
