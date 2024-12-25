@@ -78,7 +78,7 @@ public class DrillCreateObject {
                 logger.info("对象已创建: " + object1);
 
                 logger.info("运行测试项目: 添加渲染任务");
-                RenderTask task = taskGroup.addRenderTask(object1, List.of(descriptorSet));
+                RenderTask _task = taskGroup.addRenderTask(object1, List.of(descriptorSet));
                 logger.info("渲染任务已添加");
 
                 int counter = 0;
@@ -113,18 +113,6 @@ public class DrillCreateObject {
             }
 
             return stream.readAllBytes();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static String DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShaderText(String path) {
-        try (@Nullable InputStream stream = DrillCreateObject.class.getResourceAsStream(path)) {
-            if (stream == null) {
-                throw new RuntimeException("找不到文件: " + path);
-            }
-
-            return new String(stream.readAllBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
