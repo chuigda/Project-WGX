@@ -35,7 +35,7 @@ public final class ASPECT_DescriptorSetLayoutCreate {
             int combinedImageSamplerCount = 0;
             for (int i = 0; i < info.bindings.size(); i++) {
                 DescriptorLayoutBindingInfo bindingInfo = info.bindings.get(i);
-                VkDescriptorSetLayoutBinding binding = VkDescriptorSetLayoutBinding.allocate(arena);
+                VkDescriptorSetLayoutBinding binding = bindings[i];
 
                 binding.binding(i);
                 binding.descriptorType(bindingInfo.descriptorType.vkDescriptorType);
@@ -71,8 +71,16 @@ public final class ASPECT_DescriptorSetLayoutCreate {
 
             VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = VkDescriptorPoolCreateInfo.allocate(arena);
             descriptorPoolCreateInfo.maxSets(maxDescriptorSetCount);
-            descriptorPoolCreateInfo.poolSizeCount(2);
-            descriptorPoolCreateInfo.pPoolSizes(descriptorPoolSize[0]);
+            if (uniformBufferCount > 0 && combinedImageSamplerCount > 0) {
+                descriptorPoolCreateInfo.poolSizeCount(2);
+                descriptorPoolCreateInfo.pPoolSizes(descriptorPoolSize[0]);
+            } else if (uniformBufferCount > 0) {
+                descriptorPoolCreateInfo.poolSizeCount(1);
+                descriptorPoolCreateInfo.pPoolSizes(descriptorPoolSize[0]);
+            } else {
+                descriptorPoolCreateInfo.poolSizeCount(1);
+                descriptorPoolCreateInfo.pPoolSizes(descriptorPoolSize[1]);
+            }
 
             VkDescriptorPool.Buffer pDescriptorPool = VkDescriptorPool.Buffer.allocate(arena);
             result = cx.dCmd.vkCreateDescriptorPool(cx.device, descriptorPoolCreateInfo, null, pDescriptorPool);
@@ -80,9 +88,9 @@ public final class ASPECT_DescriptorSetLayoutCreate {
                 throw new RenderException("无法创建描述符池, 错误代码: " + VkResult.explain(result));
             }
 
-
-
-            return new VulkanDescriptorSetLayout(info, pDescriptorSetLayout.read());
+            VulkanDescriptorSetLayout ret = new VulkanDescriptorSetLayout(info, pDescriptorSetLayout.read());
+            engine.descriptorPools.put(ret, pDescriptorPool.read());
+            return ret;
         }
     }
 
