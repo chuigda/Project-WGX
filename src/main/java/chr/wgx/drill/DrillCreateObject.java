@@ -81,10 +81,12 @@ public class DrillCreateObject {
                 RenderTask task = taskGroup.addRenderTask(object1, List.of(descriptorSet));
                 logger.info("渲染任务已添加");
 
+                int counter = 0;
                 while (true) {
                     try {
-                        Thread.sleep(500);
-                        task.setEnabled(!task.isEnabled());
+                        Thread.sleep(16);
+                        ub.updateBufferContent(MemorySegment.ofArray(new float[]{(counter % 100) / 100.0f, 0.0f, 0.0f}));
+                        counter += 1;
                     } catch (InterruptedException e) {
                         //noinspection CallToPrintStackTrace
                         e.printStackTrace();
