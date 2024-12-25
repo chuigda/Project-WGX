@@ -107,6 +107,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         swapchainDepthAttachment.image.value = swapchain.depthImage;
 
         for (VulkanImageAttachment attachment : colorAttachments) {
+            if (attachment.createInfo.width != -1) {
+                continue;
+            }
+
             attachment.image.value.dispose(cx);
             attachment.image.value = attachmentCreateAspect.createColorAttachmentImage(
                     attachment.createInfo
@@ -114,6 +118,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         }
 
         for (VulkanImageAttachment attachment : depthAttachments) {
+            if (attachment.createInfo.width != -1) {
+                continue;
+            }
+
             attachment.image.value.dispose(cx);
             attachment.image.value = attachmentCreateAspect.createDepthAttachmentImage(
                     attachment.createInfo
