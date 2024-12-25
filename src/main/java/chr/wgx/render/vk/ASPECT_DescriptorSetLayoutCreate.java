@@ -39,7 +39,7 @@ public final class ASPECT_DescriptorSetLayoutCreate {
 
                 binding.binding(i);
                 binding.descriptorType(bindingInfo.descriptorType.vkDescriptorType);
-                binding.descriptorCount(bindingInfo.descriptorCount);
+                binding.descriptorCount(1);
                 binding.stageFlags(bindingInfo.stage.vkShaderStageFlags);
 
                 switch (bindingInfo) {

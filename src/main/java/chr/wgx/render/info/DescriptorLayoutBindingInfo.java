@@ -7,16 +7,10 @@ public abstract sealed class DescriptorLayoutBindingInfo permits
         TextureBindingInfo
 {
     public final DescriptorType descriptorType;
-    public final int descriptorCount;
     public final ShaderStage stage;
 
-    protected DescriptorLayoutBindingInfo(
-            DescriptorType descriptorType,
-            int descriptorCount,
-            ShaderStage stage
-    ) {
+    protected DescriptorLayoutBindingInfo(DescriptorType descriptorType, ShaderStage stage) {
         this.descriptorType = descriptorType;
-        this.descriptorCount = descriptorCount;
         this.stage = stage;
     }
 }

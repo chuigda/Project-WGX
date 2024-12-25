@@ -37,7 +37,6 @@ public class DrillCreateObject {
 
                 UniformBufferBindingInfo ubbi = new UniformBufferBindingInfo(
                         List.of(new FieldInfoInput("color", CGType.Vec3)),
-                        1,
                         ShaderStage.VERTEX
                 );
                 DescriptorSetLayoutCreateInfo dslci = new DescriptorSetLayoutCreateInfo(List.of(ubbi));

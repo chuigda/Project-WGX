@@ -24,7 +24,6 @@ import tech.icey.vk4j.handle.VkDescriptorSet;
 import tech.icey.vk4j.handle.VkDescriptorSetLayout;
 
 import java.lang.foreign.Arena;
-import java.util.Arrays;
 
 public final class ASPECT_DescriptorSetCreate {
     ASPECT_DescriptorSetCreate(VulkanRenderEngine engine) {
@@ -36,7 +35,7 @@ public final class ASPECT_DescriptorSetCreate {
             throw new IllegalArgumentException("DescriptorSetCreateInfo::layout 不是 VulkanDescriptorSetLayout, 是否错误地混用了不同的渲染引擎?");
         }
 
-        int descriptorSetsPerFrame = createInfo.descriptors.stream()
+        int frameDescriptorSets = createInfo.descriptors.stream()
                 .map(descriptor -> switch (descriptor) {
                     case Texture texture -> 1;
                     case UniformBuffer uniformBuffer -> ((VulkanUniformBuffer) uniformBuffer).underlyingBuffer.size();
@@ -51,26 +50,25 @@ public final class ASPECT_DescriptorSetCreate {
 
         VulkanRenderEngineContext cx = engine.cx;
         try (Arena arena = Arena.ofConfined()) {
-            VkDescriptorSetLayout.Buffer pSetLayouts = VkDescriptorSetLayout.Buffer.allocate(arena, descriptorSetsPerFrame);
-            for (int i = 0; i < descriptorSetsPerFrame; i++) {
+            VkDescriptorSetLayout.Buffer pSetLayouts = VkDescriptorSetLayout.Buffer.allocate(arena, frameDescriptorSets);
+            for (int i = 0; i < frameDescriptorSets; i++) {
                 pSetLayouts.write(i, vulkanLayout.layout);
             }
 
             VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.allocate(arena);
             allocInfo.descriptorPool(descriptorPool);
-            allocInfo.descriptorSetCount(descriptorSetsPerFrame);
+            allocInfo.descriptorSetCount(frameDescriptorSets);
             allocInfo.pSetLayouts(pSetLayouts);
 
-            VkDescriptorSet.Buffer pDescriptorSet = VkDescriptorSet.Buffer.allocate(arena, descriptorSetsPerFrame);
+            VkDescriptorSet.Buffer pDescriptorSet = VkDescriptorSet.Buffer.allocate(arena, frameDescriptorSets);
             @enumtype(VkResult.class) int result = cx.dCmd.vkAllocateDescriptorSets(cx.device, allocInfo, pDescriptorSet);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RenderException("无法分配描述符集, 错误代码: " + VkResult.explain(result));
             }
 
             VkDescriptorSet[] descriptorSets = pDescriptorSet.readAll();
-            System.err.println(Arrays.toString(descriptorSets));
             VkWriteDescriptorSet[] descriptorSetWrite = VkWriteDescriptorSet.allocate(arena, createInfo.descriptors.size());
-            for (int i = 0; i < descriptorSetsPerFrame; i++) {
+            for (int i = 0; i < frameDescriptorSets; i++) {
                 VkDescriptorSet descriptorSet = descriptorSets[i];
 
                 for (int j = 0; j < createInfo.descriptors.size(); j++) {
