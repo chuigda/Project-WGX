@@ -85,8 +85,15 @@ public class DrillCreateObject {
                 while (true) {
                     try {
                         Thread.sleep(16);
-                        ub.updateBufferContent(MemorySegment.ofArray(new float[]{(counter % 100) / 100.0f, 0.0f, 0.0f}));
+                        ub.updateBufferContent(MemorySegment.ofArray(new float[]{
+                                (float) Math.sin(counter / 90.0),
+                                (float) Math.cos(counter / 90.0),
+                                1.0f
+                        }));
                         counter += 1;
+                        if (counter >= 360) {
+                            counter = 0;
+                        }
                     } catch (InterruptedException e) {
                         //noinspection CallToPrintStackTrace
                         e.printStackTrace();
