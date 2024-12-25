@@ -2,10 +2,7 @@ package chr.wgx.drill;
 
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
-import chr.wgx.render.common.CGType;
-import chr.wgx.render.common.PixelFormat;
-import chr.wgx.render.common.ShaderStage;
-import chr.wgx.render.common.UniformUpdateFrequency;
+import chr.wgx.render.common.*;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
@@ -16,6 +13,7 @@ import chr.wgx.util.ColorUtil;
 import chr.wgx.util.ImageUtil;
 import chr.wgx.util.ResourceUtil;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.Text;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 
@@ -29,93 +27,127 @@ public class DrillCreateObject {
     public static void createObjectInThread(AbstractRenderEngine engine) {
         new Thread(() -> {
             try {
-                Texture tex = engine.createTexture(new TextureCreateInfo(
-                        ImageUtil.loadImageFromFileSystem("./otto.png"),
-                        false
-                ));
-
-                VertexInputInfo vii = new VertexInputInfo(List.of(
-                        new FieldInfoInput("position", CGType.Vec3),
-                        new FieldInfoInput("texCoord", CGType.Vec2)
-                ));
-
-                byte[] vertexShader = ResourceUtil.readBinaryFile("/resources/shader/vk/drill.vert.spv");
+                byte[] vertexShader1 = ResourceUtil.readBinaryFile("/resources/shader/vk/drill.vert.spv");
                 byte[] fragmentShader1 = ResourceUtil.readBinaryFile("/resources/shader/vk/drill.frag.spv");
+                byte[] vertexShader2 = ResourceUtil.readBinaryFile("/resources/shader/vk/drill2.vert.spv");
                 byte[] fragmentShader2 = ResourceUtil.readBinaryFile("/resources/shader/vk/drill2.frag.spv");
 
-                ShaderProgram.Vulkan shaderProgram1 = new ShaderProgram.Vulkan(vertexShader, fragmentShader1);
-                Pair<Attachment, Texture> rttColorAttachment = engine.createColorAttachment(new AttachmentCreateInfo(
-                        PixelFormat.RGBA8888_FLOAT,
-                        640,
-                        640
+                ShaderProgram.Vulkan shaderProgram1 = new ShaderProgram.Vulkan(vertexShader1, fragmentShader1);
+                ShaderProgram.Vulkan shaderProgram2 = new ShaderProgram.Vulkan(vertexShader2, fragmentShader2);
+
+                VertexInputInfo vertexInputInfo1 = new VertexInputInfo(List.of(
+                        new FieldInfoInput("inPosition", CGType.Vec2),
+                        new FieldInfoInput("inColor", CGType.Vec3)
                 ));
-                RenderPass renderPass1 = engine.createRenderPass(
-                        "FIRST_renderToTexture",
-                        1000,
-                        List.of(rttColorAttachment.first()),
-                        Option.none()
-                );
-
-                ShaderProgram.Vulkan shaderProgram2 = new ShaderProgram.Vulkan(vertexShader, fragmentShader2);
-
-                UniformBufferBindingInfo ubbi = new UniformBufferBindingInfo(
-                        List.of(new FieldInfoInput("color", CGType.Vec3)),
-                        ShaderStage.FRAGMENT
-                );
-                TextureBindingInfo tbi = new TextureBindingInfo(ShaderStage.FRAGMENT);
-                DescriptorSetLayoutCreateInfo dslci = new DescriptorSetLayoutCreateInfo(List.of(ubbi, tbi));
-                DescriptorSetLayout layout = engine.createDescriptorSetLayout(dslci, 8);
-
-                UniformBuffer ub = engine.createUniform(new UniformBufferCreateInfo(UniformUpdateFrequency.PER_FRAME, ubbi));
-                ub.updateBufferContent(MemorySegment.ofArray(new float[]{1.0f, 0.0f, 0.0f}));
-                DescriptorSet descriptorSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
-                        layout, List.of(ub, tex)
+                VertexInputInfo vertexInputInfo2 = new VertexInputInfo(List.of(
+                        new FieldInfoInput("inPosition", CGType.Vec3),
+                        new FieldInfoInput("inTexCoord", CGType.Vec2)
                 ));
 
-                logger.info("运行测试项目: 创建渲染管线");
-                RenderPipeline pipeline = engine.createPipeline(new RenderPipelineCreateInfo(
-                        vii,
-                        List.of(layout),
+                RenderPipeline pipeline1 = engine.createPipeline(new RenderPipelineCreateInfo(
+                        vertexInputInfo1,
+                        List.of(),
                         List.of(),
                         Option.some(shaderProgram1),
                         Option.none(),
                         1,
                         false
                 ));
-                Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
 
-                RenderPass renderPass = engine.createRenderPass(
-                        "FINAL_outputToSwapchain",
-                        5000,
-                        List.of(defaultAttachments.first()),
+                UniformBufferBindingInfo ubBindingInfo = new UniformBufferBindingInfo(List.of(
+                        new FieldInfoInput("model", CGType.Mat4),
+                        new FieldInfoInput("view", CGType.Mat4),
+                        new FieldInfoInput("projection", CGType.Mat4)
+                ), ShaderStage.VERTEX);
+                TextureBindingInfo texBindingInfo = new TextureBindingInfo(ShaderStage.FRAGMENT);
+                DescriptorSetLayout descriptorSetLayout = engine.createDescriptorSetLayout(
+                        new DescriptorSetLayoutCreateInfo(List.of(ubBindingInfo, texBindingInfo)),
+                        4
+                );
+
+                RenderPipeline pipeline2 = engine.createPipeline(new RenderPipelineCreateInfo(
+                        vertexInputInfo2,
+                        List.of(descriptorSetLayout),
+                        List.of(),
+                        Option.some(shaderProgram2),
+                        Option.none(),
+                        1,
+                        true
+                ));
+
+                UniformBuffer ubo = engine.createUniform(new UniformBufferCreateInfo(
+                        UniformUpdateFrequency.PER_FRAME,
+                        ubBindingInfo
+                ));
+                ubo.updateBufferContent(MemorySegment.ofArray(new float[] {
+                        1.0f, 0.0f, 0.0f, 0.0f,
+                        0.0f, 1.0f, 0.0f, 0.0f,
+                        0.0f, 0.0f, 1.0f, 0.0f,
+                        0.0f, 0.0f, 0.0f, 1.0f,
+
+                        1.0f, 0.0f, 0.0f, 0.0f,
+                        0.0f, 1.0f, 0.0f, 0.0f,
+                        0.0f, 0.0f, 1.0f, 0.0f,
+                        0.0f, 0.0f, 0.0f, 1.0f,
+
+                        1.0f, 0.0f, 0.0f, 0.0f,
+                        0.0f, 1.0f, 0.0f, 0.0f,
+                        0.0f, 0.0f, 1.0f, 0.0f,
+                        0.0f, 0.0f, 0.0f, 1.0f
+                }));
+                Pair<Attachment, Texture> rttTarget = engine.createColorAttachment(new AttachmentCreateInfo(
+                        PixelFormat.RGBA8888_FLOAT,
+                        640,
+                        640
+                ));
+                Attachment rttTargetAttachment = rttTarget.first();
+                Texture rttTexture = rttTarget.second();
+                DescriptorSet descriptorSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
+                        descriptorSetLayout,
+                        List.of(ubo, rttTexture)
+                ));
+
+                Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
+                Attachment defaultColorAttachment = defaultAttachments.first();
+                Attachment defaultDepthAttachment = defaultAttachments.second();
+
+                RenderPass renderPass1 = engine.createRenderPass(
+                        "FIRST_renderToTexture",
+                        0,
+                        List.of(rttTargetAttachment),
+                        List.of(new Color(1.0f, 1.0f, 1.0f, 1.0f)),
                         Option.none()
                 );
-                RenderPipelineBind pipelineBind = renderPass.createPipelineBind(0, pipeline);
-                RenderTaskGroup taskGroup = pipelineBind.createRenderTaskGroup(List.of());
+                RenderPipelineBind pipelineBind1 = renderPass1.createPipelineBind(0, pipeline1);
+                RenderTaskGroup taskGroup1 = pipelineBind1.createRenderTaskGroup(List.of());
+                RenderTask task1 = taskGroup1.addRenderTask(
+                        engine.createObject(new ObjectCreateInfo(
+                                vertexInputInfo1,
+                                MemorySegment.ofArray(VERTICES_OBJ1),
+                                MemorySegment.ofArray(INDICES_OBJ1)
+                        )),
+                        List.of()
+                );
 
-                logger.info("运行测试项目: 创建对象");
-                RenderObject object1 = engine.createObject(new ObjectCreateInfo(
-                        vii,
-                        MemorySegment.ofArray(VERTICES_OBJ1),
-                        MemorySegment.ofArray(INDICES_OBJ1)
-                ));
-                logger.info("对象已创建: " + object1);
+                RenderPass renderPass2 = engine.createRenderPass(
+                        "FINAL_presentToScreen",
+                        1,
+                        List.of(defaultColorAttachment),
+                        List.of(new Color(0.0f, 0.0f, 0.2f, 1.0f)),
+                        Option.some(defaultDepthAttachment)
+                );
+                renderPass2.addInputAttachments(List.of(rttTargetAttachment));
+                RenderPipelineBind pipelineBind2 = renderPass2.createPipelineBind(0, pipeline2);
+                RenderTaskGroup taskGroup2 = pipelineBind2.createRenderTaskGroup(List.of());
+                RenderTask task2 = taskGroup2.addRenderTask(
+                        engine.createObject(new ObjectCreateInfo(
+                                vertexInputInfo2,
+                                MemorySegment.ofArray(VERTICES_OBJ2),
+                                MemorySegment.ofArray(INDICES_OBJ2)
+                        )),
+                        List.of(descriptorSet)
+                );
 
-                logger.info("运行测试项目: 添加渲染任务");
-                RenderTask _task = taskGroup.addRenderTask(object1, List.of(descriptorSet));
-                logger.info("渲染任务已添加");
-
-                int counter = 0;
-                while (true) {
-                    try {
-                        Thread.sleep(16);
-                        ub.updateBufferContent(MemorySegment.ofArray(ColorUtil.hueToRGB(counter % 360)));
-                        counter += 1;
-                    } catch (InterruptedException e) {
-                        //noinspection CallToPrintStackTrace
-                        e.printStackTrace();
-                    }
-                }
             } catch (RenderException | IOException e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();
@@ -123,19 +155,18 @@ public class DrillCreateObject {
         }).start();
     }
 
-    private static byte[] DRILL_FUNCTION_DO_NOT_USE_IN_PRODUCT_OR_YOU_WILL_BE_FIRED_readShader(String path) {
-        try (@Nullable InputStream stream = DrillCreateObject.class.getResourceAsStream(path)) {
-            if (stream == null) {
-                throw new RuntimeException("找不到文件: " + path);
-            }
-
-            return stream.readAllBytes();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static final float[] VERTICES_OBJ1 = {
+            // vec2 position, vec3 color
+            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+            0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+            0.0f,  0.5f,  0.0f, 0.0f, 1.0f
+    };
+
+    private static final int[] INDICES_OBJ1 = {
+            0, 1, 2
+    };
+
+    private static final float[] VERTICES_OBJ2 = {
             // vec3 position,   vec2 texCoord
             -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
             0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
@@ -143,7 +174,7 @@ public class DrillCreateObject {
             -0.5f, 0.5f,  0.5f, 0.0f, 1.0f
     };
 
-    private static final int[] INDICES_OBJ1 = {
+    private static final int[] INDICES_OBJ2 = {
             0, 1, 2,
             2, 3, 0
     };

@@ -230,7 +230,7 @@ public final class Resource {
                     null
             );
             if (result != VkResult.VK_SUCCESS) {
-                throw new RenderException("无法创建 Vulkan 图像, 错误代码: " + result);
+                throw new RenderException("无法创建 Vulkan 图像, 错误代码: " + VkResult.explain(result));
             }
 
             return new Pair<>(pImage.read(), pAllocation.read());

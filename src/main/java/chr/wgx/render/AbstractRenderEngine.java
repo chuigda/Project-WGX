@@ -1,5 +1,6 @@
 package chr.wgx.render;
 
+import chr.wgx.render.common.Color;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
@@ -73,6 +74,7 @@ public abstract class AbstractRenderEngine {
             String renderPassName,
             int priority,
             List<Attachment> colorAttachments,
+            List<Color> clearColors,
             Option<Attachment> depthAttachment
     ) throws RenderException;
 }

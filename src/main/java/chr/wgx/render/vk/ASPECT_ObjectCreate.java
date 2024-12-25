@@ -157,7 +157,7 @@ public final class ASPECT_ObjectCreate {
                         barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
                         barrier.buffer(targetBuffer.buffer);
                         barrier.offset(0);
-                        barrier.size(oci.pVertices.byteSize());
+                        barrier.size(oci.pIndices.byteSize());
                         cx.dCmd.vkCmdPipelineBarrier(
                                 cmd,
                                 VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,

@@ -52,14 +52,19 @@ public final class VulkanConfig {
         }
 
         String validationLayers = System.getProperty("wgx.vulkan.validationLayers");
-        this.validationLayers = validationLayers != null && !validationLayers.isBlank();
+        if (validationLayers != null) {
+            this.validationLayers = !validationLayers.isBlank();
+        }
 
         String forceUNORM = System.getProperty("wgx.vulkan.forceUNORM");
-        this.forceUNORM = forceUNORM != null && !forceUNORM.isBlank();
+        if (forceUNORM != null) {
+            this.forceUNORM = !forceUNORM.isBlank();
+        }
 
         String alwaysUploadWithGraphicsQueue = System.getProperty("wgx.vulkan.noTransferQueue");
-        this.alwaysUploadWithGraphicsQueue = alwaysUploadWithGraphicsQueue != null
-                && !alwaysUploadWithGraphicsQueue.isBlank();
+        if (alwaysUploadWithGraphicsQueue != null) {
+            this.alwaysUploadWithGraphicsQueue = !alwaysUploadWithGraphicsQueue.isBlank();
+        }
     }
 
     public static final VulkanConfig DEFAULT = new VulkanConfig();

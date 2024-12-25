@@ -59,7 +59,7 @@ public final class RenderOp implements CompiledRenderPassOp {
                 }
 
                 VkDescriptorSet.Buffer pDescriptorSetVk;
-                if (renderTask.descriptorSets.size() == 1) {
+                if (renderTask.descriptorSetsVk.length == 1) {
                     pDescriptorSetVk = renderTask.descriptorSetsVk[0];
                 } else {
                     pDescriptorSetVk = renderTask.descriptorSetsVk[frameIndex];

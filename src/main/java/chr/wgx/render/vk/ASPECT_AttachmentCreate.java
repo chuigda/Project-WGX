@@ -33,19 +33,18 @@ public final class ASPECT_AttachmentCreate {
         }
 
         @enumtype(VkFormat.class) int format = Config.config().vulkanConfig.forceUNORM ?
-                VkFormat.VK_FORMAT_R8G8B8A8_UNORM :
-                VkFormat.VK_FORMAT_R8G8B8A8_SRGB;
+                VkFormat.VK_FORMAT_B8G8R8A8_UNORM :
+                VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
 
         Resource.Image image = Resource.Image.create(
                 engine.cx,
                 actualWidth,
                 actualHeight,
                 1,
-                format,
                 VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
+                format,
                 VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
-                | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
+                VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
                 VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
         );
         Resource.Sampler sampler = Resource.Sampler.create(engine.cx, 0);
@@ -84,8 +83,8 @@ public final class ASPECT_AttachmentCreate {
                 actualWidth,
                 actualHeight,
                 1,
-                VkFormat.VK_FORMAT_D32_SFLOAT,
                 VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
+                VkFormat.VK_FORMAT_D32_SFLOAT,
                 VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
                 VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT

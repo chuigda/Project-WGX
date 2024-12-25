@@ -3,6 +3,7 @@ package chr.wgx.render.vk;
 import chr.wgx.config.Config;
 import chr.wgx.render.AbstractRenderEngine;
 import chr.wgx.render.RenderException;
+import chr.wgx.render.common.Color;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
@@ -130,7 +131,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         boolean updateUniform = uniformManuallyUpdated.getAndSet(false);
 
         if (recompile || updateUniform) {
-            cx.dCmd.vkDeviceWaitIdle(cx.device);
+            cx.waitDeviceIdle();
 
             if (recompile) {
                 logger.info("正在开始重新编译渲染通道");
@@ -342,11 +343,13 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             String renderPassName,
             int priority,
             List<Attachment> colorAttachments,
+            List<Color> clearColors,
             Option<Attachment> depthAttachment
     ) {
         VulkanRenderPass ret = new VulkanRenderPass(
                 renderPassName,
                 priority,
+                clearColors,
                 colorAttachments.stream().map(attachment -> (VulkanAttachment) attachment).toList(),
                 depthAttachment.map(attachment -> (VulkanImageAttachment) attachment),
                 this.cx.prefabArena,

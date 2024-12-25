@@ -89,6 +89,7 @@ public final class ASPECT_RenderPassCompilation {
             compiled.add(new RenderingBeginOp(
                     engine.cx,
                     renderPass.colorAttachments,
+                    renderPass.clearColors,
                     renderPass.depthAttachment,
                     colorAttachmentInitialized,
                     colorAttachmentUsedInFuture,

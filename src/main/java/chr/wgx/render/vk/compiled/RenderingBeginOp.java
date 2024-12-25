@@ -1,5 +1,6 @@
 package chr.wgx.render.vk.compiled;
 
+import chr.wgx.render.common.Color;
 import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
@@ -22,6 +23,7 @@ import java.util.List;
 
 public final class RenderingBeginOp implements CompiledRenderPassOp {
     private final List<VulkanAttachment> colorAttachments;
+    private final List<Color> clearColors;
     private final Option<VulkanImageAttachment> depthAttachment;
 
     private final VkRenderingInfo renderingInfo;
@@ -31,6 +33,7 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
     public RenderingBeginOp(
             VulkanRenderEngineContext cx,
             List<VulkanAttachment> colorAttachments,
+            List<Color> clearColors,
             Option<VulkanImageAttachment> depthAttachment,
 
             List<Boolean> colorAttachmentInitialized,
@@ -39,6 +42,7 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             boolean depthAttachmentUsedInFuture
     ) {
         this.colorAttachments = colorAttachments;
+        this.clearColors = clearColors;
         this.depthAttachment = depthAttachment;
 
         renderingInfo = VkRenderingInfo.allocate(cx.prefabArena);
@@ -48,11 +52,12 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             VulkanAttachment colorAttachment = colorAttachments.get(i);
 
             colorAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            colorAttachmentInfo.loadOp(
-                    colorAttachmentInitialized.get(i)
-                            ? VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD
-                            : VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR
-            );
+            if (colorAttachmentInitialized.get(i)) {
+                colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
+            } else {
+                colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
+                clearColors.get(i).writeTo(colorAttachmentInfo.clearValue().color());
+            }
 
             if (colorAttachment instanceof VulkanSwapchainAttachment swapchainAttachment
                 && swapchainAttachment.msaaColorImage.isSome()) {
