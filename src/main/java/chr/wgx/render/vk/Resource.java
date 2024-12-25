@@ -212,7 +212,6 @@ public final class Resource {
             createInfo.arrayLayers(1);
             createInfo.format(format);
             createInfo.tiling(tiling);
-            createInfo.initialLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
             createInfo.usage(usage);
             createInfo.samples(sampleCountFlags);
             createInfo.sharingMode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);

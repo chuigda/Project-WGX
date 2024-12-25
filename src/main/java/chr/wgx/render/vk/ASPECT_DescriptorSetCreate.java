@@ -37,7 +37,7 @@ public final class ASPECT_DescriptorSetCreate {
 
         int frameDescriptorSets = createInfo.descriptors.stream()
                 .map(descriptor -> switch (descriptor) {
-                    case Texture texture -> 1;
+                    case Texture _ -> 1;
                     case UniformBuffer uniformBuffer -> ((VulkanUniformBuffer) uniformBuffer).underlyingBuffer.size();
                 })
                 .max(Integer::compareTo)

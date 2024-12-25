@@ -60,7 +60,7 @@ public final class ASPECT_UniformCreate {
                             : Option.some(engine.uniformManuallyUpdated)
             );
             if (info.updateFrequency == UniformUpdateFrequency.PER_FRAME) {
-                engine.framelyUpdatedUniforms.add(ret);
+                engine.perFrameUpdatedUniforms.add(ret);
             }
             else {
                 engine.manuallyUpdatedUniforms.add(ret);

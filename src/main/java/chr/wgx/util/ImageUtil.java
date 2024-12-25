@@ -3,7 +3,9 @@ package chr.wgx.util;
 import tech.icey.glfw.datatype.GLFWimage;
 import tech.icey.panama.buffer.ByteBuffer;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.foreign.Arena;
@@ -17,6 +19,10 @@ public final class ImageUtil {
 
             return javax.imageio.ImageIO.read(is);
         }
+    }
+
+    public static BufferedImage loadImageFromFileSystem(String path) throws IOException {
+        return ImageIO.read(new File(path));
     }
 
     public static void writeImageToBuffer(BufferedImage image, ByteBuffer buffer) {

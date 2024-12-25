@@ -11,6 +11,8 @@ import chr.wgx.render.task.RenderPass;
 import chr.wgx.render.task.RenderPipelineBind;
 import chr.wgx.render.task.RenderTask;
 import chr.wgx.render.task.RenderTaskGroup;
+import chr.wgx.util.ColorUtil;
+import chr.wgx.util.ImageUtil;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
@@ -25,9 +27,14 @@ public class DrillCreateObject {
     public static void createObjectInThread(AbstractRenderEngine engine) {
         new Thread(() -> {
             try {
+                Texture tex = engine.createTexture(new TextureCreateInfo(
+                        ImageUtil.loadImageFromFileSystem("./otto.png"),
+                        false
+                ));
+
                 VertexInputInfo vii = new VertexInputInfo(List.of(
                         new FieldInfoInput("position", CGType.Vec3),
-                        new FieldInfoInput("color", CGType.Vec3)
+                        new FieldInfoInput("texCoord", CGType.Vec2)
                 ));
 
                 ShaderProgram.Vulkan shaderProgram1 = new ShaderProgram.Vulkan(
@@ -37,13 +44,16 @@ public class DrillCreateObject {
 
                 UniformBufferBindingInfo ubbi = new UniformBufferBindingInfo(
                         List.of(new FieldInfoInput("color", CGType.Vec3)),
-                        ShaderStage.VERTEX
+                        ShaderStage.FRAGMENT
                 );
-                DescriptorSetLayoutCreateInfo dslci = new DescriptorSetLayoutCreateInfo(List.of(ubbi));
+                TextureBindingInfo tbi = new TextureBindingInfo(ShaderStage.FRAGMENT);
+                DescriptorSetLayoutCreateInfo dslci = new DescriptorSetLayoutCreateInfo(List.of(ubbi, tbi));
                 DescriptorSetLayout layout = engine.createDescriptorSetLayout(dslci, 8);
                 UniformBuffer ub = engine.createUniform(new UniformBufferCreateInfo(UniformUpdateFrequency.PER_FRAME, ubbi));
                 ub.updateBufferContent(MemorySegment.ofArray(new float[]{1.0f, 0.0f, 0.0f}));
-                DescriptorSet descriptorSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(layout, List.of(ub)));
+                DescriptorSet descriptorSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
+                        layout, List.of(ub, tex)
+                ));
 
                 RenderPipelineCreateInfo rpci = new RenderPipelineCreateInfo(
                         vii,
@@ -84,21 +94,14 @@ public class DrillCreateObject {
                 while (true) {
                     try {
                         Thread.sleep(16);
-                        ub.updateBufferContent(MemorySegment.ofArray(new float[]{
-                                (float) Math.sin(counter / 90.0),
-                                (float) Math.cos(counter / 90.0),
-                                1.0f
-                        }));
+                        ub.updateBufferContent(MemorySegment.ofArray(ColorUtil.hueToRGB(counter % 360)));
                         counter += 1;
-                        if (counter >= 360) {
-                            counter = 0;
-                        }
                     } catch (InterruptedException e) {
                         //noinspection CallToPrintStackTrace
                         e.printStackTrace();
                     }
                 }
-            } catch (RenderException e) {
+            } catch (RenderException | IOException e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();
             }
@@ -118,11 +121,11 @@ public class DrillCreateObject {
     }
 
     private static final float[] VERTICES_OBJ1 = {
-            // vec3 position,   vec3 color
-            -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-            0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,
-            0.5f, 0.5f,   0.5f, 0.0f, 1.0f, 0.0f,
-            -0.5f, 0.5f,  0.5f, 0.0f, 0.0f, 1.0f
+            // vec3 position,   vec2 texCoord
+            -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
+            0.5f, 0.5f,   0.5f, 1.0f, 1.0f,
+            -0.5f, 0.5f,  0.5f, 0.0f, 1.0f
     };
 
     private static final int[] INDICES_OBJ1 = {

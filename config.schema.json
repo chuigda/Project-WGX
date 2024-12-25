@@ -82,6 +82,10 @@
                 "forceUNORM": {
                     "type": "boolean",
                     "description": "强制使用 UNORM 格式"
+                },
+                "alwaysUploadWithGraphicsQueue": {
+                    "type": "boolean",
+                    "description": "总是使用图形队列上传数据，即使有专用的传输队列"
                 }
             }
         },

@@ -29,17 +29,17 @@ public final class ASPECT_ObjectCreate {
         return createObjectImpl(List.of(info)).getFirst();
     }
 
-    public List<RenderObject> createObjectImpl(List<ObjectCreateInfo> info) throws RenderException {
+    public List<RenderObject> createObjectImpl(List<ObjectCreateInfo> infoList) throws RenderException {
         VulkanRenderEngineContext cx = engine.cx;
 
-        List<Integer> vertexCounts = info.stream()
+        List<Integer> vertexCounts = infoList.stream()
                 .map(i -> {
                     long bufferSize = i.pVertices.byteSize();
                     assert bufferSize % i.vertexInputInfo.stride == 0;
                     return (int) (bufferSize / i.vertexInputInfo.stride);
                 })
                 .toList();
-        List<Integer> indexCounts = info.stream()
+        List<Integer> indexCounts = infoList.stream()
                 .map(i -> {
                     long bufferSize = i.pIndices.byteSize();
                     assert bufferSize % Integer.BYTES == 0;
@@ -53,7 +53,7 @@ public final class ASPECT_ObjectCreate {
         try (Arena arena = Arena.ofConfined()) {
             PointerBuffer ppData = PointerBuffer.allocate(arena);
 
-            for (ObjectCreateInfo oci : info) {
+            for (ObjectCreateInfo oci : infoList) {
                 Resource.Buffer vertexStagingBuffer = Resource.Buffer.create(
                         cx,
                         oci.pVertices.byteSize(),
@@ -121,8 +121,8 @@ public final class ASPECT_ObjectCreate {
                 cx.executeTransferCommand(cmd -> {
                     VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
                     VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
-                    for (int i = 0; i < info.size(); i++) {
-                        ObjectCreateInfo oci = info.get(i);
+                    for (int i = 0; i < infoList.size(); i++) {
+                        ObjectCreateInfo oci = infoList.get(i);
                         Resource.Buffer stagingBuffer = vertexStagingBuffers.get(i);
                         Resource.Buffer targetBuffer = vertexBuffers.get(i);
 
@@ -172,8 +172,8 @@ public final class ASPECT_ObjectCreate {
 
                 cx.executeGraphicsCommand(cmd -> {
                     VkBufferMemoryBarrier barrier = VkBufferMemoryBarrier.allocate(arena);
-                    for (int i = 0; i < info.size(); i++) {
-                        ObjectCreateInfo oci = info.get(i);
+                    for (int i = 0; i < infoList.size(); i++) {
+                        ObjectCreateInfo oci = infoList.get(i);
 
                         Resource.Buffer vertexBuffer = vertexBuffers.get(i);
                         barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
@@ -216,8 +216,8 @@ public final class ASPECT_ObjectCreate {
             else {
                 cx.executeGraphicsCommand(cmd -> {
                     VkBufferCopy copyRegion = VkBufferCopy.allocate(arena);
-                    for (int i = 0; i < info.size(); i++) {
-                        ObjectCreateInfo oci = info.get(i);
+                    for (int i = 0; i < infoList.size(); i++) {
+                        ObjectCreateInfo oci = infoList.get(i);
                         Resource.Buffer stagingBuffer = vertexStagingBuffers.get(i);
                         Resource.Buffer targetBuffer = vertexBuffers.get(i);
 
@@ -233,8 +233,8 @@ public final class ASPECT_ObjectCreate {
             }
 
             List<RenderObject> ret = new ArrayList<>();
-            for (int i = 0; i < info.size(); i++) {
-                ObjectCreateInfo oci = info.get(i);
+            for (int i = 0; i < infoList.size(); i++) {
+                ObjectCreateInfo oci = infoList.get(i);
                 Resource.Buffer vertexBuffer = vertexBuffers.get(i);
                 Resource.Buffer indexBuffer = indexBuffers.get(i);
                 int vertexCount = vertexCounts.get(i);

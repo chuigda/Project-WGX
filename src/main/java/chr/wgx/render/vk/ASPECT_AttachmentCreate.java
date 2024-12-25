@@ -12,6 +12,7 @@ import tech.icey.vk4j.bitmask.VkImageAspectFlags;
 import tech.icey.vk4j.bitmask.VkImageUsageFlags;
 import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.enumtype.VkFormat;
+import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.vk4j.enumtype.VkImageTiling;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.container.Ref;

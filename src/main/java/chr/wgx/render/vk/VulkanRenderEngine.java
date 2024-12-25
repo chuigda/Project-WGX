@@ -27,7 +27,6 @@ import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
-import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -75,6 +74,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         objectCreateAspect = new ASPECT_ObjectCreate(this);
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
         uniformCreateAspect = new ASPECT_UniformCreate(this);
+        textureCreateAspect = new ASPECT_TextureCreate(this);
         descriptorSetLayoutCreateAspect = new ASPECT_DescriptorSetLayoutCreate(this);
         descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
@@ -151,7 +151,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             }
         }
 
-        for (VulkanUniformBuffer uniform : framelyUpdatedUniforms) {
+        for (VulkanUniformBuffer uniform : perFrameUpdatedUniforms) {
             uniform.updateGPU(currentFrameIndex);
         }
 
@@ -263,7 +263,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             texture.dispose(cx);
         }
 
-        for (VulkanUniformBuffer uniform : framelyUpdatedUniforms) {
+        for (VulkanUniformBuffer uniform : perFrameUpdatedUniforms) {
             uniform.dispose(cx);
         }
 
@@ -305,8 +305,13 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     }
 
     @Override
-    public Texture createTexture(BufferedImage image) throws RenderException {
-        return null;
+    public Texture createTexture(TextureCreateInfo image) throws RenderException {
+        return createTexture(List.of(image)).getFirst();
+    }
+
+    @Override
+    public List<Texture> createTexture(List<TextureCreateInfo> images) throws RenderException {
+        return textureCreateAspect.createTextureImpl(images);
     }
 
     @Override
@@ -380,6 +385,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     private final ASPECT_ObjectCreate objectCreateAspect;
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
     private final ASPECT_UniformCreate uniformCreateAspect;
+    private final ASPECT_TextureCreate textureCreateAspect;
     private final ASPECT_DescriptorSetLayoutCreate descriptorSetLayoutCreateAspect;
     private final ASPECT_DescriptorSetCreate descriptorSetCreateAspect;
     private final ASPECT_PipelineCreate pipelineCreateAspect;
@@ -396,7 +402,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<VulkanRenderPipeline> pipelines = ConcurrentHashMap.newKeySet();
     final Set<VulkanImageAttachment> colorAttachments = ConcurrentHashMap.newKeySet();
     final Set<VulkanImageAttachment> depthAttachments = ConcurrentHashMap.newKeySet();
-    final Set<VulkanUniformBuffer> framelyUpdatedUniforms = ConcurrentHashMap.newKeySet();
+    final Set<VulkanUniformBuffer> perFrameUpdatedUniforms = ConcurrentHashMap.newKeySet();
     final Set<VulkanUniformBuffer> manuallyUpdatedUniforms = ConcurrentHashMap.newKeySet();
     final AtomicBoolean uniformManuallyUpdated = new AtomicBoolean(false);
     final Set<CombinedImageSampler> textures = ConcurrentHashMap.newKeySet();
