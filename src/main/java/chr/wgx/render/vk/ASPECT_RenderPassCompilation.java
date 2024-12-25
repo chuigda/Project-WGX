@@ -91,6 +91,8 @@ public final class ASPECT_RenderPassCompilation {
                     renderPass.colorAttachments,
                     renderPass.clearColors,
                     renderPass.depthAttachment,
+                    renderPass.renderAreaWidth,
+                    renderPass.renderAreaHeight,
                     colorAttachmentInitialized,
                     colorAttachmentUsedInFuture,
                     depthAttachmentInitialized,

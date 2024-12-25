@@ -23,30 +23,7 @@ public final class ASPECT_AttachmentCreate {
     }
 
     public Pair<Attachment, Texture> createColorAttachmentImpl(AttachmentCreateInfo info) throws RenderException {
-        int actualWidth = info.width;
-        int actualHeight = info.height;
-        if (actualWidth == -1) {
-            actualWidth = engine.swapchain.swapExtent.width();
-        }
-        if (actualHeight == -1) {
-            actualHeight = engine.swapchain.swapExtent.height();
-        }
-
-        @enumtype(VkFormat.class) int format = Config.config().vulkanConfig.forceUNORM ?
-                VkFormat.VK_FORMAT_B8G8R8A8_UNORM :
-                VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
-
-        Resource.Image image = Resource.Image.create(
-                engine.cx,
-                actualWidth,
-                actualHeight,
-                1,
-                VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
-                format,
-                VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
-                VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
-        );
+        Resource.Image image = createColorAttachmentImage(info);
         Resource.Sampler sampler = Resource.Sampler.create(engine.cx, 0);
 
         Ref<Resource.Image> imageRef = new Ref<>(image);
@@ -66,6 +43,33 @@ public final class ASPECT_AttachmentCreate {
         VulkanImageAttachment attachment = new VulkanImageAttachment(info, imageRef);
         engine.depthAttachments.add(attachment);
         return attachment;
+    }
+
+    public Resource.Image createColorAttachmentImage(AttachmentCreateInfo info) throws RenderException {
+        int actualWidth = info.width;
+        int actualHeight = info.height;
+        if (actualWidth == -1) {
+            actualWidth = engine.swapchain.swapExtent.width();
+        }
+        if (actualHeight == -1) {
+            actualHeight = engine.swapchain.swapExtent.height();
+        }
+
+        @enumtype(VkFormat.class) int format = Config.config().vulkanConfig.forceUNORM ?
+                VkFormat.VK_FORMAT_B8G8R8A8_UNORM :
+                VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
+
+        return Resource.Image.create(
+                engine.cx,
+                actualWidth,
+                actualHeight,
+                1,
+                VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
+                format,
+                VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+                VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
+                VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
+        );
     }
 
     public Resource.Image createDepthAttachmentImage(AttachmentCreateInfo info) throws RenderException {

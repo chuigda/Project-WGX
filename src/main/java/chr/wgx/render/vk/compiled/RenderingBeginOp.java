@@ -25,6 +25,8 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
     private final List<VulkanAttachment> colorAttachments;
     private final List<Color> clearColors;
     private final Option<VulkanImageAttachment> depthAttachment;
+    private final int renderAreaWidth;
+    private final int renderAreaHeight;
 
     private final VkRenderingInfo renderingInfo;
     private final VkRenderingAttachmentInfo[] colorAttachmentInfos;
@@ -35,6 +37,8 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             List<VulkanAttachment> colorAttachments,
             List<Color> clearColors,
             Option<VulkanImageAttachment> depthAttachment,
+            int renderAreaWidth,
+            int renderAreaHeight,
 
             List<Boolean> colorAttachmentInitialized,
             List<Boolean> colorAttachmentUsedInFuture,
@@ -44,8 +48,15 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
         this.colorAttachments = colorAttachments;
         this.clearColors = clearColors;
         this.depthAttachment = depthAttachment;
+        this.renderAreaWidth = renderAreaWidth;
+        this.renderAreaHeight = renderAreaHeight;
 
         renderingInfo = VkRenderingInfo.allocate(cx.prefabArena);
+        if (renderAreaWidth != -1) {
+            renderingInfo.renderArea().extent().width(renderAreaWidth);
+            renderingInfo.renderArea().extent().height(renderAreaHeight);
+        }
+
         colorAttachmentInfos = VkRenderingAttachmentInfo.allocate(cx.prefabArena, colorAttachments.size());
         for (int i = 0; i < colorAttachments.size(); i++) {
             VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos[i];
@@ -105,7 +116,9 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             VkCommandBuffer cmdBuf,
             int frameIndex
     ) {
-        renderingInfo.renderArea().extent(swapchain.swapExtent);
+        if (renderAreaWidth == -1) {
+            renderingInfo.renderArea().extent(swapchain.swapExtent);
+        }
 
         for (int i = 0; i < colorAttachments.size(); i++) {
             VulkanAttachment colorAttachment = colorAttachments.get(i);

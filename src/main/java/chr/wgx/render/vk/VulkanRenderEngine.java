@@ -108,7 +108,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
 
         for (VulkanImageAttachment attachment : colorAttachments) {
             attachment.image.value.dispose(cx);
-            attachment.image.value = attachmentCreateAspect.createDepthAttachmentImage(
+            attachment.image.value = attachmentCreateAspect.createColorAttachmentImage(
                     attachment.createInfo
             );
         }
