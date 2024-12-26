@@ -175,10 +175,6 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             }
         }
 
-        for (VulkanUniformBuffer uniform : perFrameUpdatedUniforms) {
-            uniform.updateGPU(currentFrameIndex);
-        }
-
         VkFence inFlightFence = cx.inFlightFences[currentFrameIndex];
         VkSemaphore imageAvailableSemaphore = cx.imageAvailableSemaphores[currentFrameIndex];
         VkSemaphore renderFinishedSemaphore = cx.renderFinishedSemaphores[currentFrameIndex];
@@ -188,6 +184,10 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
             pFence.write(inFlightFence);
             cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
+
+            for (VulkanUniformBuffer uniform : perFrameUpdatedUniforms) {
+                uniform.updateGPU(currentFrameIndex);
+            }
 
             IntBuffer pImageIndex = IntBuffer.allocate(arena);
             @enumtype(VkResult.class) int result = cx.dCmd.vkAcquireNextImageKHR(

@@ -6,6 +6,7 @@ import chr.wgx.render.common.UniformUpdateFrequency;
 import chr.wgx.render.info.UniformBufferCreateInfo;
 import chr.wgx.render.vk.data.VulkanUniformBuffer;
 import tech.icey.vk4j.bitmask.VkBufferUsageFlags;
+import tech.icey.vk4j.handle.VkDeviceMemory;
 import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
 import tech.icey.vma.datatype.VmaAllocationInfo;
 import tech.icey.xjbutil.container.Option;
@@ -32,6 +33,7 @@ public final class ASPECT_UniformCreate {
 
             List<Resource.Buffer> buffers = new ArrayList<>();
             List<MemorySegment> mappedMemory = new ArrayList<>();
+            List<VkDeviceMemory> deviceMemoryHandles = new ArrayList<>();
             for (int i = 0; i < bufferCount; i++) {
                 buffers.add(Resource.Buffer.create(
                         cx,
@@ -42,6 +44,7 @@ public final class ASPECT_UniformCreate {
                         allocationInfo
                 ));
                 mappedMemory.add(allocationInfo.pMappedData().reinterpret(info.bindingInfo.bufferSize));
+                deviceMemoryHandles.add(allocationInfo.deviceMemory());
             }
 
             if (info.init instanceof Option.Some<MemorySegment> someInit) {
@@ -55,6 +58,7 @@ public final class ASPECT_UniformCreate {
                     info,
                     buffers,
                     mappedMemory,
+                    deviceMemoryHandles,
                     info.updateFrequency == UniformUpdateFrequency.PER_FRAME
                             ? Option.none()
                             : Option.some(engine.uniformManuallyUpdated)

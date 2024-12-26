@@ -6,6 +6,7 @@ import chr.wgx.render.info.UniformBufferCreateInfo;
 import chr.wgx.render.vk.IVkDisposable;
 import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
+import tech.icey.vk4j.handle.VkDeviceMemory;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action1;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class VulkanUniformBuffer extends UniformBuffer implements IVkDisposable {
     public final List<Resource.Buffer> underlyingBuffer;
     public final List<MemorySegment> mappedMemory;
+    public final List<VkDeviceMemory> deviceMemoryHandles;
     public final byte[] cpuBufferBack;
     public final MemorySegment cpuBuffer;
 
@@ -25,11 +27,13 @@ public final class VulkanUniformBuffer extends UniformBuffer implements IVkDispo
             UniformBufferCreateInfo createInfo,
             List<Resource.Buffer> underlyingBuffer,
             List<MemorySegment> mappedMemory,
+            List<VkDeviceMemory> deviceMemoryHandles,
             Option<AtomicBoolean> updated
     ) {
         super(createInfo);
         this.underlyingBuffer = underlyingBuffer;
         this.mappedMemory = mappedMemory;
+        this.deviceMemoryHandles = deviceMemoryHandles;
         this.cpuBufferBack = new byte[createInfo.bindingInfo.bufferSize];
         this.cpuBuffer = MemorySegment.ofArray(cpuBufferBack);
 

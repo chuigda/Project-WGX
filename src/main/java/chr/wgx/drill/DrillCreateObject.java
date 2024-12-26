@@ -98,8 +98,8 @@ public class DrillCreateObject {
                 }));
                 Pair<Attachment, Texture> rttTarget = engine.createColorAttachment(new AttachmentCreateInfo(
                         PixelFormat.RGBA8888_FLOAT,
-                        -1,
-                        -1
+                        640,
+                        640
                 ));
                 Attachment rttTargetAttachment = rttTarget.first();
                 Texture rttTexture = rttTarget.second();

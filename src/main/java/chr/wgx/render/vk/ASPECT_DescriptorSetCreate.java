@@ -117,9 +117,9 @@ public final class ASPECT_DescriptorSetCreate {
                             write.pBufferInfo(bufferInfo);
                         }
                     }
-
-                    cx.dCmd.vkUpdateDescriptorSets(cx.device, 1, write, 0, null);
                 }
+
+                cx.dCmd.vkUpdateDescriptorSets(cx.device, createInfo.descriptors.size(), descriptorSetWrite[0], 0, null);
             }
 
             VulkanDescriptorSet ret = new VulkanDescriptorSet(createInfo, descriptorSets);
