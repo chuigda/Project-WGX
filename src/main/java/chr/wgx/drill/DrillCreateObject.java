@@ -72,7 +72,7 @@ public class DrillCreateObject {
                         Option.some(shaderProgram2),
                         Option.none(),
                         1,
-                        false
+                        true
                 ));
 
                 UniformBuffer ubo = engine.createUniform(new UniformBufferCreateInfo(
@@ -134,8 +134,7 @@ public class DrillCreateObject {
                         1,
                         List.of(defaultColorAttachment),
                         List.of(new Color(0.0f, 0.0f, 0.2f, 1.0f)),
-//                        Option.some(defaultDepthAttachment)
-                        Option.none()
+                        Option.some(defaultDepthAttachment)
                 );
                 renderPass2.addInputAttachments(List.of(rttTargetAttachment));
                 RenderPipelineBind pipelineBind2 = renderPass2.createPipelineBind(0, pipeline2);
