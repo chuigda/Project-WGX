@@ -2,7 +2,6 @@ package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
 import chr.wgx.render.data.Descriptor;
-import chr.wgx.render.data.DescriptorSet;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.data.UniformBuffer;
 import chr.wgx.render.info.DescriptorSetCreateInfo;

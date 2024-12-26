@@ -1,6 +1,5 @@
 package chr.wgx.render.common;
 
-import org.objectweb.asm.tree.analysis.Value;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkFormat;
 

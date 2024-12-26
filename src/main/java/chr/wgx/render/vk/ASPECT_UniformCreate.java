@@ -1,5 +1,6 @@
 package chr.wgx.render.vk;
 
+import chr.wgx.config.Config;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.UniformUpdateFrequency;
 import chr.wgx.render.info.UniformBufferCreateInfo;
@@ -21,11 +22,10 @@ public final class ASPECT_UniformCreate {
 
     public VulkanUniformBuffer createUniformImpl(UniformBufferCreateInfo info) throws RenderException {
         VulkanRenderEngineContext cx = engine.cx;
-        Swapchain swapchain = engine.swapchain;
 
         int bufferCount = info.updateFrequency == UniformUpdateFrequency.MANUAL
                 ? 1
-                : swapchain.swapchainImages.length;
+                : Config.config().vulkanConfig.maxFramesInFlight;
 
         try (Arena arena = Arena.ofConfined()) {
             VmaAllocationInfo allocationInfo = VmaAllocationInfo.allocate(arena);

@@ -13,6 +13,7 @@ import chr.wgx.util.ColorUtil;
 import chr.wgx.util.ImageUtil;
 import chr.wgx.util.ResourceUtil;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.w3c.dom.Text;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
@@ -148,7 +149,35 @@ public class DrillCreateObject {
                         List.of(descriptorSet)
                 );
 
-            } catch (RenderException | IOException e) {
+                int counter = 0;
+                while (true) {
+                    Thread.sleep(1000 / 60);
+
+                    float cosine = (float) Math.cos(counter * 0.01);
+                    float sine = (float) Math.sin(counter * 0.01);
+                    // rotate against the z-axis
+                    ubo.updateBufferContent(MemorySegment.ofArray(new float[] {
+                            // model matrix
+                            cosine, -sine, 0.0f, 0.0f,
+                            sine, cosine, 0.0f, 0.0f,
+                            0.0f, 0.0f, 1.0f, 0.0f,
+                            0.0f, 0.0f, 0.0f, 1.0f,
+
+                            // identity for view matrix
+                            1.0f, 0.0f, 0.0f, 0.0f,
+                            0.0f, 1.0f, 0.0f, 0.0f,
+                            0.0f, 0.0f, 1.0f, 0.0f,
+                            0.0f, 0.0f, 0.0f, 1.0f,
+
+                            // projection matrix
+                            1.0f, 0.0f, 0.0f, 0.0f,
+                            0.0f, 1.0f, 0.0f, 0.0f,
+                            0.0f, 0.0f, 1.0f, 0.0f,
+                            0.0f, 0.0f, 0.0f, 1.0f
+                    }));
+                    counter += 1;
+                }
+            } catch (RenderException | IOException | InterruptedException e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();
             }

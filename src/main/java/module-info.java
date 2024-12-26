@@ -7,6 +7,7 @@ module chr.wgx {
     requires java.desktop;
     requires java.logging;
     requires org.jetbrains.annotations;
+    requires org.joml;
     requires org.openjdk.nashorn;
     requires tech.icey.gles2;
     requires tech.icey.glfw;
@@ -16,7 +17,6 @@ module chr.wgx {
 
     requires xjbutil;
     requires jsr305;
-    requires org.objectweb.asm.tree.analysis;
 
     exports chr.wgx.config;
     exports chr.wgx.reactor;

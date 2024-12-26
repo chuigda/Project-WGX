@@ -56,7 +56,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             int width = pWidthHeight.read(0);
             int height = pWidthHeight.read(1);
             swapchain = Swapchain.create(cx, width, height);
-            logger.info("交换链已创建");
+            logger.info("交换链已创建, 图像数量=" + swapchain.swapchainImages.length);
         }
 
         AttachmentCreateInfo pseudoColorAttachmentInfo = new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1);
