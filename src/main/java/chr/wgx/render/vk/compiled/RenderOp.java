@@ -2,7 +2,7 @@ package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
-import chr.wgx.render.vk.task.VulkanRenderRenderPipelineBind;
+import chr.wgx.render.vk.task.VulkanRenderPipelineBind;
 import chr.wgx.render.vk.task.VulkanRenderTask;
 import chr.wgx.render.vk.task.VulkanRenderTaskGroup;
 import tech.icey.vk4j.enumtype.VkIndexType;
@@ -11,7 +11,7 @@ import tech.icey.vk4j.handle.VkCommandBuffer;
 import tech.icey.vk4j.handle.VkDescriptorSet;
 
 public final class RenderOp implements CompiledRenderPassOp {
-    public RenderOp(VulkanRenderRenderPipelineBind bindPoint) {
+    public RenderOp(VulkanRenderPipelineBind bindPoint) {
         this.bindPoint = bindPoint;
     }
 
@@ -97,5 +97,5 @@ public final class RenderOp implements CompiledRenderPassOp {
         }
     }
 
-    private final VulkanRenderRenderPipelineBind bindPoint;
+    private final VulkanRenderPipelineBind bindPoint;
 }

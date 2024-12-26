@@ -6,7 +6,7 @@ import chr.wgx.render.vk.compiled.*;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.task.VulkanRenderPass;
-import chr.wgx.render.vk.task.VulkanRenderRenderPipelineBind;
+import chr.wgx.render.vk.task.VulkanRenderPipelineBind;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.xjbutil.container.Option;
@@ -99,7 +99,7 @@ public final class ASPECT_RenderPassCompilation {
                     depthAttachmentUsedInFuture
             ));
 
-            for (VulkanRenderRenderPipelineBind bindPoint : renderPass.bindList) {
+            for (VulkanRenderPipelineBind bindPoint : renderPass.bindList) {
                 compiled.add(new RenderOp(bindPoint));
             }
 

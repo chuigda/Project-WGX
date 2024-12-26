@@ -23,7 +23,7 @@ public final class VulkanRenderPass extends RenderPass {
     public final int renderAreaHeight;
 
     public final Set<VulkanAttachment> inputAttachments = ConcurrentHashMap.newKeySet();
-    public final ConcurrentSkipListSet<VulkanRenderRenderPipelineBind> bindList = new ConcurrentSkipListSet<>();
+    public final ConcurrentSkipListSet<VulkanRenderPipelineBind> bindList = new ConcurrentSkipListSet<>();
 
     private final Arena prefabArena;
     private final AtomicBoolean renderPassesNeedRecalculation;
@@ -60,7 +60,7 @@ public final class VulkanRenderPass extends RenderPass {
 
     @Override
     public RenderPipelineBind createPipelineBind(int priority, RenderPipeline pipeline) {
-        VulkanRenderRenderPipelineBind bind = new VulkanRenderRenderPipelineBind(
+        VulkanRenderPipelineBind bind = new VulkanRenderPipelineBind(
                 priority,
                 (VulkanRenderPipeline) pipeline,
                 prefabArena
