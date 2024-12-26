@@ -106,6 +106,8 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
         swapchainColorAttachment.msaaColorImage = swapchain.msaaColorImage;
         swapchainDepthAttachment.image.value = swapchain.depthImage;
 
+        List<Ref<Resource.Image>> updatedImages = new ArrayList<>();
+
         for (VulkanImageAttachment attachment : colorAttachments) {
             if (attachment.createInfo.width != -1) {
                 continue;
@@ -115,6 +117,7 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             attachment.image.value = attachmentCreateAspect.createColorAttachmentImage(
                     attachment.createInfo
             );
+            updatedImages.add(attachment.image);
         }
 
         for (VulkanImageAttachment attachment : depthAttachments) {
@@ -126,6 +129,18 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
             attachment.image.value = attachmentCreateAspect.createDepthAttachmentImage(
                     attachment.createInfo
             );
+            updatedImages.add(attachment.image);
+        }
+
+        synchronized (this.imageDescriptorSetUsage) {
+            for (Ref<Resource.Image> image : updatedImages) {
+                Set<ImageDescriptorUsage> usages = this.imageDescriptorSetUsage.get(image);
+                if (usages == null) {
+                    continue;
+                }
+
+                descriptorSetCreateAspect.updateDescriptorSetItem(usages);
+            }
         }
     }
 
@@ -419,6 +434,31 @@ public final class VulkanRenderEngine extends AbstractRenderEngine {
     final Set<CombinedImageSampler> textures = ConcurrentHashMap.newKeySet();
     final ConcurrentHashMap<VulkanDescriptorSetLayout, VkDescriptorPool> descriptorPools = new ConcurrentHashMap<>();
     final Set<VulkanDescriptorSet> descriptorSets = ConcurrentHashMap.newKeySet();
+
+    static final class ImageDescriptorUsage {
+        public final VulkanDescriptorSet descriptorSet;
+        public final Integer binding;
+
+        public ImageDescriptorUsage(VulkanDescriptorSet descriptorSet, Integer binding) {
+            this.descriptorSet = descriptorSet;
+            this.binding = binding;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ImageDescriptorUsage that = (ImageDescriptorUsage) o;
+            return descriptorSet.equals(that.descriptorSet) && binding.equals(that.binding);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(descriptorSet, binding);
+        }
+    }
+
+    final HashMap<Ref<Resource.Image>, Set<ImageDescriptorUsage>> imageDescriptorSetUsage = new HashMap<>();
 
     final Set<VulkanRenderPass> renderPasses = new ConcurrentSkipListSet<>();
     final AtomicBoolean renderPassNeedCompilation = new AtomicBoolean(true);

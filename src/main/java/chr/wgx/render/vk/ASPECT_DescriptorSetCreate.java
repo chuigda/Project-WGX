@@ -2,6 +2,7 @@ package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
 import chr.wgx.render.data.Descriptor;
+import chr.wgx.render.data.DescriptorSet;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.data.UniformBuffer;
 import chr.wgx.render.info.DescriptorSetCreateInfo;
@@ -22,15 +23,21 @@ import tech.icey.vk4j.enumtype.VkResult;
 import tech.icey.vk4j.handle.VkDescriptorPool;
 import tech.icey.vk4j.handle.VkDescriptorSet;
 import tech.icey.vk4j.handle.VkDescriptorSetLayout;
+import tech.icey.xjbutil.container.Pair;
 
 import java.lang.foreign.Arena;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Logger;
 
 public final class ASPECT_DescriptorSetCreate {
     ASPECT_DescriptorSetCreate(VulkanRenderEngine engine) {
         this.engine = engine;
     }
 
-    public VulkanDescriptorSet createDescriptorSetImpl(DescriptorSetCreateInfo createInfo) throws RenderException {
+    VulkanDescriptorSet createDescriptorSetImpl(DescriptorSetCreateInfo createInfo) throws RenderException {
         if (!(createInfo.layout instanceof VulkanDescriptorSetLayout vulkanLayout)) {
             throw new IllegalArgumentException("DescriptorSetCreateInfo::layout 不是 VulkanDescriptorSetLayout, 是否错误地混用了不同的渲染引擎?");
         }
@@ -68,6 +75,7 @@ public final class ASPECT_DescriptorSetCreate {
 
             VkDescriptorSet[] descriptorSets = pDescriptorSet.readAll();
             VkWriteDescriptorSet[] descriptorSetWrite = VkWriteDescriptorSet.allocate(arena, createInfo.descriptors.size());
+            List<Pair<CombinedImageSampler, Integer>> usedCombinedImageSamplers = new ArrayList<>();
             for (int i = 0; i < frameDescriptorSets; i++) {
                 VkDescriptorSet descriptorSet = descriptorSets[i];
 
@@ -91,6 +99,7 @@ public final class ASPECT_DescriptorSetCreate {
                             imageInfo.sampler(combinedImageSampler.sampler.sampler);
 
                             write.pImageInfo(imageInfo);
+                            usedCombinedImageSamplers.add(new Pair<>(combinedImageSampler, j));
                         }
                         case UniformBuffer uniformBuffer -> {
                             write.descriptorType(VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -115,10 +124,63 @@ public final class ASPECT_DescriptorSetCreate {
             }
 
             VulkanDescriptorSet ret = new VulkanDescriptorSet(createInfo, descriptorSets);
+            synchronized (engine.imageDescriptorSetUsage) {
+                for (Pair<CombinedImageSampler, Integer> pair : usedCombinedImageSamplers) {
+                    Set<VulkanRenderEngine.ImageDescriptorUsage> s = engine.imageDescriptorSetUsage.computeIfAbsent(
+                            pair.first().image,
+                            _ -> new HashSet<>()
+                    );
+
+                    VulkanRenderEngine.ImageDescriptorUsage usage = new VulkanRenderEngine.ImageDescriptorUsage(
+                            ret,
+                            pair.second()
+                    );
+                    s.add(usage);
+                }
+            }
+
             engine.descriptorSets.add(ret);
             return ret;
         }
     }
 
+    void updateDescriptorSetItem(Set<VulkanRenderEngine.ImageDescriptorUsage> usages) throws RenderException {
+        VulkanRenderEngineContext cx = engine.cx;
+
+        try (Arena arena = Arena.ofConfined()) {
+            for (VulkanRenderEngine.ImageDescriptorUsage usage : usages) {
+                VulkanDescriptorSet descriptorSet = usage.descriptorSet;
+                Descriptor descriptor = descriptorSet.createInfo.descriptors.get(usage.binding);
+
+                if (!(descriptor instanceof CombinedImageSampler combinedImageSampler)) {
+                    assert false;
+                    logger.warning("描述符集合中 binding=" + usage.binding + " 的描述符不是纹理，已跳过");
+                    continue;
+                }
+
+                VkWriteDescriptorSet[] write = VkWriteDescriptorSet.allocate(arena, descriptorSet.descriptorSets.length);
+                for (int i = 0; i < descriptorSet.descriptorSets.length; i++) {
+                    VkWriteDescriptorSet writeDescriptor = write[i];
+                    writeDescriptor.dstSet(descriptorSet.descriptorSets[i]);
+                    writeDescriptor.dstBinding(usage.binding);
+                    writeDescriptor.dstArrayElement(0);
+                    writeDescriptor.descriptorCount(1);
+                    writeDescriptor.descriptorType(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+                    VkDescriptorImageInfo imageInfo = VkDescriptorImageInfo.allocate(arena);
+                    imageInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    imageInfo.imageView(combinedImageSampler.image.value.imageView);
+                    imageInfo.sampler(combinedImageSampler.sampler.sampler);
+
+                    writeDescriptor.pImageInfo(imageInfo);
+                }
+
+                cx.dCmd.vkUpdateDescriptorSets(cx.device, descriptorSet.descriptorSets.length, write[0], 0, null);
+            }
+        }
+    }
+
     private final VulkanRenderEngine engine;
+
+    private static final Logger logger = Logger.getLogger(ASPECT_DescriptorSetCreate.class.getName());
 }
