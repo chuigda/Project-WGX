@@ -5,7 +5,6 @@ import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
 
-@SuppressWarnings("ClassCanBeRecord")
 public final class RenderPipelineCreateInfo {
     public final VertexInputInfo vertexInputInfo;
     public final List<DescriptorSetLayout> descriptorSetLayouts;
