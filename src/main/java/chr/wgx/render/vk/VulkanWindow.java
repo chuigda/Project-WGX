@@ -2,7 +2,6 @@ package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
 import chr.wgx.util.ImageUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;

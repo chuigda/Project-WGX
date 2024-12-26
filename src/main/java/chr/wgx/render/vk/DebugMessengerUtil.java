@@ -1,6 +1,7 @@
 package chr.wgx.render.vk;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.annotation.pointer;
 import tech.icey.panama.buffer.ByteBuffer;
@@ -20,13 +21,13 @@ public final class DebugMessengerUtil {
 
     private static /* VkBool32 */ int debugCallback(
             @enumtype(VkDebugUtilsMessageSeverityFlagsEXT.class) int messageSeverity,
-            @enumtype(VkDebugUtilsMessageTypeFlagsEXT.class) int messageType,
+            @enumtype(VkDebugUtilsMessageTypeFlagsEXT.class) int ignoredMessageType,
             @pointer(comment="const VkDebugUtilsMessengerCallbackDataEXT*") MemorySegment pCallbackData,
-            @pointer(comment="void*") MemorySegment pUserData
+            @pointer(comment="void*") MemorySegment ignoredPUserData
     ) {
         VkDebugUtilsMessengerCallbackDataEXT callbackData =
                 new VkDebugUtilsMessengerCallbackDataEXT(pCallbackData.reinterpret(VkDebugUtilsMessengerCallbackDataEXT.SIZE));
-        ByteBuffer pMessage = callbackData.pMessage();
+        @Nullable ByteBuffer pMessage = callbackData.pMessage();
         String message = pMessage != null ? pMessage.readString() : "发生了未知错误, 没有诊断消息可用";
 
         Action1<String> action = getSeverityLoggingFunction(messageSeverity);

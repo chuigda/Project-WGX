@@ -101,9 +101,7 @@ public final class ASPECT_TextureCreate {
 
                         imageLayout_undefinedToTransferDest(
                                 image,
-                                barrier,
-                                Constants.VK_QUEUE_FAMILY_IGNORED,
-                                Constants.VK_QUEUE_FAMILY_IGNORED
+                                barrier
                         );
                     }
                     cx.dCmd.vkCmdPipelineBarrier(
@@ -176,9 +174,7 @@ public final class ASPECT_TextureCreate {
 
                         imageLayout_undefinedToTransferDest(
                                 image,
-                                barrier,
-                                Constants.VK_QUEUE_FAMILY_IGNORED,
-                                Constants.VK_QUEUE_FAMILY_IGNORED
+                                barrier
                         );
                     }
                     cx.dCmd.vkCmdPipelineBarrier(
@@ -266,18 +262,13 @@ public final class ASPECT_TextureCreate {
         }
     }
 
-    private void imageLayout_undefinedToTransferDest(
-            Resource.Image image,
-            VkImageMemoryBarrier barrier,
-            int srcQueueFamilyIndex,
-            int dstQueueFamilyIndex
-    ) {
+    private void imageLayout_undefinedToTransferDest(Resource.Image image, VkImageMemoryBarrier barrier) {
         barrier.srcAccessMask(0);
         barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
         barrier.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
         barrier.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        barrier.srcQueueFamilyIndex(srcQueueFamilyIndex);
-        barrier.dstQueueFamilyIndex(dstQueueFamilyIndex);
+        barrier.srcQueueFamilyIndex(Constants.VK_QUEUE_FAMILY_IGNORED);
+        barrier.dstQueueFamilyIndex(Constants.VK_QUEUE_FAMILY_IGNORED);
         barrier.image(image.image);
         barrier.subresourceRange().aspectMask(VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT);
         barrier.subresourceRange().baseMipLevel(0);

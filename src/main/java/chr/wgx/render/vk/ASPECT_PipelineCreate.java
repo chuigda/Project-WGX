@@ -217,5 +217,4 @@ public final class ASPECT_PipelineCreate {
     private final VulkanRenderEngine engine;
 
     private static final ByteBuffer MAIN_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "main");
-    private static final Logger logger = Logger.getLogger(ASPECT_PipelineCreate.class.getName());
 }

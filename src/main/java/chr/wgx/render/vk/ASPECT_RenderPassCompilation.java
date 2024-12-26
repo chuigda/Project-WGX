@@ -23,7 +23,7 @@ public final class ASPECT_RenderPassCompilation {
         this.engine = engine;
     }
 
-    public void recompileRenderPasses() throws RenderException {
+    public void recompileRenderPasses() {
         List<CompiledRenderPassOp> compiled = new ArrayList<>();
         HashMap<VulkanAttachment, Integer> currentLayouts = new HashMap<>();
         HashSet<VulkanAttachment> attachmentInitialized = new HashSet<>();

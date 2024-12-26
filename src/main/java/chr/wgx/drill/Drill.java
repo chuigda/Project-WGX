@@ -5,7 +5,6 @@ import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import org.openjdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import javax.script.*;
-import java.util.HashMap;
 
 public final class Drill {
     private static final String SOURCE_CODE = """

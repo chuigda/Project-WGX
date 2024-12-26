@@ -10,7 +10,6 @@ import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
-import java.awt.image.BufferedImage;
 import java.util.List;
 
 public abstract class AbstractRenderEngine {

@@ -143,7 +143,7 @@ public final class ASPECT_DescriptorSetCreate {
         }
     }
 
-    void updateDescriptorSetItem(Set<VulkanRenderEngine.ImageDescriptorUsage> usages) throws RenderException {
+    void updateDescriptorSetItem(Set<VulkanRenderEngine.ImageDescriptorUsage> usages) {
         VulkanRenderEngineContext cx = engine.cx;
 
         try (Arena arena = Arena.ofConfined()) {

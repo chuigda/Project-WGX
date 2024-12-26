@@ -33,6 +33,7 @@ import tech.icey.xjbutil.container.Option;
 import java.lang.foreign.Arena;
 import java.util.logging.Logger;
 
+@SuppressWarnings("NotNullFieldNotInitialized")
 final class VREContextInitialiser {
     private GLFW glfw;
     private GLFWwindow window;

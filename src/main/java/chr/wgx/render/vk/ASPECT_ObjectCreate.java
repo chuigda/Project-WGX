@@ -18,7 +18,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 public final class ASPECT_ObjectCreate {
     public ASPECT_ObjectCreate(VulkanRenderEngine engine) {
@@ -272,5 +271,4 @@ public final class ASPECT_ObjectCreate {
     }
 
     private final VulkanRenderEngine engine;
-    private static final Logger logger = Logger.getLogger(ASPECT_ObjectCreate.class.getName());
 }

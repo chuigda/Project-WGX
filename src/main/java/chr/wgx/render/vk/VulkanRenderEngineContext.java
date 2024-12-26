@@ -1,6 +1,7 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
+import org.jetbrains.annotations.Nullable;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.annotation.enumtype;
@@ -209,8 +210,8 @@ public final class VulkanRenderEngineContext {
             VkQueue queue,
             Action1<VkCommandBuffer> recordCommandBuffer
     ) throws RenderException {
-        VkCommandBuffer commandBuffer = null;
-        VkFence fence = null;
+        @Nullable VkCommandBuffer commandBuffer = null;
+        @Nullable VkFence fence = null;
 
         try (Arena arena = Arena.ofConfined()) {
             VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.allocate(arena);
