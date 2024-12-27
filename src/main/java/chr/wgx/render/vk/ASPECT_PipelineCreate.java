@@ -1,7 +1,9 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
+import chr.wgx.render.common.ShaderStage;
 import chr.wgx.render.info.FieldInfo;
+import chr.wgx.render.info.PushConstantRange;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.info.ShaderProgram;
 import chr.wgx.render.vk.data.VulkanDescriptorSetLayout;
@@ -154,7 +156,25 @@ public final class ASPECT_PipelineCreate {
                 }
                 pipelineLayoutInfo.pSetLayouts(pSetLayouts);
             }
-            // TODO add push constants then
+
+            if (!info.pushConstants.isEmpty()) {
+                VkPushConstantRange[] pushConstantRanges = VkPushConstantRange.allocate(
+                        arena,
+                        info.pushConstants.size()
+                );
+                for (int i = 0; i < info.pushConstants.size(); i++) {
+                    PushConstantRange range = info.pushConstants.get(i);
+                    VkPushConstantRange rangeVk = pushConstantRanges[i];
+
+                    rangeVk.stageFlags(ShaderStage.VERTEX_AND_FRAGMENT.vkShaderStageFlags);
+                    rangeVk.offset(range.offset);
+                    rangeVk.size(range.size);
+                }
+
+                pipelineLayoutInfo.pushConstantRangeCount(info.pushConstants.size());
+                pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges[0]);
+            }
+
             VkPipelineLayout.Buffer pPipelineLayout = VkPipelineLayout.Buffer.allocate(arena);
             @enumtype(VkResult.class) int result = cx.dCmd.vkCreatePipelineLayout(
                     cx.device,

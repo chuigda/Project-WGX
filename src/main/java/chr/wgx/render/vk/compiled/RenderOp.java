@@ -1,14 +1,19 @@
 package chr.wgx.render.vk.compiled;
 
+import chr.wgx.render.common.ShaderStage;
+import chr.wgx.render.data.PushConstant;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
+import chr.wgx.render.vk.data.VulkanPushConstant;
 import chr.wgx.render.vk.task.VulkanRenderPipelineBind;
 import chr.wgx.render.vk.task.VulkanRenderTask;
 import chr.wgx.render.vk.task.VulkanRenderTaskGroup;
+import tech.icey.vk4j.bitmask.VkShaderStageFlags;
 import tech.icey.vk4j.enumtype.VkIndexType;
 import tech.icey.vk4j.enumtype.VkPipelineBindPoint;
 import tech.icey.vk4j.handle.VkCommandBuffer;
 import tech.icey.vk4j.handle.VkDescriptorSet;
+import tech.icey.xjbutil.container.Option;
 
 public final class RenderOp implements CompiledRenderPassOp {
     public RenderOp(VulkanRenderPipelineBind bindPoint) {
@@ -76,6 +81,20 @@ public final class RenderOp implements CompiledRenderPassOp {
                             0,
                             null
                     );
+                }
+
+                if (renderTask.pushConstant instanceof Option.Some<VulkanPushConstant> some) {
+                    VulkanPushConstant pushConstant = some.value;
+                    synchronized (pushConstant) {
+                        cx.dCmd.vkCmdPushConstants(
+                                cmdBuf,
+                                bindPoint.pipeline.pipelineLayout,
+                                ShaderStage.VERTEX_AND_FRAGMENT.vkShaderStageFlags,
+                                0,
+                                (int) pushConstant.segment.byteSize(),
+                                pushConstant.segment
+                        );
+                    }
                 }
 
                 cx.dCmd.vkCmdBindVertexBuffers(cmdBuf, 0, 1, renderTask.pBuffer, renderTask.pOffsets);

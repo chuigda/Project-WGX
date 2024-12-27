@@ -50,7 +50,6 @@ public class DrillCreateObject {
                 ));
 
                 UniformBufferBindingInfo ubBindingInfo = new UniformBufferBindingInfo(List.of(
-                        new FieldInfoInput("model", CGType.Mat4),
                         new FieldInfoInput("view", CGType.Mat4),
                         new FieldInfoInput("projection", CGType.Mat4)
                 ), ShaderStage.VERTEX);
@@ -60,10 +59,13 @@ public class DrillCreateObject {
                         4
                 );
 
+                List<PushConstantRange> pushConstantRanges = List.of(
+                        new PushConstantRange(0, 68)
+                );
                 RenderPipeline pipeline2 = engine.createPipeline(new RenderPipelineCreateInfo(
                         vertexInputInfo2,
                         List.of(descriptorSetLayout),
-                        List.of(),
+                        pushConstantRanges,
                         Option.some(shaderProgram2),
                         Option.none(),
                         1,
@@ -83,13 +85,16 @@ public class DrillCreateObject {
                         1.0f, 0.0f, 0.0f, 0.0f,
                         0.0f, 1.0f, 0.0f, 0.0f,
                         0.0f, 0.0f, 1.0f, 0.0f,
-                        0.0f, 0.0f, 0.0f, 1.0f,
-
+                        0.0f, 0.0f, 0.0f, 1.0f
+                }));
+                PushConstant pushConstant = engine.createPushConstant(pushConstantRanges, 1).getFirst();
+                pushConstant.updateBufferContent(MemorySegment.ofArray(new float[] {
                         1.0f, 0.0f, 0.0f, 0.0f,
                         0.0f, 1.0f, 0.0f, 0.0f,
                         0.0f, 0.0f, 1.0f, 0.0f,
                         0.0f, 0.0f, 0.0f, 1.0f
                 }));
+
                 Pair<Attachment, Texture> rttTarget = engine.createColorAttachment(new AttachmentCreateInfo(
                         PixelFormat.RGBA8888_FLOAT,
                         640,
@@ -140,7 +145,8 @@ public class DrillCreateObject {
                                 MemorySegment.ofArray(VERTICES_OBJ2),
                                 MemorySegment.ofArray(INDICES_OBJ2)
                         )),
-                        List.of(descriptorSet)
+                        List.of(descriptorSet),
+                        pushConstant
                 );
 
                 int counter = 0;
@@ -149,23 +155,10 @@ public class DrillCreateObject {
 
                     float cosine = (float) Math.cos(counter * 0.01);
                     float sine = (float) Math.sin(counter * 0.01);
-                    // rotate against the z-axis
-                    ubo.updateBufferContent(MemorySegment.ofArray(new float[] {
-                            // model matrix
+
+                    pushConstant.updateBufferContent(MemorySegment.ofArray(new float[] {
                             cosine, -sine, 0.0f, 0.0f,
                             sine, cosine, 0.0f, 0.0f,
-                            0.0f, 0.0f, 1.0f, 0.0f,
-                            0.0f, 0.0f, 0.0f, 1.0f,
-
-                            // identity for view matrix
-                            1.0f, 0.0f, 0.0f, 0.0f,
-                            0.0f, 1.0f, 0.0f, 0.0f,
-                            0.0f, 0.0f, 1.0f, 0.0f,
-                            0.0f, 0.0f, 0.0f, 1.0f,
-
-                            // projection matrix
-                            1.0f, 0.0f, 0.0f, 0.0f,
-                            0.0f, 1.0f, 0.0f, 0.0f,
                             0.0f, 0.0f, 1.0f, 0.0f,
                             0.0f, 0.0f, 0.0f, 1.0f
                     }));

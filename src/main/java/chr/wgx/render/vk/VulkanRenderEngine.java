@@ -75,6 +75,7 @@ public final class VulkanRenderEngine extends RenderEngine {
         objectCreateAspect = new ASPECT_ObjectCreate(this);
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
         uniformCreateAspect = new ASPECT_UniformCreate(this);
+        pushConstantCreateAspect = new ASPECT_PushConstantCreate(this);
         textureCreateAspect = new ASPECT_TextureCreate(this);
         descriptorSetLayoutCreateAspect = new ASPECT_DescriptorSetLayoutCreate(this);
         descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
@@ -344,6 +345,11 @@ public final class VulkanRenderEngine extends RenderEngine {
     }
 
     @Override
+    public List<PushConstant> createPushConstant(List<PushConstantRange> pushConstantRanges, int count) {
+        return pushConstantCreateAspect.createPushConstantImpl(pushConstantRanges, count);
+    }
+
+    @Override
     public DescriptorSetLayout createDescriptorSetLayout(
             DescriptorSetLayoutCreateInfo info,
             int maxSets
@@ -411,6 +417,7 @@ public final class VulkanRenderEngine extends RenderEngine {
     private final ASPECT_ObjectCreate objectCreateAspect;
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
     private final ASPECT_UniformCreate uniformCreateAspect;
+    private final ASPECT_PushConstantCreate pushConstantCreateAspect;
     private final ASPECT_TextureCreate textureCreateAspect;
     private final ASPECT_DescriptorSetLayoutCreate descriptorSetLayoutCreateAspect;
     private final ASPECT_DescriptorSetCreate descriptorSetCreateAspect;

@@ -5,6 +5,10 @@ layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 1) uniform sampler2D uTexture;
 
+layout(push_constant) uniform PushConstantObject {
+    layout(offset = 64) vec4 blendColor;
+} pco;
+
 void main() {
-    outColor = texture(uTexture, inTexCoord);
+    outColor = texture(uTexture, inTexCoord) * pco.blendColor;
 }

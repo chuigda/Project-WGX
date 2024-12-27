@@ -1,11 +1,14 @@
 package chr.wgx.render.vk.task;
 
+import chr.wgx.render.data.PushConstant;
 import chr.wgx.render.task.RenderTask;
 import chr.wgx.render.vk.data.VulkanDescriptorSet;
+import chr.wgx.render.vk.data.VulkanPushConstant;
 import chr.wgx.render.vk.data.VulkanRenderObject;
 import tech.icey.panama.buffer.LongBuffer;
 import tech.icey.vk4j.handle.VkBuffer;
 import tech.icey.vk4j.handle.VkDescriptorSet;
+import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
 import java.util.List;
@@ -13,14 +16,21 @@ import java.util.List;
 public final class VulkanRenderTask extends RenderTask {
     public final VulkanRenderObject renderObject;
     public final List<VulkanDescriptorSet> descriptorSets;
+    public final Option<VulkanPushConstant> pushConstant;
 
     public final VkDescriptorSet.Buffer[] descriptorSetsVk;
     public final VkBuffer.Buffer pBuffer;
     public final LongBuffer pOffsets;
 
-    VulkanRenderTask(VulkanRenderObject renderObject, List<VulkanDescriptorSet> descriptorSets, Arena prefabArena) {
+    VulkanRenderTask(
+            VulkanRenderObject renderObject,
+            List<VulkanDescriptorSet> descriptorSets,
+            Option<PushConstant> pushConstant,
+            Arena prefabArena
+    ) {
         this.renderObject = renderObject;
         this.descriptorSets = descriptorSets;
+        this.pushConstant = pushConstant.map(pc -> (VulkanPushConstant) pc);
 
         int descriptorSetsPerFrame = descriptorSets.stream()
                 .map(descriptorSet -> descriptorSet.descriptorSets.length)

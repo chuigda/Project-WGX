@@ -1,7 +1,9 @@
 package chr.wgx.render.task;
 
 import chr.wgx.render.data.DescriptorSet;
+import chr.wgx.render.data.PushConstant;
 import chr.wgx.render.data.RenderObject;
+import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,9 +13,25 @@ public abstract class RenderTaskGroup {
 
     public abstract RenderTask addRenderTask(
             RenderObject renderObject,
-            List<DescriptorSet> descriptorSets
-            // TODO push constants
+            List<DescriptorSet> descriptorSets,
+            Option<PushConstant> pushConstant
     );
+
+    public final RenderTask addRenderTask(
+            RenderObject renderObject,
+            List<DescriptorSet> descriptorSets,
+            PushConstant pushConstant
+    ) {
+        return this.addRenderTask(renderObject, descriptorSets, Option.some(pushConstant));
+    }
+
+    public final RenderTask addRenderTask(RenderObject renderObject, List<DescriptorSet> descriptorSets) {
+        return this.addRenderTask(renderObject, descriptorSets, Option.none());
+    }
+
+    public final RenderTask addRenderTask(RenderObject renderObject) {
+        return this.addRenderTask(renderObject, List.of());
+    }
 
     public final void setEnabled(boolean enabled) {
         this.enabled.set(enabled);

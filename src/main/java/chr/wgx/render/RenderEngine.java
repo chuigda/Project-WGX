@@ -61,6 +61,10 @@ public abstract class RenderEngine {
     public abstract Texture createTexture(TextureCreateInfo image) throws RenderException;
     public abstract List<Texture> createTexture(List<TextureCreateInfo> images) throws RenderException;
     public abstract UniformBuffer createUniform(UniformBufferCreateInfo info) throws RenderException;
+    public abstract List<PushConstant> createPushConstant(
+            List<PushConstantRange> pushConstantRanges,
+            int count
+    ) throws RenderException;
 
     public abstract DescriptorSetLayout createDescriptorSetLayout(
             DescriptorSetLayoutCreateInfo info,
