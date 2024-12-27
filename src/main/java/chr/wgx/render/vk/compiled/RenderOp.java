@@ -1,7 +1,5 @@
 package chr.wgx.render.vk.compiled;
 
-import chr.wgx.render.common.ShaderStage;
-import chr.wgx.render.data.PushConstant;
 import chr.wgx.render.info.PushConstantRange;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
@@ -12,7 +10,6 @@ import chr.wgx.render.vk.task.VulkanRenderTask;
 import chr.wgx.render.vk.task.VulkanRenderTaskDynamic;
 import chr.wgx.render.vk.task.VulkanRenderTaskGroup;
 import tech.icey.panama.buffer.LongBuffer;
-import tech.icey.vk4j.bitmask.VkShaderStageFlags;
 import tech.icey.vk4j.enumtype.VkIndexType;
 import tech.icey.vk4j.enumtype.VkPipelineBindPoint;
 import tech.icey.vk4j.handle.VkBuffer;

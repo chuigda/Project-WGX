@@ -1,7 +1,6 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
-import chr.wgx.render.common.ShaderStage;
 import chr.wgx.render.info.*;
 import chr.wgx.render.vk.data.VulkanDescriptorSetLayout;
 import chr.wgx.render.vk.data.VulkanRenderPipeline;
