@@ -20,9 +20,9 @@ public final class GLES2DebugCallback {
             @enumtype(GLES2Constants.class) int type,
             @unsigned int id,
             @enumtype(GLES2Constants.class) int severity,
-            int length,
+            int ignoredLength,
             @pointer(comment = "const GLchar*") MemorySegment message,
-            @pointer(comment = "const void*") MemorySegment userParam
+            @pointer(comment = "const void*") MemorySegment ignoredUserParam
     ) {
         String messageString = new ByteBuffer(message).readString();
         Action1<String> action = getSeverityLoggingFunction(severity);
@@ -34,7 +34,7 @@ public final class GLES2DebugCallback {
                 messageString
         ));
 
-        if (severity == GLES2DebugFunctions.DEBUG_SEVERITY_HIGH) {
+        if (severity == GLES2KHRDebug.DEBUG_SEVERITY_HIGH) {
             StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
             StringBuilder sb = new StringBuilder();
             sb.append("JVM 调用栈:\n");
@@ -47,11 +47,11 @@ public final class GLES2DebugCallback {
 
     private static Action1<String> getSeverityLoggingFunction(@enumtype(GLES2Constants.class) int severity) {
         Action1<String> action;
-        if (severity == GLES2DebugFunctions.DEBUG_SEVERITY_HIGH) {
+        if (severity == GLES2KHRDebug.DEBUG_SEVERITY_HIGH) {
             action = logger::severe;
-        } else if (severity == GLES2DebugFunctions.DEBUG_SEVERITY_MEDIUM) {
+        } else if (severity == GLES2KHRDebug.DEBUG_SEVERITY_MEDIUM) {
             action = logger::warning;
-        } else if (severity == GLES2DebugFunctions.DEBUG_SEVERITY_LOW) {
+        } else if (severity == GLES2KHRDebug.DEBUG_SEVERITY_LOW) {
             action = logger::info;
         } else {
             action = logger::fine;
@@ -61,35 +61,35 @@ public final class GLES2DebugCallback {
 
     private static String describeDebugSource(@enumtype(GLES2Constants.class) int source) {
         return switch (source) {
-            case GLES2DebugFunctions.DEBUG_SOURCE_API -> "API";
-            case GLES2DebugFunctions.DEBUG_SOURCE_WINDOW_SYSTEM -> "Window System";
-            case GLES2DebugFunctions.DEBUG_SOURCE_SHADER_COMPILER -> "Shader Compiler";
-            case GLES2DebugFunctions.DEBUG_SOURCE_THIRD_PARTY -> "Third Party";
-            case GLES2DebugFunctions.DEBUG_SOURCE_APPLICATION -> "Application";
-            case GLES2DebugFunctions.DEBUG_SOURCE_OTHER -> "Other";
+            case GLES2KHRDebug.DEBUG_SOURCE_API -> "API";
+            case GLES2KHRDebug.DEBUG_SOURCE_WINDOW_SYSTEM -> "Window System";
+            case GLES2KHRDebug.DEBUG_SOURCE_SHADER_COMPILER -> "Shader Compiler";
+            case GLES2KHRDebug.DEBUG_SOURCE_THIRD_PARTY -> "Third Party";
+            case GLES2KHRDebug.DEBUG_SOURCE_APPLICATION -> "Application";
+            case GLES2KHRDebug.DEBUG_SOURCE_OTHER -> "Other";
             default -> "Unknown";
         };
     }
 
     private static String describeDebugType(@enumtype(GLES2Constants.class) int type) {
         return switch (type) {
-            case GLES2DebugFunctions.DEBUG_TYPE_ERROR -> "Error";
-            case GLES2DebugFunctions.DEBUG_TYPE_DEPRECATED_BEHAVIOR -> "Deprecated Behavior";
-            case GLES2DebugFunctions.DEBUG_TYPE_UNDEFINED_BEHAVIOR -> "Undefined Behavior";
-            case GLES2DebugFunctions.DEBUG_TYPE_PORTABILITY -> "Portability";
-            case GLES2DebugFunctions.DEBUG_TYPE_PERFORMANCE -> "Performance";
-            case GLES2DebugFunctions.DEBUG_TYPE_OTHER -> "Other";
-            case GLES2DebugFunctions.DEBUG_TYPE_MARKER -> "Marker";
+            case GLES2KHRDebug.DEBUG_TYPE_ERROR -> "Error";
+            case GLES2KHRDebug.DEBUG_TYPE_DEPRECATED_BEHAVIOR -> "Deprecated Behavior";
+            case GLES2KHRDebug.DEBUG_TYPE_UNDEFINED_BEHAVIOR -> "Undefined Behavior";
+            case GLES2KHRDebug.DEBUG_TYPE_PORTABILITY -> "Portability";
+            case GLES2KHRDebug.DEBUG_TYPE_PERFORMANCE -> "Performance";
+            case GLES2KHRDebug.DEBUG_TYPE_OTHER -> "Other";
+            case GLES2KHRDebug.DEBUG_TYPE_MARKER -> "Marker";
             default -> "Unknown";
         };
     }
 
     private static String describeDebugSeverity(@enumtype(GLES2Constants.class) int severity) {
         return switch (severity) {
-            case GLES2DebugFunctions.DEBUG_SEVERITY_HIGH -> "High";
-            case GLES2DebugFunctions.DEBUG_SEVERITY_MEDIUM -> "Medium";
-            case GLES2DebugFunctions.DEBUG_SEVERITY_LOW -> "Low";
-            case GLES2DebugFunctions.DEBUG_SEVERITY_NOTIFICATION -> "Notification";
+            case GLES2KHRDebug.DEBUG_SEVERITY_HIGH -> "High";
+            case GLES2KHRDebug.DEBUG_SEVERITY_MEDIUM -> "Medium";
+            case GLES2KHRDebug.DEBUG_SEVERITY_LOW -> "Low";
+            case GLES2KHRDebug.DEBUG_SEVERITY_NOTIFICATION -> "Notification";
             default -> "Unknown";
         };
     }
@@ -101,8 +101,8 @@ public final class GLES2DebugCallback {
         try {
             MethodHandle handle = MethodHandles
                     .lookup()
-                    .findStatic(GLES2DebugCallback.class, "debugCallback", GLES2DebugFunctions.DESCRIPTOR$GLDEBUGPROC.toMethodType());
-            DEBUG_CALLBACK = Linker.nativeLinker().upcallStub(handle, GLES2DebugFunctions.DESCRIPTOR$GLDEBUGPROC, Arena.global());
+                    .findStatic(GLES2DebugCallback.class, "debugCallback", GLES2KHRDebug.DESCRIPTOR$GLDEBUGPROC.toMethodType());
+            DEBUG_CALLBACK = Linker.nativeLinker().upcallStub(handle, GLES2KHRDebug.DESCRIPTOR$GLDEBUGPROC, Arena.global());
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }

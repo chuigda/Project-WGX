@@ -291,7 +291,7 @@ public final class VulkanRenderEngine extends RenderEngine {
 
     @Override
     public RenderObject createObject(ObjectCreateInfo info) throws RenderException {
-        return objectCreateAspect.createObjectImpl(info);
+        return createObject(List.of(info)).getFirst();
     }
 
     @Override

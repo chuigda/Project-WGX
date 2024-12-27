@@ -24,10 +24,6 @@ public final class ASPECT_ObjectCreate {
         this.engine = engine;
     }
 
-    public RenderObject createObjectImpl(ObjectCreateInfo info) throws RenderException {
-        return createObjectImpl(List.of(info)).getFirst();
-    }
-
     public List<RenderObject> createObjectImpl(List<ObjectCreateInfo> infoList) throws RenderException {
         VulkanRenderEngineContext cx = engine.cx;
 

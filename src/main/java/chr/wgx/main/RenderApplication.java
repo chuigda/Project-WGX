@@ -4,8 +4,7 @@ import chr.wgx.config.Config;
 import chr.wgx.drill.DrillCreateObject;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.RenderWindow;
-import chr.wgx.render.vk.VulkanRenderEngine;
-import chr.wgx.render.vk.VulkanRenderEngineFactory;
+import chr.wgx.render.gles2.GLES2RenderEngine;
 import chr.wgx.util.SharedObjectLoader;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
@@ -26,7 +25,7 @@ public final class RenderApplication {
         }
 
         Config config = Config.config();
-        try (RenderWindow w = VulkanRenderEngine.FACTORY.createRenderWindow(
+        try (RenderWindow w = GLES2RenderEngine.FACTORY.createRenderWindow(
                 glfw,
                 config.windowTitle,
                 config.windowWidth,

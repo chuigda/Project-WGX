@@ -10,8 +10,9 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
+import java.util.Objects;
 
-public final class GLES2DebugFunctions {
+public final class GLES2KHRDebug {
     public static final int DEBUG_SOURCE_API                                 = 0x8246;
     public static final int DEBUG_SOURCE_WINDOW_SYSTEM                       = 0x8247;
     public static final int DEBUG_SOURCE_SHADER_COMPILER                     = 0x8248;
@@ -64,12 +65,16 @@ public final class GLES2DebugFunctions {
         }
     }
 
-    public GLES2DebugFunctions(RawFunctionLoader loader) {
+    public GLES2KHRDebug(RawFunctionLoader loader) {
         MemorySegment segment$glDebugMessageCallback = loader.apply("glDebugMessageCallback");
         MemorySegment segment$glDebugMessageControl = loader.apply("glDebugMessageControl");
 
-        this.HANDLE$glDebugMessageCallback = RawFunctionLoader.link(segment$glDebugMessageCallback, DESCRIPTOR$glDebugMessageCallback);
-        this.HANDLE$glDebugMessageControl = RawFunctionLoader.link(segment$glDebugMessageControl, DESCRIPTOR$glDebugMessageControl);
+        this.HANDLE$glDebugMessageCallback = Objects.requireNonNull(
+                RawFunctionLoader.link(segment$glDebugMessageCallback, DESCRIPTOR$glDebugMessageCallback)
+        );
+        this.HANDLE$glDebugMessageControl = Objects.requireNonNull(
+                RawFunctionLoader.link(segment$glDebugMessageControl, DESCRIPTOR$glDebugMessageControl)
+        );
     }
 
     public final MethodHandle HANDLE$glDebugMessageCallback;

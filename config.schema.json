@@ -52,7 +52,7 @@
                 },
                 "validationLayers": {
                     "type": "boolean",
-                    "description": "启用验证层"
+                    "description": "启用校验层"
                 },
                 "vsync": {
                     "type": "integer",
@@ -100,6 +100,10 @@
                 "enableLineSmooth": {
                     "type": "boolean",
                     "description": "启用线条平滑"
+                },
+                "debug": {
+                    "type": "boolean",
+                    "description": "启用调试模式"
                 }
             }
         },
