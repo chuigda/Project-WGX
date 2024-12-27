@@ -2,6 +2,7 @@ package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.common.ShaderStage;
 import chr.wgx.render.data.PushConstant;
+import chr.wgx.render.info.PushConstantRange;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanPushConstant;
@@ -86,14 +87,16 @@ public final class RenderOp implements CompiledRenderPassOp {
                 if (renderTask.pushConstant instanceof Option.Some<VulkanPushConstant> some) {
                     VulkanPushConstant pushConstant = some.value;
                     synchronized (pushConstant) {
-                        cx.dCmd.vkCmdPushConstants(
-                                cmdBuf,
-                                bindPoint.pipeline.pipelineLayout,
-                                ShaderStage.VERTEX_AND_FRAGMENT.vkShaderStageFlags,
-                                0,
-                                (int) pushConstant.segment.byteSize(),
-                                pushConstant.segment
-                        );
+                        for (PushConstantRange range : pushConstant.info.pushConstantRanges) {
+                            cx.dCmd.vkCmdPushConstants(
+                                    cmdBuf,
+                                    bindPoint.pipeline.pipelineLayout,
+                                    range.shaderStage.vkShaderStageFlags,
+                                    range.offset,
+                                    range.type.byteSize,
+                                    pushConstant.segment.asSlice(range.offset, range.type.byteSize)
+                            );
+                        }
                     }
                 }
 

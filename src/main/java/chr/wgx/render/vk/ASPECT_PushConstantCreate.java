@@ -1,7 +1,7 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.data.PushConstant;
-import chr.wgx.render.info.PushConstantRange;
+import chr.wgx.render.info.PushConstantInfo;
 import chr.wgx.render.vk.data.VulkanPushConstant;
 
 import java.util.ArrayList;
@@ -12,14 +12,12 @@ public final class ASPECT_PushConstantCreate {
         this.engine = engine;
     }
 
-    List<PushConstant> createPushConstantImpl(List<PushConstantRange> pushConstantRanges, int count) {
-        PushConstantRange lastRange = pushConstantRanges.getLast();
-        int pushConstantBufferSize = lastRange.offset + lastRange.size;
-
+    List<PushConstant> createPushConstantImpl(PushConstantInfo info, int count) {
         List<PushConstant> ret = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             VulkanPushConstant pushConstant = new VulkanPushConstant(
-                    engine.cx.prefabArena.allocate(pushConstantBufferSize)
+                    info,
+                    engine.cx.prefabArena.allocate(info.bufferSize)
             );
             ret.add(pushConstant);
         }

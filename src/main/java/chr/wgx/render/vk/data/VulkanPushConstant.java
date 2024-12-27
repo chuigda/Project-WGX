@@ -1,6 +1,7 @@
 package chr.wgx.render.vk.data;
 
 import chr.wgx.render.data.PushConstant;
+import chr.wgx.render.info.PushConstantInfo;
 import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.MemorySegment;
@@ -8,7 +9,8 @@ import java.lang.foreign.MemorySegment;
 public final class VulkanPushConstant extends PushConstant {
     public final MemorySegment segment;
 
-    public VulkanPushConstant(MemorySegment segment) {
+    public VulkanPushConstant(PushConstantInfo info, MemorySegment segment) {
+        super(info);
         this.segment = segment;
     }
 

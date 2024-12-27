@@ -42,7 +42,7 @@ public class DrillCreateObject {
                 RenderPipeline pipeline1 = engine.createPipeline(new RenderPipelineCreateInfo(
                         vertexInputInfo1,
                         List.of(),
-                        List.of(),
+                        Option.none(),
                         Option.some(shaderProgram1),
                         Option.none(),
                         1,
@@ -59,13 +59,14 @@ public class DrillCreateObject {
                         4
                 );
 
-                List<PushConstantRange> pushConstantRanges = List.of(
-                        new PushConstantRange(0, 68)
-                );
+                PushConstantInfo pci = new PushConstantInfo(List.of(
+                        new PushConstantRange(ShaderStage.VERTEX, CGType.Mat4, 0),
+                        new PushConstantRange(ShaderStage.FRAGMENT, CGType.Vec4, 64)
+                ));
                 RenderPipeline pipeline2 = engine.createPipeline(new RenderPipelineCreateInfo(
                         vertexInputInfo2,
                         List.of(descriptorSetLayout),
-                        pushConstantRanges,
+                        Option.some(pci),
                         Option.some(shaderProgram2),
                         Option.none(),
                         1,
@@ -87,7 +88,7 @@ public class DrillCreateObject {
                         0.0f, 0.0f, 1.0f, 0.0f,
                         0.0f, 0.0f, 0.0f, 1.0f
                 }));
-                PushConstant pushConstant = engine.createPushConstant(pushConstantRanges, 1).getFirst();
+                PushConstant pushConstant = engine.createPushConstant(pci, 1).getFirst();
                 pushConstant.updateBufferContent(MemorySegment.ofArray(new float[] {
                         1.0f, 0.0f, 0.0f, 0.0f,
                         0.0f, 1.0f, 0.0f, 0.0f,
@@ -155,12 +156,15 @@ public class DrillCreateObject {
 
                     float cosine = (float) Math.cos(counter * 0.01);
                     float sine = (float) Math.sin(counter * 0.01);
+                    float light = 0.5f + 0.5f * sine;
 
                     pushConstant.updateBufferContent(MemorySegment.ofArray(new float[] {
                             cosine, -sine, 0.0f, 0.0f,
                             sine, cosine, 0.0f, 0.0f,
                             0.0f, 0.0f, 1.0f, 0.0f,
-                            0.0f, 0.0f, 0.0f, 1.0f
+                            0.0f, 0.0f, 0.0f, 1.0f,
+
+                            light, light, light, 1.0f
                     }));
                     counter += 1;
                 }

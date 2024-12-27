@@ -2,10 +2,7 @@ package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.ShaderStage;
-import chr.wgx.render.info.FieldInfo;
-import chr.wgx.render.info.PushConstantRange;
-import chr.wgx.render.info.RenderPipelineCreateInfo;
-import chr.wgx.render.info.ShaderProgram;
+import chr.wgx.render.info.*;
 import chr.wgx.render.vk.data.VulkanDescriptorSetLayout;
 import chr.wgx.render.vk.data.VulkanRenderPipeline;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +23,6 @@ import tech.icey.vk4j.handle.VkShaderModule;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
-import java.util.logging.Logger;
 
 public final class ASPECT_PipelineCreate {
     public ASPECT_PipelineCreate(VulkanRenderEngine engine) {
@@ -157,21 +153,23 @@ public final class ASPECT_PipelineCreate {
                 pipelineLayoutInfo.pSetLayouts(pSetLayouts);
             }
 
-            if (!info.pushConstants.isEmpty()) {
+            if (info.pushConstantInfo instanceof Option.Some<PushConstantInfo> some) {
+                PushConstantInfo pushConstantInfo = some.value;
+
                 VkPushConstantRange[] pushConstantRanges = VkPushConstantRange.allocate(
                         arena,
-                        info.pushConstants.size()
+                        pushConstantInfo.pushConstantRanges.size()
                 );
-                for (int i = 0; i < info.pushConstants.size(); i++) {
-                    PushConstantRange range = info.pushConstants.get(i);
+                for (int i = 0; i < pushConstantInfo.pushConstantRanges.size(); i++) {
+                    PushConstantRange range = pushConstantInfo.pushConstantRanges.get(i);
                     VkPushConstantRange rangeVk = pushConstantRanges[i];
 
-                    rangeVk.stageFlags(ShaderStage.VERTEX_AND_FRAGMENT.vkShaderStageFlags);
+                    rangeVk.stageFlags(range.shaderStage.vkShaderStageFlags);
                     rangeVk.offset(range.offset);
-                    rangeVk.size(range.size);
+                    rangeVk.size(range.type.byteSize);
                 }
 
-                pipelineLayoutInfo.pushConstantRangeCount(info.pushConstants.size());
+                pipelineLayoutInfo.pushConstantRangeCount(pushConstantInfo.pushConstantRanges.size());
                 pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges[0]);
             }
 

@@ -345,8 +345,8 @@ public final class VulkanRenderEngine extends RenderEngine {
     }
 
     @Override
-    public List<PushConstant> createPushConstant(List<PushConstantRange> pushConstantRanges, int count) {
-        return pushConstantCreateAspect.createPushConstantImpl(pushConstantRanges, count);
+    public List<PushConstant> createPushConstant(PushConstantInfo info, int count) {
+        return pushConstantCreateAspect.createPushConstantImpl(info, count);
     }
 
     @Override
