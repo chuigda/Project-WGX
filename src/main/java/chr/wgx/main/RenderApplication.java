@@ -3,8 +3,9 @@ package chr.wgx.main;
 import chr.wgx.config.Config;
 import chr.wgx.drill.DrillCreateObject;
 import chr.wgx.render.RenderException;
+import chr.wgx.render.RenderWindow;
 import chr.wgx.render.vk.VulkanRenderEngine;
-import chr.wgx.render.vk.VulkanWindow;
+import chr.wgx.render.vk.VulkanRenderEngineFactory;
 import chr.wgx.util.SharedObjectLoader;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
@@ -25,17 +26,15 @@ public final class RenderApplication {
         }
 
         Config config = Config.config();
-        try (VulkanWindow w = new VulkanWindow(glfw, config.windowTitle, config.windowWidth, config.windowHeight)) {
-            VulkanRenderEngine engine = new VulkanRenderEngine(
-                    glfw,
-                    w.rawWindow,
-                    DrillCreateObject::createObjectInThread,
-                    (width, height) -> logger.info("帧缓冲尺寸已调整至 " + width + "x" + height),
-                    () -> {},
-                    () -> {},
-                    () -> logger.info("Vulkan 渲染引擎已关闭")
-            );
-            w.mainLoop(engine);
+        try (RenderWindow w = VulkanRenderEngine.FACTORY.createRenderWindow(
+                glfw,
+                config.windowTitle,
+                config.windowWidth,
+                config.windowHeight
+        )) {
+            DrillCreateObject.createObjectInThread(w.renderEngine);
+
+            w.mainLoop();
         } catch (RenderException e) {
             throw new RuntimeException(e);
         }

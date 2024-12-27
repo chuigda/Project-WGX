@@ -1,14 +1,11 @@
-package chr.wgx.render.vk;
+package chr.wgx.render;
 
-import chr.wgx.render.RenderException;
 import chr.wgx.util.ImageUtil;
-import org.jetbrains.annotations.Nullable;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
 import tech.icey.glfw.datatype.GLFWimage;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.annotation.pointer;
-import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.panama.buffer.IntBuffer;
 
 import java.awt.image.BufferedImage;
@@ -18,26 +15,16 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.logging.Logger;
 
-public final class VulkanWindow implements AutoCloseable {
+public final class RenderWindow implements AutoCloseable {
     public final GLFW glfw;
     public final GLFWwindow rawWindow;
+    public final RenderEngine renderEngine;
     public boolean framebufferResized = false;
 
-    public VulkanWindow(GLFW glfw, String title, int width, int height) throws RenderException {
-        if (glfw.glfwVulkanSupported() != GLFWConstants.GLFW_TRUE) {
-            throw new RenderException("GLFW 报告不支持 Vulkan");
-        }
-
-        glfw.glfwWindowHint(GLFWConstants.GLFW_CLIENT_API, GLFWConstants.GLFW_NO_API);
-        try (Arena arena = Arena.ofConfined()) {
-            ByteBuffer titleBuffer = ByteBuffer.allocateString(arena, title);
-            @Nullable GLFWwindow window = glfw.glfwCreateWindow(width, height, titleBuffer, null, null);
-            if (window == null) {
-                throw new RenderException("无法创建 GLFW 窗口");
-            }
-            this.glfw = glfw;
-            this.rawWindow = window;
-        }
+    public RenderWindow(GLFW glfw, GLFWwindow rawWindow, RenderEngine renderEngine) {
+        this.glfw = glfw;
+        this.rawWindow = rawWindow;
+        this.renderEngine = renderEngine;
 
         FunctionDescriptor descriptor = FunctionDescriptor.ofVoid(
                 ValueLayout.ADDRESS,
@@ -47,7 +34,7 @@ public final class VulkanWindow implements AutoCloseable {
 
         try {
             MethodHandle handle = MethodHandles.lookup().findVirtual(
-                    VulkanWindow.class,
+                    RenderWindow.class,
                     "framebufferSizeCallback",
                     descriptor.toMethodType()
             ).bindTo(this);
@@ -66,37 +53,39 @@ public final class VulkanWindow implements AutoCloseable {
         }
     }
 
-    public void mainLoop(VulkanRenderEngine renderer) throws RenderException {
+    public void mainLoop() throws RenderException {
         while (glfw.glfwWindowShouldClose(rawWindow) != GLFWConstants.GLFW_TRUE) {
+            glfw.glfwPollEvents();
             if (framebufferResized) {
                 framebufferResized = false;
                 int width, height;
                 try (Arena arena = Arena.ofConfined()) {
                     IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
-                    IntBuffer pWidth = pWidthHeight;
+                    IntBuffer pWidth = pWidthHeight.offset(0);
                     IntBuffer pHeight = pWidthHeight.offset(1);
                     glfw.glfwGetFramebufferSize(rawWindow, pWidth, pHeight);
                     width = pWidth.read();
                     height = pHeight.read();
                 }
-                renderer.resizeEngine(width, height);
+
+                renderEngine.resizeEngine(width, height);
             }
 
-            renderer.renderFrameEngine();
-            glfw.glfwPollEvents();
+            renderEngine.renderFrameEngine();
         }
-        renderer.closeEngine();
+
+        renderEngine.closeEngine();
     }
 
     @Override
     public void close() {
-        logger.info("关闭 GLFW 窗口");
         glfw.glfwDestroyWindow(rawWindow);
     }
 
+    @SuppressWarnings("unused")
     private void framebufferSizeCallback(@pointer(comment="GLFWwindow*") MemorySegment window, int width, int height) {
         framebufferResized = true;
     }
 
-    private static final Logger logger = Logger.getLogger(VulkanWindow.class.getName());
+    private static final Logger logger = Logger.getLogger(RenderWindow.class.getName());
 }

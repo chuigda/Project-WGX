@@ -1,6 +1,7 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.config.Config;
+import chr.wgx.render.IRenderEngineFactory;
 import chr.wgx.render.RenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.Color;
@@ -24,9 +25,6 @@ import tech.icey.vk4j.handle.*;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.container.Ref;
-import tech.icey.xjbutil.functional.Action0;
-import tech.icey.xjbutil.functional.Action1;
-import tech.icey.xjbutil.functional.Action2;
 
 import java.lang.foreign.Arena;
 import java.util.*;
@@ -36,18 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public final class VulkanRenderEngine extends RenderEngine {
-    public VulkanRenderEngine(
-            GLFW glfw,
-            GLFWwindow window,
-
-            Action1<RenderEngine> onInit,
-            Action2<Integer, Integer> onResize,
-            Action0 onBeforeRenderFrame,
-            Action0 onAfterRenderFrame,
-            Action0 onClose
-    ) throws RenderException {
-        super(onInit, onResize, onBeforeRenderFrame, onAfterRenderFrame, onClose);
-
+    VulkanRenderEngine(GLFW glfw, GLFWwindow window) throws RenderException {
         cx = VulkanRenderEngineContext.create(glfw, window);
         try (Arena arena = Arena.ofConfined()) {
             IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
@@ -81,8 +68,6 @@ public final class VulkanRenderEngine extends RenderEngine {
         descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
         renderPassCompilationAspect = new ASPECT_RenderPassCompilation(this);
-
-        onInit.apply(this);
     }
 
     @Override
@@ -385,8 +370,11 @@ public final class VulkanRenderEngine extends RenderEngine {
                 this.renderPassNeedCompilation
         );
         this.renderPasses.add(ret);
+        this.renderPassNeedCompilation.set(true);
         return ret;
     }
+
+    public static final IRenderEngineFactory FACTORY = new VulkanRenderEngineFactory();
 
     private void resetAndRecordCommandBuffer(
             VkCommandBuffer commandBuffer,

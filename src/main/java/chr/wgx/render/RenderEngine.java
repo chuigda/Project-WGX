@@ -7,46 +7,39 @@ import chr.wgx.render.task.RenderPass;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.functional.Action0;
-import tech.icey.xjbutil.functional.Action1;
 import tech.icey.xjbutil.functional.Action2;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class RenderEngine {
-    private final Action1<RenderEngine> onInit;
-    private final Action2<Integer, Integer> onResize;
-    private final Action0 onBeforeRenderFrame;
-    private final Action0 onAfterRenderFrame;
-    private final Action0 onClose;
-
-    public RenderEngine(
-            Action1<RenderEngine> onInit,
-            Action2<Integer, Integer> onResize,
-            Action0 onBeforeRenderFrame,
-            Action0 onAfterRenderFrame,
-            Action0 onClose
-    ) {
-        this.onInit = onInit;
-        this.onResize = onResize;
-        this.onBeforeRenderFrame = onBeforeRenderFrame;
-        this.onAfterRenderFrame = onAfterRenderFrame;
-        this.onClose = onClose;
-    }
+    public final ConcurrentLinkedQueue<Action2<Integer, Integer>> onResizeActions = new ConcurrentLinkedQueue<>();
+    public final ConcurrentLinkedQueue<Action0> onBeforeRenderFrameActions = new ConcurrentLinkedQueue<>();
+    public final ConcurrentLinkedQueue<Action0> onAfterRenderFrameActions = new ConcurrentLinkedQueue<>();
+    public final ConcurrentLinkedQueue<Action0> onCloseActions = new ConcurrentLinkedQueue<>();
 
     public final void resizeEngine(int width, int height) throws RenderException {
         resize(width, height);
-        onResize.apply(width, height);
+        for (Action2<Integer, Integer> action : onResizeActions) {
+            action.apply(width, height);
+        }
     }
 
     public final void renderFrameEngine() throws RenderException {
-        onBeforeRenderFrame.apply();
+        for (Action0 action : onBeforeRenderFrameActions) {
+            action.apply();
+        }
         renderFrame();
-        onAfterRenderFrame.apply();
+        for (Action0 action : onAfterRenderFrameActions) {
+            action.apply();
+        }
     }
 
     public final void closeEngine() {
         close();
-        onClose.apply();
+        for (Action0 action : onCloseActions) {
+            action.apply();
+        }
     }
 
     protected abstract void resize(int width, int height) throws RenderException;

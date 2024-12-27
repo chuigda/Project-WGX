@@ -26,7 +26,7 @@ public final class VulkanRenderPass extends RenderPass {
     public final ConcurrentSkipListSet<VulkanRenderPipelineBind> bindList = new ConcurrentSkipListSet<>();
 
     private final Arena prefabArena;
-    private final AtomicBoolean renderPassesNeedRecalculation;
+    private final AtomicBoolean renderPassesNeedRecompilation;
 
     public VulkanRenderPass(
             String renderPassName,
@@ -35,7 +35,7 @@ public final class VulkanRenderPass extends RenderPass {
             List<VulkanAttachment> colorAttachments,
             Option<VulkanImageAttachment> depthAttachment,
             Arena prefabArena,
-            AtomicBoolean renderPassesNeedRecalculation
+            AtomicBoolean renderPassesNeedRecompilation
     ) {
         super(renderPassName, priority, clearColors);
         this.colorAttachments = colorAttachments;
@@ -44,8 +44,7 @@ public final class VulkanRenderPass extends RenderPass {
         this.renderAreaHeight = colorAttachments.getFirst().createInfo.height;
 
         this.prefabArena = prefabArena;
-        this.renderPassesNeedRecalculation = renderPassesNeedRecalculation;
-        renderPassesNeedRecalculation.set(true);
+        this.renderPassesNeedRecompilation = renderPassesNeedRecompilation;
 
         assert sanitize();
     }
@@ -55,7 +54,7 @@ public final class VulkanRenderPass extends RenderPass {
         for (Attachment attachment : attachments) {
             inputAttachments.add((VulkanAttachment) attachment);
         }
-        renderPassesNeedRecalculation.set(true);
+        renderPassesNeedRecompilation.set(true);
     }
 
     @Override
