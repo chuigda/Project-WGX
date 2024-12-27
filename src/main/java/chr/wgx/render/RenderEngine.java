@@ -12,15 +12,15 @@ import tech.icey.xjbutil.functional.Action2;
 
 import java.util.List;
 
-public abstract class AbstractRenderEngine {
-    private final Action1<AbstractRenderEngine> onInit;
+public abstract class RenderEngine {
+    private final Action1<RenderEngine> onInit;
     private final Action2<Integer, Integer> onResize;
     private final Action0 onBeforeRenderFrame;
     private final Action0 onAfterRenderFrame;
     private final Action0 onClose;
 
-    public AbstractRenderEngine(
-            Action1<AbstractRenderEngine> onInit,
+    public RenderEngine(
+            Action1<RenderEngine> onInit,
             Action2<Integer, Integer> onResize,
             Action0 onBeforeRenderFrame,
             Action0 onAfterRenderFrame,

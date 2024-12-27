@@ -1,6 +1,6 @@
 package chr.wgx.render.gles2;
 
-import chr.wgx.render.AbstractRenderEngine;
+import chr.wgx.render.RenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.handle.*;
 import chr.wgx.render.info.*;

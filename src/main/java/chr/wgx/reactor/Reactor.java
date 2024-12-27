@@ -1,11 +1,11 @@
 package chr.wgx.reactor;
 
-import chr.wgx.render.AbstractRenderEngine;
+import chr.wgx.render.RenderEngine;
 
 import java.util.HashMap;
 
 public final class Reactor {
-    public final AbstractRenderEngine renderEngine;
+    public final RenderEngine renderEngine;
 
     /// 提交给 Reactor 之后就不会修改的稳定对象
     public final HashMap<String, Object> stablePool = new HashMap<>();
@@ -14,7 +14,7 @@ public final class Reactor {
     /// 变更时机不定，并且需要监视的放射性对象
     public final HashMap<String, Radioactive<?>> radioactivePool = new HashMap<>();
 
-    public Reactor(AbstractRenderEngine renderEngine) {
+    public Reactor(RenderEngine renderEngine) {
         this.renderEngine = renderEngine;
     }
 

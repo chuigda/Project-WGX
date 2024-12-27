@@ -1,6 +1,6 @@
 package chr.wgx.drill;
 
-import chr.wgx.render.AbstractRenderEngine;
+import chr.wgx.render.RenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.*;
 import chr.wgx.render.data.*;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class DrillCreateObject {
-    public static void createObjectInThread(AbstractRenderEngine engine) {
+    public static void createObjectInThread(RenderEngine engine) {
         new Thread(() -> {
             try {
                 byte[] vertexShader1 = ResourceUtil.readBinaryFile("/resources/shader/vk/drill.vert.spv");

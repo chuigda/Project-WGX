@@ -1,7 +1,7 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.config.Config;
-import chr.wgx.render.AbstractRenderEngine;
+import chr.wgx.render.RenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.Color;
 import chr.wgx.render.common.PixelFormat;
@@ -35,12 +35,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
-public final class VulkanRenderEngine extends AbstractRenderEngine {
+public final class VulkanRenderEngine extends RenderEngine {
     public VulkanRenderEngine(
             GLFW glfw,
             GLFWwindow window,
 
-            Action1<AbstractRenderEngine> onInit,
+            Action1<RenderEngine> onInit,
             Action2<Integer, Integer> onResize,
             Action0 onBeforeRenderFrame,
             Action0 onAfterRenderFrame,
