@@ -4,6 +4,7 @@ import chr.wgx.render.data.DescriptorSet;
 import chr.wgx.render.data.PushConstant;
 import chr.wgx.render.data.RenderObject;
 import chr.wgx.render.task.RenderTask;
+import chr.wgx.render.task.RenderTaskDynamic;
 import chr.wgx.render.task.RenderTaskGroup;
 import chr.wgx.render.vk.data.VulkanDescriptorSet;
 import chr.wgx.render.vk.data.VulkanRenderObject;
@@ -16,6 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class VulkanRenderTaskGroup extends RenderTaskGroup {
     public final ConcurrentLinkedQueue<VulkanRenderTask> renderTasks = new ConcurrentLinkedQueue<>();
+    public final ConcurrentLinkedQueue<VulkanRenderTaskDynamic> dynamicRenderTasks = new ConcurrentLinkedQueue<>();
     public final List<VulkanDescriptorSet> sharedDescriptorSets;
     public final VkDescriptorSet.Buffer[] sharedDescriptorSetsVk;
 
@@ -58,6 +60,22 @@ public final class VulkanRenderTaskGroup extends RenderTaskGroup {
                 prefabArena
         );
         renderTasks.add(ret);
+        return ret;
+    }
+
+    @Override
+    public RenderTaskDynamic addDynamicRenderTask(
+            RenderObject renderObject,
+            List<DescriptorSet> descriptorSets,
+            Option<PushConstant> pushConstant
+    ) {
+        VulkanRenderTaskDynamic ret = new VulkanRenderTaskDynamic(
+                (VulkanRenderObject) renderObject,
+                descriptorSets.stream().map(ds -> (VulkanDescriptorSet) ds).toList(),
+                pushConstant,
+                prefabArena
+        );
+        dynamicRenderTasks.add(ret);
         return ret;
     }
 }

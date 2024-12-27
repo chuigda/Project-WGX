@@ -17,6 +17,12 @@ public abstract class RenderTaskGroup {
             Option<PushConstant> pushConstant
     );
 
+    public abstract RenderTaskDynamic addDynamicRenderTask(
+            RenderObject renderObject,
+            List<DescriptorSet> descriptorSets,
+            Option<PushConstant> pushConstant
+    );
+
     public final RenderTask addRenderTask(
             RenderObject renderObject,
             List<DescriptorSet> descriptorSets,
@@ -30,7 +36,23 @@ public abstract class RenderTaskGroup {
     }
 
     public final RenderTask addRenderTask(RenderObject renderObject) {
-        return this.addRenderTask(renderObject, List.of());
+        return this.addRenderTask(renderObject, List.of(), Option.none());
+    }
+
+    public final RenderTaskDynamic addDynamicRenderTask(
+            RenderObject renderObject,
+            List<DescriptorSet> descriptorSets,
+            PushConstant pushConstant
+    ) {
+        return this.addDynamicRenderTask(renderObject, descriptorSets, Option.some(pushConstant));
+    }
+
+    public final RenderTaskDynamic addDynamicRenderTask(RenderObject renderObject, List<DescriptorSet> descriptorSets) {
+        return this.addDynamicRenderTask(renderObject, descriptorSets, Option.none());
+    }
+
+    public final RenderTaskDynamic addDynamicRenderTask(RenderObject renderObject) {
+        return this.addDynamicRenderTask(renderObject, List.of(), Option.none());
     }
 
     public final void setEnabled(boolean enabled) {
