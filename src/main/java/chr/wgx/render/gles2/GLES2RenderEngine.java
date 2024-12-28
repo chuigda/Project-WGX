@@ -98,6 +98,7 @@ public final class GLES2RenderEngine extends RenderEngine {
         objectCreateAspect = new ASPECT_ObjectCreate(this);
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
+        renderPassCreateAspect = new ASPECT_RenderPassCreate(this);
 
         defaultColorAttachment = (GLES2TextureAttachment) attachmentCreateAspect.createColorAttachmentImpl(
                 new AttachmentCreateInfo(
@@ -234,16 +235,14 @@ public final class GLES2RenderEngine extends RenderEngine {
             List<Attachment> colorAttachments,
             List<Color> clearColors,
             Option<Attachment> depthAttachment
-    ) {
-        GLES2RenderPass ret = new GLES2RenderPass(
+    ) throws RenderException {
+        return invokeWithGLContext(() -> renderPassCreateAspect.createRenderPassImpl(
                 renderPassName,
                 priority,
                 colorAttachments,
                 clearColors,
                 depthAttachment
-        );
-        renderPasses.add(ret);
-        return ret;
+        ));
     }
 
     public static final GLES2RenderEngineFactory FACTORY = new GLES2RenderEngineFactory();
@@ -294,6 +293,7 @@ public final class GLES2RenderEngine extends RenderEngine {
     private final ASPECT_ObjectCreate objectCreateAspect;
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
     private final ASPECT_PipelineCreate pipelineCreateAspect;
+    private final ASPECT_RenderPassCreate renderPassCreateAspect;
 
     private static final class DeferredTask<T> {
         public final GLWorker<T> action;
