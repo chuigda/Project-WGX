@@ -59,7 +59,7 @@ public class DrillCreateObject {
 
                 UniformBufferBindingInfo ubBindingInfo = new UniformBufferBindingInfo("uVP", ShaderStage.VERTEX, List.of(
                         new FieldInfoInput("view", CGType.Mat4),
-                        new FieldInfoInput("projection", CGType.Mat4)
+                        new FieldInfoInput("proj", CGType.Mat4)
                 ));
                 TextureBindingInfo texBindingInfo = new TextureBindingInfo("uTexture", ShaderStage.FRAGMENT);
                 DescriptorSetLayout descriptorSetLayout = engine.createDescriptorSetLayout(

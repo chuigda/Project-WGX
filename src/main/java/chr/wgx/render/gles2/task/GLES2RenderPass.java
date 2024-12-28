@@ -4,6 +4,7 @@ import chr.wgx.render.common.Color;
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
 import chr.wgx.render.gles2.data.GLES2Attachment;
+import chr.wgx.render.gles2.data.GLES2RenderPipeline;
 import chr.wgx.render.task.RenderPass;
 import chr.wgx.render.task.RenderPipelineBind;
 import tech.icey.xjbutil.container.Option;
@@ -41,6 +42,8 @@ public final class GLES2RenderPass extends RenderPass {
 
     @Override
     public RenderPipelineBind createPipelineBind(int priority, RenderPipeline pipeline) {
-        return null;
+        GLES2RenderPipelineBind ret = new GLES2RenderPipelineBind(priority, (GLES2RenderPipeline) pipeline);
+        bindList.add(ret);
+        return ret;
     }
 }
