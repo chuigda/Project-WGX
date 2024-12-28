@@ -68,7 +68,7 @@ public final class ASPECT_RenderPassCreate {
             }
             gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, 0);
 
-            return new GLES2RenderPass(
+            GLES2RenderPass ret =  new GLES2RenderPass(
                     renderPassName,
                     priority,
                     colorTextureAttachments,
@@ -76,6 +76,8 @@ public final class ASPECT_RenderPassCreate {
                     depthTextureAttachment,
                     framebufferObject
             );
+            engine.renderPasses.add(ret);
+            return ret;
         }
     }
 

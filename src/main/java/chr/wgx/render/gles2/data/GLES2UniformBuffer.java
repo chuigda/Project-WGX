@@ -2,7 +2,6 @@ package chr.wgx.render.gles2.data;
 
 import chr.wgx.render.data.UniformBuffer;
 import chr.wgx.render.info.UniformBufferCreateInfo;
-import tech.icey.gles2.GLES2;
 import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.MemorySegment;
@@ -16,12 +15,16 @@ public final class GLES2UniformBuffer extends UniformBuffer {
     }
 
     @Override
-    public synchronized void updateBufferContent(MemorySegment segment) {
-        cpuBuffer.copyFrom(segment);
+    public void updateBufferContent(MemorySegment segment) {
+        synchronized (cpuBuffer) {
+            cpuBuffer.copyFrom(segment);
+        }
     }
 
     @Override
     public void updateBufferContent(Action1<MemorySegment> updateAction) {
-        updateAction.apply(cpuBuffer);
+        synchronized (cpuBuffer) {
+            updateAction.apply(cpuBuffer);
+        }
     }
 }

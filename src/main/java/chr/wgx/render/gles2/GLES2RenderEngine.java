@@ -114,6 +114,8 @@ public final class GLES2RenderEngine extends RenderEngine {
                         -1
                 )
         );
+
+        renderFrameAspect = new ASPECT_RenderFrame(this);
     }
 
     public final Arena prefabArena = Arena.ofAuto();
@@ -154,6 +156,8 @@ public final class GLES2RenderEngine extends RenderEngine {
         for (DeferredTask<?> task : taskQueue.getAndSet(new ArrayList<>())) {
             task.runTask();
         }
+
+        renderFrameAspect.renderFrameImpl();
 
         glfw.glfwSwapBuffers(window);
     }
@@ -294,6 +298,8 @@ public final class GLES2RenderEngine extends RenderEngine {
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
     private final ASPECT_PipelineCreate pipelineCreateAspect;
     private final ASPECT_RenderPassCreate renderPassCreateAspect;
+
+    private final ASPECT_RenderFrame renderFrameAspect;
 
     private static final class DeferredTask<T> {
         public final GLWorker<T> action;

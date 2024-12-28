@@ -185,9 +185,9 @@ public class DrillCreateObject {
 
     private static final float[] VERTICES_OBJ1 = {
             // vec2 position, vec3 color
-            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-            0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-            0.0f,  0.5f,  0.0f, 0.0f, 1.0f
+            -0.5f, -0.5f,     1.0f, 0.0f, 0.0f,
+            0.5f, -0.5f,      0.0f, 1.0f, 0.0f,
+            0.0f,  0.5f,      0.0f, 0.0f, 1.0f
     };
 
     private static final int[] INDICES_OBJ1 = {
