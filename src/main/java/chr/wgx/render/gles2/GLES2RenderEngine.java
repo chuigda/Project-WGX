@@ -4,8 +4,11 @@ import chr.wgx.config.Config;
 import chr.wgx.render.RenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.Color;
+import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
+import chr.wgx.render.gles2.data.GLES2Attachment;
 import chr.wgx.render.gles2.data.GLES2RenderObject;
+import chr.wgx.render.gles2.data.GLES2Texture;
 import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +18,7 @@ import tech.icey.glfw.GLFW;
 import tech.icey.glfw.handle.GLFWwindow;
 import tech.icey.panama.RawFunctionLoader;
 import tech.icey.panama.buffer.ByteBuffer;
+import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.xjbutil.container.Either;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
@@ -82,12 +86,38 @@ public final class GLES2RenderEngine extends RenderEngine {
             logger.warning("OpenGL ES2 多渲染目标扩展不可用");
         }
 
+        try (Arena arena = Arena.ofConfined()) {
+            IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
+            glfw.glfwGetFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));
+
+            framebufferWidth = pWidthHeight.read();
+            framebufferHeight = pWidthHeight.read(1);
+        }
+
         objectCreateAspect = new ASPECT_ObjectCreate(this);
+        attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
     }
 
     @Override
-    protected void resize(int width, int height) throws RenderException {
+    protected void resize(int width, int height) {
         glfw.glfwMakeContextCurrent(window);
+        this.framebufferWidth = width;
+        this.framebufferHeight = height;
+
+        for (GLES2Texture texture : dynamicallySizedTextures) {
+            gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, texture.textureObject);
+            gles2.glTexImage2D(
+                    GLES2Constants.GL_TEXTURE_2D,
+                    0,
+                    GLES2Constants.GL_RGBA,
+                    width,
+                    height,
+                    0,
+                    GLES2Constants.GL_RGBA,
+                    GLES2Constants.GL_UNSIGNED_BYTE,
+                    null
+            );
+        }
     }
 
     @Override
@@ -116,12 +146,12 @@ public final class GLES2RenderEngine extends RenderEngine {
 
     @Override
     public Pair<Attachment, Texture> createColorAttachment(AttachmentCreateInfo i) throws RenderException {
-        return null;
+        return invokeWithGLContext(() -> attachmentCreateAspect.createColorAttachmentImpl(i));
     }
 
     @Override
     public Attachment createDepthAttachment(AttachmentCreateInfo i) throws RenderException {
-        return null;
+        return invokeWithGLContext(() -> attachmentCreateAspect.createDepthAttachmentImpl(i));
     }
 
     @Override
@@ -198,26 +228,17 @@ public final class GLES2RenderEngine extends RenderEngine {
         }
     }
 
-    final GLFW glfw;
-    final GLFWwindow window;
-    final GLES2 gles2;
-    final Option<GLES2EXTDrawBuffers> extDrawBuffers;
-
-    final List<GLES2RenderObject> objects = new ArrayList<>();
-
-    private final ASPECT_ObjectCreate objectCreateAspect;
-
     @FunctionalInterface
-    private interface GLWorker<T> {
+    interface GLWorker<T> {
         T apply() throws RenderException;
     }
 
     /// 在渲染线程上运行指定任务，并阻塞调用直到运行完成。
-    private <T> T invokeWithGLContext(GLWorker<T> worker) throws RenderException {
+    <T> T invokeWithGLContext(GLWorker<T> worker) throws RenderException {
         Pair<
                 Oneshot.Sender<Either<T, RenderException>>,
                 Oneshot.Receiver<Either<T, RenderException>>
-        > channel = Oneshot.create();
+                > channel = Oneshot.create();
         Oneshot.Sender<Either<T, RenderException>> tx = channel.first();
         Oneshot.Receiver<Either<T, RenderException>> rx = channel.second();
         DeferredTask<T> task = new DeferredTask<>(worker, tx);
@@ -233,7 +254,32 @@ public final class GLES2RenderEngine extends RenderEngine {
         };
     }
 
+    final GLFW glfw;
+    final GLFWwindow window;
+    final GLES2 gles2;
+    final Option<GLES2EXTDrawBuffers> extDrawBuffers;
+
+    int framebufferWidth;
+    int framebufferHeight;
+
+    final List<GLES2RenderObject> objects = new ArrayList<>();
+    final List<GLES2Attachment> attachments = new ArrayList<>();
+    final List<GLES2Texture> textures = new ArrayList<>();
+    final List<GLES2Texture> dynamicallySizedTextures = new ArrayList<>();
+
+    private final ASPECT_ObjectCreate objectCreateAspect;
+    private final ASPECT_AttachmentCreate attachmentCreateAspect;
+
     private final AtomicReference<List<DeferredTask<?>>> taskQueue = new AtomicReference<>(new ArrayList<>());
+
+    private static final GLES2Attachment DEFAULT_COLOR_ATTACHMENT = new GLES2Attachment(
+            new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1),
+            0
+    );
+    private static final GLES2Attachment DEFAULT_DEPTH_ATTACHMENT = new GLES2Attachment(
+            new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1),
+            0
+    );
 
     private static final Logger logger = Logger.getLogger(GLES2RenderEngine.class.getName());
 }
