@@ -13,8 +13,12 @@ public final class UniformBufferBindingInfo extends DescriptorLayoutBindingInfo 
     public final MemoryLayout cpuLayout;
     public final int bufferSize;
 
-    public UniformBufferBindingInfo(List<FieldInfoInput> fieldInfoInputs, ShaderStage stage) {
-        super(DescriptorType.UNIFORM_BUFFER, stage);
+    public UniformBufferBindingInfo(
+            String bindingName,
+            ShaderStage stage,
+            List<FieldInfoInput> fieldInfoInputs
+    ) {
+        super(DescriptorType.UNIFORM_BUFFER, bindingName, stage);
 
         // 用于计算 std140 布局中的对齐
         int currentLocation = 0;

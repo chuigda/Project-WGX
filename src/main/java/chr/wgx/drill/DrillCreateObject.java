@@ -30,6 +30,14 @@ public class DrillCreateObject {
                 ShaderProgram.Vulkan shaderProgram1 = new ShaderProgram.Vulkan(vertexShader1, fragmentShader1);
                 ShaderProgram.Vulkan shaderProgram2 = new ShaderProgram.Vulkan(vertexShader2, fragmentShader2);
 
+                String vertexShaderOES1 = ResourceUtil.readTextFile("/resources/shader/gles2/drill.vert");
+                String fragmentShaderOES1 = ResourceUtil.readTextFile("/resources/shader/gles2/drill.frag");
+                String vertexShaderOES2 = ResourceUtil.readTextFile("/resources/shader/gles2/drill2.vert");
+                String fragmentShaderOES2 = ResourceUtil.readTextFile("/resources/shader/gles2/drill2.frag");
+
+                ShaderProgram.GLES2 shaderProgramOES1 = new ShaderProgram.GLES2(vertexShaderOES1, fragmentShaderOES1);
+                ShaderProgram.GLES2 shaderProgramOES2 = new ShaderProgram.GLES2(vertexShaderOES2, fragmentShaderOES2);
+
                 VertexInputInfo vertexInputInfo1 = new VertexInputInfo(List.of(
                         new FieldInfoInput("inPosition", CGType.Vec2),
                         new FieldInfoInput("inColor", CGType.Vec3)
@@ -44,31 +52,31 @@ public class DrillCreateObject {
                         List.of(),
                         Option.none(),
                         Option.some(shaderProgram1),
-                        Option.none(),
+                        Option.some(shaderProgramOES1),
                         1,
                         false
                 ));
 
-                UniformBufferBindingInfo ubBindingInfo = new UniformBufferBindingInfo(List.of(
+                UniformBufferBindingInfo ubBindingInfo = new UniformBufferBindingInfo("uVP", ShaderStage.VERTEX, List.of(
                         new FieldInfoInput("view", CGType.Mat4),
                         new FieldInfoInput("projection", CGType.Mat4)
-                ), ShaderStage.VERTEX);
-                TextureBindingInfo texBindingInfo = new TextureBindingInfo(ShaderStage.FRAGMENT);
+                ));
+                TextureBindingInfo texBindingInfo = new TextureBindingInfo("uTexture", ShaderStage.FRAGMENT);
                 DescriptorSetLayout descriptorSetLayout = engine.createDescriptorSetLayout(
                         new DescriptorSetLayoutCreateInfo(List.of(ubBindingInfo, texBindingInfo)),
                         4
                 );
 
                 PushConstantInfo pci = new PushConstantInfo(List.of(
-                        new PushConstantRange(ShaderStage.VERTEX, CGType.Mat4, 0),
-                        new PushConstantRange(ShaderStage.FRAGMENT, CGType.Vec4, 64)
+                        new PushConstantRange("model", ShaderStage.VERTEX, CGType.Mat4, 0),
+                        new PushConstantRange("blendColor", ShaderStage.FRAGMENT, CGType.Vec4, 64)
                 ));
                 RenderPipeline pipeline2 = engine.createPipeline(new RenderPipelineCreateInfo(
                         vertexInputInfo2,
                         List.of(descriptorSetLayout),
                         Option.some(pci),
                         Option.some(shaderProgram2),
-                        Option.none(),
+                        Option.some(shaderProgramOES2),
                         1,
                         true
                 ));
