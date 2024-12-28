@@ -1,8 +1,9 @@
 package chr.wgx.render.gles2;
 
+import chr.wgx.render.RenderException;
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.Texture;
-import chr.wgx.render.gles2.data.GLES2Attachment;
+import chr.wgx.render.gles2.data.GLES2TextureAttachment;
 import chr.wgx.render.gles2.data.GLES2Texture;
 import chr.wgx.render.info.AttachmentCreateInfo;
 import tech.icey.gles2.GLES2;
@@ -18,16 +19,12 @@ public final class ASPECT_AttachmentCreate {
         this.engine = engine;
     }
 
-    Pair<Attachment, Texture> createColorAttachmentImpl(AttachmentCreateInfo info) {
+    Pair<Attachment, Texture> createColorAttachmentImpl(AttachmentCreateInfo info) throws RenderException {
         GLES2 gles2 = engine.gles2;
 
         try (Arena arena = Arena.ofConfined()) {
             int actualWidth = info.width == -1 ? engine.framebufferWidth : info.width;
             int actualHeight = info.height == -1 ? engine.framebufferHeight : info.height;
-
-            IntBuffer pFBO = IntBuffer.allocate(arena);
-            gles2.glGenFramebuffers(1, pFBO);
-            int fbo = pFBO.read();
 
             IntBuffer pTexture = IntBuffer.allocate(arena);
             gles2.glGenTextures(1, pTexture);
@@ -50,17 +47,12 @@ public final class ASPECT_AttachmentCreate {
             gles2.glTexParameteri(GLES2Constants.GL_TEXTURE_2D, GLES2Constants.GL_TEXTURE_WRAP_S, GLES2Constants.GL_CLAMP_TO_EDGE);
             gles2.glTexParameteri(GLES2Constants.GL_TEXTURE_2D, GLES2Constants.GL_TEXTURE_WRAP_T, GLES2Constants.GL_CLAMP_TO_EDGE);
 
-            gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, fbo);
-            gles2.glFramebufferTexture2D(
-                    GLES2Constants.GL_FRAMEBUFFER,
-                    GLES2Constants.GL_COLOR_ATTACHMENT0,
-                    GLES2Constants.GL_TEXTURE_2D,
-                    textureObject,
-                    0
-            );
-            gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, 0);
+            int status = gles2.glGetError();
+            if (status != GLES2Constants.GL_NO_ERROR) {
+                throw new RenderException("创建纹理失败: " + status);
+            }
 
-            GLES2Attachment attachment = new GLES2Attachment(info, fbo);
+            GLES2TextureAttachment attachment = new GLES2TextureAttachment(info, textureObject);
             GLES2Texture texture = new GLES2Texture(true, info.pixelFormat, textureObject);
 
             engine.attachments.add(attachment);
@@ -73,16 +65,12 @@ public final class ASPECT_AttachmentCreate {
         }
     }
 
-    public Attachment createDepthAttachmentImpl(AttachmentCreateInfo info) {
+    public Attachment createDepthAttachmentImpl(AttachmentCreateInfo info) throws RenderException {
         GLES2 gles2 = engine.gles2;
 
         try (Arena arena = Arena.ofConfined()) {
             int actualWidth = info.width == -1 ? engine.framebufferWidth : info.width;
             int actualHeight = info.height == -1 ? engine.framebufferHeight : info.height;
-
-            IntBuffer pFBO = IntBuffer.allocate(arena);
-            gles2.glGenFramebuffers(1, pFBO);
-            int fbo = pFBO.read();
 
             IntBuffer pTexture = IntBuffer.allocate(arena);
             gles2.glGenTextures(1, pTexture);
@@ -106,17 +94,7 @@ public final class ASPECT_AttachmentCreate {
             gles2.glTexParameteri(GLES2Constants.GL_TEXTURE_2D, GLES2Constants.GL_TEXTURE_WRAP_S, GLES2Constants.GL_CLAMP_TO_EDGE);
             gles2.glTexParameteri(GLES2Constants.GL_TEXTURE_2D, GLES2Constants.GL_TEXTURE_WRAP_T, GLES2Constants.GL_CLAMP_TO_EDGE);
 
-            gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, fbo);
-            gles2.glFramebufferTexture2D(
-                    GLES2Constants.GL_FRAMEBUFFER,
-                    GLES2Constants.GL_DEPTH_ATTACHMENT,
-                    GLES2Constants.GL_TEXTURE_2D,
-                    textureObject,
-                    0
-            );
-            gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, 0);
-
-            GLES2Attachment attachment = new GLES2Attachment(info, fbo);
+            GLES2TextureAttachment attachment = new GLES2TextureAttachment(info, textureObject);
             GLES2Texture texture = new GLES2Texture(true, info.pixelFormat, textureObject);
 
             engine.attachments.add(attachment);

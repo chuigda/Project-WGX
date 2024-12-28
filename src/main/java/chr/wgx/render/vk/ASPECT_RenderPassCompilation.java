@@ -36,7 +36,7 @@ public final class ASPECT_RenderPassCompilation {
             // 将所有输入附件的布局转换为可供组合图像采样器使用的布局
             for (VulkanAttachment inputAttachment : renderPass.inputAttachments) {
                 if (inputAttachment.createInfo.pixelFormat == PixelFormat.DEPTH_BUFFER_OPTIMAL) {
-                    // TODO 在未来的版本中允许对深度附件采样
+                    // TODO 在未来的版本中考虑允许对深度附件采样
                     continue;
                 }
 
@@ -74,7 +74,7 @@ public final class ASPECT_RenderPassCompilation {
                     .map(attachmentInitialized::contains)
                     .toList();
             List<Boolean> colorAttachmentUsedInFuture = renderPass.colorAttachments.stream()
-                    // TODO: implement analysis of further usage of images written to
+                    // TODO: 分析附件被写入之后，后续的使用情况
                     .map(_ -> true)
                     .toList();
             attachmentInitialized.addAll(renderPass.colorAttachments);
@@ -84,7 +84,7 @@ public final class ASPECT_RenderPassCompilation {
             } else {
                 depthAttachmentInitialized = false;
             }
-            boolean depthAttachmentUsedInFuture = true; // TODO
+            boolean depthAttachmentUsedInFuture = true; // 分析深度附件被写入之后，后续的使用情况
 
             compiled.add(new RenderingBeginOp(
                     engine.cx,

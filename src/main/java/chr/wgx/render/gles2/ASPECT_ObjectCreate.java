@@ -24,7 +24,7 @@ public final class ASPECT_ObjectCreate {
         List<RenderObject> ret = new ArrayList<>();
         try (Arena arena = Arena.ofConfined()) {
             IntBuffer pVBO = IntBuffer.allocate(arena, (long) infoList.size() * 2);
-            gles2.glGenBuffers(infoList.size(), pVBO);
+            gles2.glGenBuffers(infoList.size() * 2, pVBO);
 
             for (int i = 0; i < infoList.size(); i++) {
                 ObjectCreateInfo info = infoList.get(i);
@@ -63,6 +63,11 @@ public final class ASPECT_ObjectCreate {
                         pIndices,
                         GLES2Constants.GL_STATIC_DRAW
                 );
+
+                int status = gles2.glGetError();
+                if (status != GLES2Constants.GL_NO_ERROR) {
+                    throw new RenderException("创建顶点缓冲对象并上传数据失败: " + status);
+                }
 
                 GLES2RenderObject object = new GLES2RenderObject(
                         info.vertexInputInfo,

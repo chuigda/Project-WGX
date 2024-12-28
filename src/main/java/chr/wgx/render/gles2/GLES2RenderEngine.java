@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 public final class GLES2RenderEngine extends RenderEngine {
-    GLES2RenderEngine(GLFW glfw, GLFWwindow window) {
+    GLES2RenderEngine(GLFW glfw, GLFWwindow window) throws RenderException {
         this.glfw = glfw;
         this.window = window;
 
@@ -98,6 +98,21 @@ public final class GLES2RenderEngine extends RenderEngine {
         objectCreateAspect = new ASPECT_ObjectCreate(this);
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
+
+        defaultColorAttachment = (GLES2TextureAttachment) attachmentCreateAspect.createColorAttachmentImpl(
+                new AttachmentCreateInfo(
+                        PixelFormat.RGBA8888_FLOAT,
+                        -1,
+                        -1
+                )
+        ).first();
+        defaultDepthAttachment = (GLES2TextureAttachment) attachmentCreateAspect.createDepthAttachmentImpl(
+                new AttachmentCreateInfo(
+                        PixelFormat.DEPTH_BUFFER_OPTIMAL,
+                        -1,
+                        -1
+                )
+        );
     }
 
     public final Arena prefabArena = Arena.ofAuto();
@@ -107,6 +122,10 @@ public final class GLES2RenderEngine extends RenderEngine {
         glfw.glfwMakeContextCurrent(window);
         this.framebufferWidth = width;
         this.framebufferHeight = height;
+
+        if (width == 0 || height == 0) {
+            return;
+        }
 
         for (GLES2Texture texture : dynamicallySizedTextures) {
             gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, texture.textureObject);
@@ -119,13 +138,17 @@ public final class GLES2RenderEngine extends RenderEngine {
                     0,
                     GLES2Constants.GL_RGBA,
                     GLES2Constants.GL_UNSIGNED_BYTE,
-                    null
+                    MemorySegment.NULL
             );
         }
     }
 
     @Override
     protected void renderFrame() throws RenderException {
+        if (framebufferWidth == 0 || framebufferHeight == 0) {
+            return;
+        }
+
         glfw.glfwMakeContextCurrent(window);
         for (DeferredTask<?> task : taskQueue.getAndSet(new ArrayList<>())) {
             task.runTask();
@@ -160,7 +183,7 @@ public final class GLES2RenderEngine extends RenderEngine {
 
     @Override
     public Pair<Attachment, Attachment> getDefaultAttachments() {
-        return new Pair<>(DEFAULT_COLOR_ATTACHMENT, DEFAULT_DEPTH_ATTACHMENT);
+        return new Pair<>(defaultColorAttachment, defaultDepthAttachment);
     }
 
     @Override
@@ -258,9 +281,11 @@ public final class GLES2RenderEngine extends RenderEngine {
 
     int framebufferWidth;
     int framebufferHeight;
+    final GLES2TextureAttachment defaultColorAttachment;
+    final GLES2TextureAttachment defaultDepthAttachment;
 
     final List<GLES2RenderObject> objects = new ArrayList<>();
-    final List<GLES2Attachment> attachments = new ArrayList<>();
+    final List<GLES2TextureAttachment> attachments = new ArrayList<>();
     final List<GLES2Texture> textures = new ArrayList<>();
     final List<GLES2Texture> dynamicallySizedTextures = new ArrayList<>();
     final List<GLES2RenderPipeline> pipelines = new ArrayList<>();
@@ -289,15 +314,5 @@ public final class GLES2RenderEngine extends RenderEngine {
     }
 
     private final AtomicReference<List<DeferredTask<?>>> taskQueue = new AtomicReference<>(new ArrayList<>());
-
-    private static final GLES2Attachment DEFAULT_COLOR_ATTACHMENT = new GLES2Attachment(
-            new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1),
-            0
-    );
-    private static final GLES2Attachment DEFAULT_DEPTH_ATTACHMENT = new GLES2Attachment(
-            new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1),
-            0
-    );
-
     private static final Logger logger = Logger.getLogger(GLES2RenderEngine.class.getName());
 }
