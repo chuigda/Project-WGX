@@ -34,6 +34,11 @@ public final class ASPECT_RenderFrame {
 
             for (GLES2RenderPipelineBind pipelineBind : renderPass.bindList) {
                 gles2.glUseProgram(pipelineBind.pipeline.shaderProgram);
+                if (pipelineBind.pipeline.createInfo.depthTest) {
+                    gles2.glEnable(GLES2Constants.GL_DEPTH_TEST);
+                } else {
+                    gles2.glDisable(GLES2Constants.GL_DEPTH_TEST);
+                }
 
                 for (GLES2RenderTaskGroup renderTaskGroup : pipelineBind.renderTaskGroups) {
                     int offset0 = 0;
@@ -122,6 +127,9 @@ public final class ASPECT_RenderFrame {
                             }
                         }
 
+                        gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, renderTask.renderObject.vertexVBO);
+                        gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, renderTask.renderObject.indexVBO);
+
                         for (FieldInfo vertexInput : pipelineBind.pipeline.createInfo.vertexInputInfo.attributes) {
                             int location = vertexInput.location;
                             int byteOffset = vertexInput.byteOffset;
@@ -137,11 +145,6 @@ public final class ASPECT_RenderFrame {
                             );
                         }
 
-                        // bind vertex buffer
-                        gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, renderTask.renderObject.vertexVBO);
-                        // bind index buffer
-                        gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, renderTask.renderObject.indexVBO);
-                        // draw
                         gles2.glDrawElements(
                                 GLES2Constants.GL_TRIANGLES,
                                 renderTask.renderObject.indexCount,
