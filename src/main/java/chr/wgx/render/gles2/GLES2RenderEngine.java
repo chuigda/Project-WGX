@@ -7,6 +7,7 @@ import chr.wgx.render.common.Color;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
 import chr.wgx.render.gles2.data.*;
+import chr.wgx.render.gles2.task.GLES2RenderPass;
 import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
@@ -95,6 +97,7 @@ public final class GLES2RenderEngine extends RenderEngine {
 
         objectCreateAspect = new ASPECT_ObjectCreate(this);
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
+        pipelineCreateAspect = new ASPECT_PipelineCreate(this);
     }
 
     public final Arena prefabArena = Arena.ofAuto();
@@ -192,13 +195,13 @@ public final class GLES2RenderEngine extends RenderEngine {
     }
 
     @Override
-    public DescriptorSet createDescriptorSet(DescriptorSetCreateInfo info) throws RenderException {
-        return null;
+    public DescriptorSet createDescriptorSet(DescriptorSetCreateInfo info) {
+        return new GLES2DescriptorSet(info);
     }
 
     @Override
     public RenderPipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException {
-        return null;
+        return invokeWithGLContext(() -> pipelineCreateAspect.createPipelineImpl(info));
     }
 
     @Override
@@ -208,8 +211,16 @@ public final class GLES2RenderEngine extends RenderEngine {
             List<Attachment> colorAttachments,
             List<Color> clearColors,
             Option<Attachment> depthAttachment
-    ) throws RenderException {
-        return null;
+    ) {
+        GLES2RenderPass ret = new GLES2RenderPass(
+                renderPassName,
+                priority,
+                colorAttachments,
+                clearColors,
+                depthAttachment
+        );
+        renderPasses.add(ret);
+        return ret;
     }
 
     public static final GLES2RenderEngineFactory FACTORY = new GLES2RenderEngineFactory();
@@ -252,9 +263,12 @@ public final class GLES2RenderEngine extends RenderEngine {
     final List<GLES2Attachment> attachments = new ArrayList<>();
     final List<GLES2Texture> textures = new ArrayList<>();
     final List<GLES2Texture> dynamicallySizedTextures = new ArrayList<>();
+    final List<GLES2RenderPipeline> pipelines = new ArrayList<>();
+    final ConcurrentSkipListSet<GLES2RenderPass> renderPasses = new ConcurrentSkipListSet<>();
 
     private final ASPECT_ObjectCreate objectCreateAspect;
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
+    private final ASPECT_PipelineCreate pipelineCreateAspect;
 
     private static final class DeferredTask<T> {
         public final GLWorker<T> action;
