@@ -6,9 +6,7 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.common.Color;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
-import chr.wgx.render.gles2.data.GLES2Attachment;
-import chr.wgx.render.gles2.data.GLES2RenderObject;
-import chr.wgx.render.gles2.data.GLES2Texture;
+import chr.wgx.render.gles2.data.*;
 import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +23,7 @@ import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.sync.Oneshot;
 
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -98,6 +97,8 @@ public final class GLES2RenderEngine extends RenderEngine {
         attachmentCreateAspect = new ASPECT_AttachmentCreate(this);
     }
 
+    public final Arena prefabArena = Arena.ofAuto();
+
     @Override
     protected void resize(int width, int height) {
         glfw.glfwMakeContextCurrent(window);
@@ -156,7 +157,7 @@ public final class GLES2RenderEngine extends RenderEngine {
 
     @Override
     public Pair<Attachment, Attachment> getDefaultAttachments() {
-        return null;
+        return new Pair<>(DEFAULT_COLOR_ATTACHMENT, DEFAULT_DEPTH_ATTACHMENT);
     }
 
     @Override
@@ -170,21 +171,24 @@ public final class GLES2RenderEngine extends RenderEngine {
     }
 
     @Override
-    public UniformBuffer createUniform(UniformBufferCreateInfo info) throws RenderException {
-        return null;
+    public UniformBuffer createUniform(UniformBufferCreateInfo info) {
+        MemorySegment cpuBuffer = prefabArena.allocate(info.bindingInfo.bufferSize, 16);
+        return new GLES2UniformBuffer(info, cpuBuffer);
     }
 
     @Override
-    public List<PushConstant> createPushConstant(PushConstantInfo info, int count) throws RenderException {
-        return List.of();
+    public List<PushConstant> createPushConstant(PushConstantInfo info, int count) {
+        List<PushConstant> ret = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            MemorySegment cpuBuffer = prefabArena.allocate(info.bufferSize, 16);
+            ret.add(new GLES2PushConstant(info, cpuBuffer));
+        }
+        return ret;
     }
 
     @Override
-    public DescriptorSetLayout createDescriptorSetLayout(
-            DescriptorSetLayoutCreateInfo info,
-            int maxSets
-    ) throws RenderException {
-        return null;
+    public DescriptorSetLayout createDescriptorSetLayout(DescriptorSetLayoutCreateInfo info, int maxSets) {
+        return new GLES2DescriptorSetLayout(info);
     }
 
     @Override
@@ -209,24 +213,6 @@ public final class GLES2RenderEngine extends RenderEngine {
     }
 
     public static final GLES2RenderEngineFactory FACTORY = new GLES2RenderEngineFactory();
-
-    static final class DeferredTask<T> {
-        public final GLWorker<T> action;
-        public final Oneshot.Sender<Either<T, RenderException>> sender;
-
-        DeferredTask(GLWorker<T> action, Oneshot.Sender<Either<T, RenderException>> sender) {
-            this.action = action;
-            this.sender = sender;
-        }
-
-        public void runTask() {
-            try {
-                sender.send(Either.left(action.apply()));
-            } catch (RenderException e) {
-                sender.send(Either.right(e));
-            }
-        }
-    }
 
     @FunctionalInterface
     interface GLWorker<T> {
@@ -254,9 +240,9 @@ public final class GLES2RenderEngine extends RenderEngine {
         };
     }
 
+    final GLES2 gles2;
     final GLFW glfw;
     final GLFWwindow window;
-    final GLES2 gles2;
     final Option<GLES2EXTDrawBuffers> extDrawBuffers;
 
     int framebufferWidth;
@@ -269,6 +255,24 @@ public final class GLES2RenderEngine extends RenderEngine {
 
     private final ASPECT_ObjectCreate objectCreateAspect;
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
+
+    private static final class DeferredTask<T> {
+        public final GLWorker<T> action;
+        public final Oneshot.Sender<Either<T, RenderException>> sender;
+
+        DeferredTask(GLWorker<T> action, Oneshot.Sender<Either<T, RenderException>> sender) {
+            this.action = action;
+            this.sender = sender;
+        }
+
+        public void runTask() {
+            try {
+                sender.send(Either.left(action.apply()));
+            } catch (RenderException e) {
+                sender.send(Either.right(e));
+            }
+        }
+    }
 
     private final AtomicReference<List<DeferredTask<?>>> taskQueue = new AtomicReference<>(new ArrayList<>());
 

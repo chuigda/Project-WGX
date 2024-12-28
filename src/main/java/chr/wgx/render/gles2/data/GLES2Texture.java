@@ -2,8 +2,13 @@ package chr.wgx.render.gles2.data;
 
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.Texture;
+import chr.wgx.render.gles2.IGLES2Disposable;
+import tech.icey.gles2.GLES2;
+import tech.icey.panama.buffer.IntBuffer;
 
-public final class GLES2Texture extends Texture {
+import java.lang.foreign.Arena;
+
+public final class GLES2Texture extends Texture implements IGLES2Disposable {
     public final PixelFormat pixelFormat;
     public final int textureObject;
 
@@ -11,5 +16,15 @@ public final class GLES2Texture extends Texture {
         super(isAttachment);
         this.pixelFormat = pixelFormat;
         this.textureObject = textureObject;
+    }
+
+    @Override
+    public void dispose(GLES2 gles2) {
+        try (Arena arena = Arena.ofConfined()) {
+            IntBuffer pTexture = IntBuffer.allocate(arena);
+            pTexture.write(textureObject);
+
+            gles2.glDeleteTextures(1, pTexture);
+        }
     }
 }
