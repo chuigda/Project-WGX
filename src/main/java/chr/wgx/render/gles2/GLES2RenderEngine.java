@@ -45,7 +45,6 @@ public final class GLES2RenderEngine extends RenderEngine {
 
         this.gles2 = new GLES2(loadWithGLFW);
 
-        @Nullable GLES2EXTDrawBuffers extDrawBuffers = null;
         @Nullable ByteBuffer extensions = gles2.glGetString(GLES2Constants.GL_EXTENSIONS);
         if (extensions != null) {
             String extensionsString = extensions.readString();
@@ -70,21 +69,15 @@ public final class GLES2RenderEngine extends RenderEngine {
                 }
             }
 
-            if (extensionsString.contains("GL_EXT_draw_buffers")) {
-                try {
-                    extDrawBuffers = new GLES2EXTDrawBuffers(loadWithGLFW);
-                    logger.info("已启用 OpenGL ES2 多渲染目标扩展");
-                } catch (Throwable e) {
-                    logger.warning("找到了 OpenGL ES2 多渲染目标扩展, 但是无法初始化多渲染目标函数: " + e.getMessage());
-                }
+            hasEXTDrawBuffers = extensionsString.contains("GL_EXT_draw_buffers");
+            if (hasEXTDrawBuffers) {
+                logger.info("已找到 GL_EXT_draw_buffers 扩展, 将会支持多个颜色附件");
+            } else {
+                logger.warning("未找到 GL_EXT_draw_buffers 扩展, GLES2 渲染器将只能支持单个颜色附件");
             }
-        }
-
-        if (extDrawBuffers != null) {
-            this.extDrawBuffers = Option.some(extDrawBuffers);
         } else {
-            this.extDrawBuffers = Option.none();
-            logger.warning("OpenGL ES2 多渲染目标扩展不可用");
+            hasEXTDrawBuffers = false;
+            logger.warning("无法获取 OpenGL ES2 扩展列表, 所有扩展均不会启用");
         }
 
         try (Arena arena = Arena.ofConfined()) {
@@ -284,7 +277,7 @@ public final class GLES2RenderEngine extends RenderEngine {
     final GLES2 gles2;
     final GLFW glfw;
     final GLFWwindow window;
-    final Option<GLES2EXTDrawBuffers> extDrawBuffers;
+    final boolean hasEXTDrawBuffers;
 
     int framebufferWidth;
     int framebufferHeight;

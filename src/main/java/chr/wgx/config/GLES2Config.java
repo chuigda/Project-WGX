@@ -10,6 +10,10 @@ public final class GLES2Config {
     public boolean debug = false;
 
     public void detectJVMArgumentsOverride() {
+        String debug = System.getProperty("wgx.gles2.debug");
+        if (debug != null) {
+            this.debug = !debug.isBlank();
+        }
     }
 
     public static final GLES2Config DEFAULT = new GLES2Config();
