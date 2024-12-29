@@ -3,6 +3,7 @@ package chr.wgx.render.gles2;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.CGType;
 import chr.wgx.render.common.Color;
+import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.Descriptor;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.data.UniformBuffer;
@@ -13,6 +14,7 @@ import chr.wgx.render.gles2.task.GLES2RenderTask;
 import chr.wgx.render.gles2.task.GLES2RenderTaskGroup;
 import chr.wgx.render.info.FieldInfo;
 import chr.wgx.render.info.PushConstantRange;
+import org.intellij.lang.annotations.Language;
 import tech.icey.gles2.GLES2;
 import tech.icey.gles2.GLES2Constants;
 import tech.icey.panama.buffer.FloatBuffer;
@@ -73,7 +75,15 @@ public final class ASPECT_RenderFrame {
         for (GLES2RenderPass renderPass : engine.renderPasses) {
             gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, renderPass.framebufferObject);
 
-            // TODO
+            Attachment firstAttachment = renderPass.colorAttachments.getFirst();
+            int actualWidth = firstAttachment.createInfo.width == -1
+                    ? engine.framebufferWidth
+                    : firstAttachment.createInfo.width;
+            int actualHeight = firstAttachment.createInfo.height == -1
+                    ? engine.framebufferHeight
+                    : firstAttachment.createInfo.height;
+            gles2.glViewport(0, 0, actualWidth, actualHeight);
+
             Color clearColor = renderPass.clearColors.getFirst();
             gles2.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
             gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT | GLES2Constants.GL_DEPTH_BUFFER_BIT);
@@ -203,6 +213,7 @@ public final class ASPECT_RenderFrame {
         }
 
         gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, defaultFramebuffer);
+        gles2.glViewport(0, 0, engine.framebufferWidth, engine.framebufferHeight);
         gles2.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
         gles2.glDisable(GLES2Constants.GL_DEPTH_TEST);
@@ -297,6 +308,7 @@ public final class ASPECT_RenderFrame {
             2, 3, 0
     };
 
+    @Language("Glsl")
     private static final String HIDDEN_PASS_VERTEX_SHADER = """
             #version 100
             
@@ -313,6 +325,7 @@ public final class ASPECT_RenderFrame {
             }
             """;
 
+    @Language("Glsl")
     private static final String HIDDEN_PASS_FRAGMENT_SHADER = """
             #version 100
             

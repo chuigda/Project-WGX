@@ -132,12 +132,12 @@ public final class GLES2RenderEngine extends RenderEngine {
             gles2.glTexImage2D(
                     GLES2Constants.GL_TEXTURE_2D,
                     0,
-                    GLES2Constants.GL_RGBA,
+                    texture.pixelFormat.glInternalFormat,
                     width,
                     height,
                     0,
-                    GLES2Constants.GL_RGBA,
-                    GLES2Constants.GL_UNSIGNED_BYTE,
+                    texture.pixelFormat.glFormat,
+                    texture.pixelFormat.glType,
                     MemorySegment.NULL
             );
         }
