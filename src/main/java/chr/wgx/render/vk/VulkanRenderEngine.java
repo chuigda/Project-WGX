@@ -386,6 +386,7 @@ public final class VulkanRenderEngine extends RenderEngine {
 
         try (Arena arena = Arena.ofConfined()) {
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.allocate(arena);
+            beginInfo.flags(VkCommandBufferUsageFlags.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
             @enumtype(VkResult.class) int result = cx.dCmd.vkBeginCommandBuffer(commandBuffer, beginInfo);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));

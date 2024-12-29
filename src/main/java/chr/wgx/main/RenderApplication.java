@@ -2,15 +2,18 @@ package chr.wgx.main;
 
 import chr.wgx.config.Config;
 import chr.wgx.drill.DrillCreateObject;
+import chr.wgx.render.IRenderEngineFactory;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.RenderWindow;
 import chr.wgx.render.gles2.GLES2RenderEngine;
+import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.util.SharedObjectLoader;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
 import tech.icey.glfw.GLFWLoader;
 import tech.icey.vk4j.VulkanLoader;
 
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public final class RenderApplication {
@@ -25,14 +28,17 @@ public final class RenderApplication {
         }
 
         Config config = Config.config();
-        try (RenderWindow w = GLES2RenderEngine.FACTORY.createRenderWindow(
+        IRenderEngineFactory factory = Objects.equals(config.renderMode, "vulkan")
+                ? VulkanRenderEngine.FACTORY
+                : GLES2RenderEngine.FACTORY;
+
+        try (RenderWindow w = factory.createRenderWindow(
                 glfw,
                 config.windowTitle,
                 config.windowWidth,
                 config.windowHeight
         )) {
             DrillCreateObject.createObjectInThread(w.renderEngine);
-
             w.mainLoop();
         } catch (RenderException e) {
             throw new RuntimeException(e);
