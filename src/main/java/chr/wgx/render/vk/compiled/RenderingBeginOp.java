@@ -15,7 +15,6 @@ import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.vk4j.handle.VkCommandBuffer;
 import tech.icey.xjbutil.container.Option;
 
-import java.lang.foreign.Arena;
 import java.util.List;
 
 public final class RenderingBeginOp implements CompiledRenderPassOp {

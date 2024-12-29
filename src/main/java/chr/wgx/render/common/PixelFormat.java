@@ -5,7 +5,7 @@ import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkFormat;
 
 import static tech.icey.gles2.GLES2Constants.*;
-import static tech.icey.vk4j.enumtype.VkFormat.*;
+import static tech.icey.vk4j.enumtype.VkFormat.VK_FORMAT_D32_SFLOAT;
 
 public enum PixelFormat {
     RGBA8888_FLOAT(0 /* actual value depends on configuration */, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE),

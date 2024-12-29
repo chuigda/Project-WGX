@@ -1,6 +1,5 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.render.RenderException;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.vk.compiled.*;
 import chr.wgx.render.vk.data.VulkanAttachment;

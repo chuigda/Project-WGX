@@ -3,15 +3,16 @@ package chr.wgx.render.vk.task;
 import chr.wgx.render.common.Color;
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
-import chr.wgx.render.task.RenderPipelineBind;
 import chr.wgx.render.task.RenderPass;
+import chr.wgx.render.task.RenderPipelineBind;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.data.VulkanRenderPipeline;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
