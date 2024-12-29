@@ -100,13 +100,15 @@ public final class GLES2RenderEngine extends RenderEngine {
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
         renderPassCreateAspect = new ASPECT_RenderPassCreate(this);
 
-        defaultColorAttachment = (GLES2TextureAttachment) attachmentCreateAspect.createColorAttachmentImpl(
+        Pair<Attachment, Texture> colorAttachment = attachmentCreateAspect.createColorAttachmentImpl(
                 new AttachmentCreateInfo(
                         PixelFormat.RGBA8888_FLOAT,
                         -1,
                         -1
                 )
-        ).first();
+        );
+        defaultColorAttachment = (GLES2TextureAttachment) colorAttachment.first();
+        defaultColorAttachmentTexture = (GLES2Texture) colorAttachment.second();
         defaultDepthAttachment = (GLES2TextureAttachment) attachmentCreateAspect.createDepthAttachmentImpl(
                 new AttachmentCreateInfo(
                         PixelFormat.DEPTH_BUFFER_OPTIMAL,
@@ -286,6 +288,7 @@ public final class GLES2RenderEngine extends RenderEngine {
     int framebufferHeight;
     final GLES2TextureAttachment defaultColorAttachment;
     final GLES2TextureAttachment defaultDepthAttachment;
+    final GLES2Texture defaultColorAttachmentTexture;
 
     final List<GLES2RenderObject> objects = new ArrayList<>();
     final List<GLES2TextureAttachment> attachments = new ArrayList<>();

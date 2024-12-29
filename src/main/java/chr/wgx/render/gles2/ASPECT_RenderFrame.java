@@ -15,14 +15,50 @@ import chr.wgx.render.info.PushConstantRange;
 import tech.icey.gles2.GLES2;
 import tech.icey.gles2.GLES2Constants;
 import tech.icey.panama.buffer.FloatBuffer;
+import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.xjbutil.container.Option;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
 public final class ASPECT_RenderFrame {
-    ASPECT_RenderFrame(GLES2RenderEngine engine) {
+    ASPECT_RenderFrame(GLES2RenderEngine engine) throws RenderException{
         this.engine = engine;
+        GLES2 gles2 = engine.gles2;
+
+        hiddenShaderProgram = GLES2Util.compileShaderProgram(
+                gles2,
+                HIDDEN_PASS_VERTEX_SHADER,
+                HIDDEN_PASS_FRAGMENT_SHADER
+        );
+
+        try (Arena arena = Arena.ofConfined()) {
+            FloatBuffer vertexBufferSegment = FloatBuffer.allocate(arena, HIDDEN_OBJECT_VERTICES);
+            IntBuffer indexBufferSegment = IntBuffer.allocate(arena, HIDDEN_OBJECT_INDICES);
+
+            IntBuffer pVBO = IntBuffer.allocate(arena, 2);
+            gles2.glGenBuffers(2, pVBO);
+
+            hiddenObjectVBO = pVBO.read();
+            hiddenObjectIBO = pVBO.read(1);
+
+            gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, hiddenObjectVBO);
+            gles2.glBufferData(
+                    GLES2Constants.GL_ARRAY_BUFFER,
+                    vertexBufferSegment.segment().byteSize(),
+                    vertexBufferSegment.segment(),
+                    GLES2Constants.GL_STATIC_DRAW
+            );
+
+            gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, hiddenObjectIBO);
+            gles2.glBufferData(
+                    GLES2Constants.GL_ELEMENT_ARRAY_BUFFER,
+                    indexBufferSegment.segment().byteSize(),
+                    indexBufferSegment.segment(),
+                    GLES2Constants.GL_STATIC_DRAW
+            );
+        }
     }
 
     void renderFrameImpl() throws RenderException {
@@ -156,6 +192,21 @@ public final class ASPECT_RenderFrame {
             }
         }
 
+        gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, 0);
+        gles2.glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+        gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
+        gles2.glUseProgram(hiddenShaderProgram);
+        gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, hiddenObjectVBO);
+        gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, hiddenObjectIBO);
+        gles2.glEnableVertexAttribArray(0);
+        gles2.glVertexAttribPointer(0, 2, GLES2Constants.GL_FLOAT, (byte) 0, 16, MemorySegment.NULL);
+        gles2.glEnableVertexAttribArray(1);
+        gles2.glVertexAttribPointer(1, 2, GLES2Constants.GL_FLOAT, (byte) 0, 16, MemorySegment.ofAddress(2 * Float.BYTES));
+        gles2.glActiveTexture(GLES2Constants.GL_TEXTURE0);
+        gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, engine.defaultColorAttachmentTexture.textureObject);
+        gles2.glUniform1i(0, 0);
+        gles2.glDrawElements(GLES2Constants.GL_TRIANGLES, 6, GLES2Constants.GL_UNSIGNED_INT, MemorySegment.NULL);
+
         int status = gles2.glGetError();
         if (status != GLES2Constants.GL_NO_ERROR) {
             throw new RenderException("OpenGL 错误: " + status);
@@ -215,4 +266,51 @@ public final class ASPECT_RenderFrame {
     }
 
     private final GLES2RenderEngine engine;
+
+    private final int hiddenShaderProgram;
+    private final int hiddenObjectVBO;
+    private final int hiddenObjectIBO;
+
+    private static final float[] HIDDEN_OBJECT_VERTICES = new float[] {
+            // vec2 position, vec2 texCoord
+            -1.0f, -1.0f,     0.0f, 0.0f,
+            1.0f, -1.0f,      1.0f, 0.0f,
+            1.0f,  1.0f,      1.0f, 1.0f,
+            -1.0f,  1.0f,     0.0f, 1.0f
+    };
+
+    private static final int[] HIDDEN_OBJECT_INDICES = new int[] {
+            0, 1, 2,
+            2, 3, 0
+    };
+
+    private static String HIDDEN_PASS_VERTEX_SHADER = """
+            #version 100
+            
+            precision mediump float;
+            
+            attribute vec2 aPosition;
+            attribute vec2 aTexCoord;
+            
+            varying vec2 vTexCoord;
+            
+            void main() {
+                gl_Position = vec4(aPosition, 0.0, 1.0);
+                vTexCoord = aTexCoord;
+            }
+            """;
+
+    private static String HIDDEN_PASS_FRAGMENT_SHADER = """
+            #version 100
+            
+            precision mediump float;
+            
+            varying vec2 vTexCoord;
+            
+            uniform sampler2D uTexture;
+            
+            void main() {
+                gl_FragColor = texture2D(uTexture, vTexCoord);
+            }
+            """;
 }
