@@ -2,6 +2,7 @@ package chr.wgx.render.gles2;
 
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.CGType;
+import chr.wgx.render.common.Color;
 import chr.wgx.render.data.Descriptor;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.data.UniformBuffer;
@@ -71,6 +72,10 @@ public final class ASPECT_RenderFrame {
 
         for (GLES2RenderPass renderPass : engine.renderPasses) {
             gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, renderPass.framebufferObject);
+
+            // TODO
+            Color clearColor = renderPass.clearColors.getFirst();
+            gles2.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
             gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT | GLES2Constants.GL_DEPTH_BUFFER_BIT);
 
             for (GLES2RenderPipelineBind pipelineBind : renderPass.bindList) {
@@ -198,7 +203,7 @@ public final class ASPECT_RenderFrame {
         }
 
         gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, defaultFramebuffer);
-        gles2.glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+        gles2.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
         gles2.glDisable(GLES2Constants.GL_DEPTH_TEST);
         gles2.glDisable(GLES2Constants.GL_BLEND);
