@@ -8,10 +8,7 @@ import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.data.VulkanSwapchainAttachment;
 import tech.icey.vk4j.bitmask.VkResolveModeFlags;
-import tech.icey.vk4j.datatype.VkRect2D;
-import tech.icey.vk4j.datatype.VkRenderingAttachmentInfo;
-import tech.icey.vk4j.datatype.VkRenderingInfo;
-import tech.icey.vk4j.datatype.VkViewport;
+import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.VkAttachmentLoadOp;
 import tech.icey.vk4j.enumtype.VkAttachmentStoreOp;
 import tech.icey.vk4j.enumtype.VkImageLayout;
@@ -31,6 +28,10 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
     private final VkRenderingInfo renderingInfo;
     private final VkRenderingAttachmentInfo[] colorAttachmentInfos;
     private final Option<VkRenderingAttachmentInfo> depthAttachmentInfo;
+
+    private final VkViewport viewport;
+    private final VkRect2D scissor;
+    private final VkExtent2D scissorExtent;
 
     public RenderingBeginOp(
             VulkanRenderEngineContext cx,
@@ -107,6 +108,12 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
         if (depthAttachmentInfo instanceof Option.Some<VkRenderingAttachmentInfo> some) {
             renderingInfo.pDepthAttachment(some.value);
         }
+
+        this.viewport = VkViewport.allocate(cx.prefabArena);
+        viewport.minDepth(0.0f);
+        viewport.maxDepth(1.0f);
+        this.scissor = VkRect2D.allocate(cx.prefabArena);
+        this.scissorExtent = scissor.extent();
     }
 
     @Override
@@ -153,20 +160,12 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             renderAreaHeight = swapchain.swapExtent.height();
         }
 
-        try (Arena arena = Arena.ofConfined()) {
-            VkViewport viewport = VkViewport.allocate(arena);
-            viewport.x(0.0f);
-            viewport.y(0.0f);
-            viewport.width(renderAreaWidth);
-            viewport.height(renderAreaHeight);
-            viewport.minDepth(0.0f);
-            viewport.maxDepth(1.0f);
-            cx.dCmd.vkCmdSetViewport(cmdBuf, 0, 1, viewport);
+        viewport.width(renderAreaWidth);
+        viewport.height(renderAreaHeight);
+        cx.dCmd.vkCmdSetViewport(cmdBuf, 0, 1, viewport);
 
-            VkRect2D scissor = VkRect2D.allocate(arena);
-            scissor.extent().width(renderAreaWidth);
-            scissor.extent().height(renderAreaHeight);
-            cx.dCmd.vkCmdSetScissor(cmdBuf, 0, 1, scissor);
-        }
+        scissorExtent.width(renderAreaWidth);
+        scissorExtent.height(renderAreaHeight);
+        cx.dCmd.vkCmdSetScissor(cmdBuf, 0, 1, scissor);
     }
 }

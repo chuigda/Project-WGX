@@ -68,6 +68,7 @@ public final class VulkanRenderEngine extends RenderEngine {
         descriptorSetCreateAspect = new ASPECT_DescriptorSetCreate(this);
         pipelineCreateAspect = new ASPECT_PipelineCreate(this);
         renderPassCompilationAspect = new ASPECT_RenderPassCompilation(this);
+        renderFrameAspect = new ASPECT_RenderFrame(this);
     }
 
     @Override
@@ -161,89 +162,7 @@ public final class VulkanRenderEngine extends RenderEngine {
             }
         }
 
-        VkFence inFlightFence = cx.inFlightFences[currentFrameIndex];
-        VkSemaphore imageAvailableSemaphore = cx.imageAvailableSemaphores[currentFrameIndex];
-        VkSemaphore renderFinishedSemaphore = cx.renderFinishedSemaphores[currentFrameIndex];
-        VkCommandBuffer commandBuffer = cx.commandBuffers[currentFrameIndex];
-
-        try (Arena arena = Arena.ofConfined()) {
-            VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
-            pFence.write(inFlightFence);
-            cx.dCmd.vkWaitForFences(cx.device, 1, pFence, Constants.VK_TRUE, NativeLayout.UINT64_MAX);
-
-            for (VulkanUniformBuffer uniform : perFrameUpdatedUniforms) {
-                uniform.updateGPU(currentFrameIndex);
-            }
-
-            IntBuffer pImageIndex = IntBuffer.allocate(arena);
-            @enumtype(VkResult.class) int result = cx.dCmd.vkAcquireNextImageKHR(
-                    cx.device,
-                    swapchain.vkSwapchain,
-                    NativeLayout.UINT64_MAX,
-                    imageAvailableSemaphore,
-                    null,
-                    pImageIndex
-            );
-            if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR) {
-                return;
-            }
-            if (result != VkResult.VK_SUCCESS && result != VkResult.VK_SUBOPTIMAL_KHR) {
-                throw new RenderException("无法获取交换链图像, 错误代码: " + VkResult.explain(result));
-            }
-            cx.dCmd.vkResetFences(cx.device, 1, pFence);
-
-            int imageIndex = pImageIndex.read(0);
-            resetAndRecordCommandBuffer(commandBuffer, swapchain.swapchainImages[imageIndex]);
-
-            VkSemaphore.Buffer pWaitSemaphore = VkSemaphore.Buffer.allocate(arena);
-            pWaitSemaphore.write(imageAvailableSemaphore);
-            IntBuffer pWaitStages = IntBuffer.allocate(arena);
-            pWaitStages.write(VkPipelineStageFlags.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-            VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
-            pCommandBuffer.write(commandBuffer);
-            VkSemaphore.Buffer pSignalSemaphore = VkSemaphore.Buffer.allocate(arena);
-            pSignalSemaphore.write(renderFinishedSemaphore);
-
-            VkSubmitInfo submitInfo = VkSubmitInfo.allocate(arena);
-            submitInfo.waitSemaphoreCount(1);
-            submitInfo.pWaitSemaphores(pWaitSemaphore);
-            submitInfo.pWaitDstStageMask(pWaitStages);
-            submitInfo.commandBufferCount(1);
-            submitInfo.pCommandBuffers(pCommandBuffer);
-            submitInfo.signalSemaphoreCount(1);
-            submitInfo.pSignalSemaphores(pSignalSemaphore);
-
-            synchronized (cx.graphicsQueue) {
-                result = cx.dCmd.vkQueueSubmit(cx.graphicsQueue, 1, submitInfo, inFlightFence);
-            }
-            if (result != VkResult.VK_SUCCESS) {
-                throw new RenderException("无法提交指令缓冲到队列, 错误代码: " + VkResult.explain(result));
-            }
-
-            VkSwapchainKHR.Buffer pSwapchain = VkSwapchainKHR.Buffer.allocate(arena);
-            pSwapchain.write(swapchain.vkSwapchain);
-
-            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.allocate(arena);
-            presentInfo.waitSemaphoreCount(1);
-            presentInfo.pWaitSemaphores(pSignalSemaphore);
-            presentInfo.swapchainCount(1);
-            presentInfo.pSwapchains(pSwapchain);
-            presentInfo.pImageIndices(pImageIndex);
-
-            synchronized (
-                    cx.graphicsQueue.segment().address() == cx.presentQueue.segment().address() ?
-                            cx.graphicsQueue :
-                            cx.presentQueue
-            ) {
-                result = cx.dCmd.vkQueuePresentKHR(cx.presentQueue, presentInfo);
-            }
-
-            if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR) {
-                return;
-            } else if (result != VkResult.VK_SUCCESS && result != VkResult.VK_SUBOPTIMAL_KHR) {
-                throw new RenderException("无法提交交换链图像到队列, 错误代码: " + VkResult.explain(result));
-            }
-        }
+        renderFrameAspect.renderFrameImpl(currentFrameIndex);
 
         currentFrameIndex = (currentFrameIndex + 1) % Config.config().vulkanConfig.maxFramesInFlight;
     }
@@ -412,6 +331,7 @@ public final class VulkanRenderEngine extends RenderEngine {
     private final ASPECT_DescriptorSetCreate descriptorSetCreateAspect;
     private final ASPECT_PipelineCreate pipelineCreateAspect;
     private final ASPECT_RenderPassCompilation renderPassCompilationAspect;
+    private final ASPECT_RenderFrame renderFrameAspect;
 
     VulkanRenderEngineContext cx;
     Swapchain swapchain;

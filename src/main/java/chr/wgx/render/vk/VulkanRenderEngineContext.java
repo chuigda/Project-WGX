@@ -49,10 +49,13 @@ public final class VulkanRenderEngineContext {
     public final VkQueue graphicsQueue;
     public final VkQueue presentQueue;
     public final Option<VkQueue> dedicatedTransferQueue;
+
     public final VmaAllocator vmaAllocator;
+
     public final VkSemaphore[] imageAvailableSemaphores;
     public final VkSemaphore[] renderFinishedSemaphores;
     public final VkFence[] inFlightFences;
+
     public final VkCommandPool commandPool;
     public final VkCommandBuffer[] commandBuffers;
     public final VkCommandPool graphicsOnceCommandPool;
@@ -80,10 +83,13 @@ public final class VulkanRenderEngineContext {
             VkQueue graphicsQueue,
             VkQueue presentQueue,
             Option<VkQueue> dedicatedTransferQueue,
+
             VmaAllocator vmaAllocator,
+
             VkSemaphore[] imageAvailableSemaphores,
             VkSemaphore[] renderFinishedSemaphores,
             VkFence[] inFlightFences,
+
             VkCommandPool commandPool,
             VkCommandPool graphicsOnceCommandPool,
             VkCommandBuffer[] commandBuffers,
@@ -112,6 +118,7 @@ public final class VulkanRenderEngineContext {
         this.imageAvailableSemaphores = imageAvailableSemaphores;
         this.renderFinishedSemaphores = renderFinishedSemaphores;
         this.inFlightFences = inFlightFences;
+
         this.commandPool = commandPool;
         this.graphicsOnceCommandPool = graphicsOnceCommandPool;
         this.commandBuffers = commandBuffers;
