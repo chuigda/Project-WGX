@@ -59,10 +59,15 @@ public final class ASPECT_RenderFrame {
                     GLES2Constants.GL_STATIC_DRAW
             );
         }
+
+        pDefaultFramebuffer = IntBuffer.allocate(engine.prefabArena);
     }
 
     void renderFrameImpl() throws RenderException {
         GLES2 gles2 = engine.gles2;
+
+        gles2.glGetIntegerv(GLES2Constants.GL_FRAMEBUFFER_BINDING, pDefaultFramebuffer);
+        int defaultFramebuffer = pDefaultFramebuffer.read();
 
         for (GLES2RenderPass renderPass : engine.renderPasses) {
             gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, renderPass.framebufferObject);
@@ -192,9 +197,11 @@ public final class ASPECT_RenderFrame {
             }
         }
 
-        gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, 0);
+        gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, defaultFramebuffer);
         gles2.glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
+        gles2.glDisable(GLES2Constants.GL_DEPTH_TEST);
+        gles2.glDisable(GLES2Constants.GL_BLEND);
         gles2.glUseProgram(hiddenShaderProgram);
         gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, hiddenObjectVBO);
         gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, hiddenObjectIBO);
@@ -270,6 +277,7 @@ public final class ASPECT_RenderFrame {
     private final int hiddenShaderProgram;
     private final int hiddenObjectVBO;
     private final int hiddenObjectIBO;
+    private final IntBuffer pDefaultFramebuffer;
 
     private static final float[] HIDDEN_OBJECT_VERTICES = new float[] {
             // vec2 position, vec2 texCoord
@@ -284,7 +292,7 @@ public final class ASPECT_RenderFrame {
             2, 3, 0
     };
 
-    private static String HIDDEN_PASS_VERTEX_SHADER = """
+    private static final String HIDDEN_PASS_VERTEX_SHADER = """
             #version 100
             
             precision mediump float;
@@ -300,7 +308,7 @@ public final class ASPECT_RenderFrame {
             }
             """;
 
-    private static String HIDDEN_PASS_FRAGMENT_SHADER = """
+    private static final String HIDDEN_PASS_FRAGMENT_SHADER = """
             #version 100
             
             precision mediump float;
