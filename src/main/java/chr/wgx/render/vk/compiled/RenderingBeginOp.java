@@ -1,13 +1,11 @@
 package chr.wgx.render.vk.compiled;
 
 import chr.wgx.render.common.Color;
-import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.data.VulkanSwapchainAttachment;
-import tech.icey.vk4j.bitmask.VkResolveModeFlags;
 import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.VkAttachmentLoadOp;
 import tech.icey.vk4j.enumtype.VkAttachmentStoreOp;
@@ -70,18 +68,11 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
                 clearColors.get(i).writeTo(colorAttachmentInfo.clearValue().color());
             }
 
-            if (colorAttachment instanceof VulkanSwapchainAttachment swapchainAttachment
-                && swapchainAttachment.msaaColorImage.isSome()) {
-                colorAttachmentInfo.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE);
-                colorAttachmentInfo.resolveMode(VkResolveModeFlags.VK_RESOLVE_MODE_AVERAGE_BIT);
-                colorAttachmentInfo.resolveImageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            } else {
-                colorAttachmentInfo.storeOp(
-                        colorAttachmentUsedInFuture.get(i)
-                                ? VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE
-                                : VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE
-                );
-            }
+            colorAttachmentInfo.storeOp(
+                    colorAttachmentUsedInFuture.get(i)
+                            ? VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE
+                            : VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE
+            );
         }
 
         depthAttachmentInfo = depthAttachment.map(_ -> {
@@ -131,14 +122,9 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos[i];
 
             switch (colorAttachment) {
-                case VulkanSwapchainAttachment swapchainAttachment -> {
-                    if (swapchainAttachment.msaaColorImage instanceof Option.Some<Resource.Image> some) {
-                        colorAttachmentInfo.imageView(some.value.imageView);
-                        colorAttachmentInfo.resolveImageView(swapchainAttachment.swapchainImage.imageView);
-                    } else {
-                        colorAttachmentInfo.imageView(swapchainAttachment.swapchainImage.imageView);
-                    }
-                }
+                case VulkanSwapchainAttachment swapchainAttachment -> colorAttachmentInfo.imageView(
+                        swapchainAttachment.swapchainImage.imageView
+                );
                 case VulkanImageAttachment imageAttachment -> colorAttachmentInfo.imageView(
                         imageAttachment.image.value.imageView
                 );

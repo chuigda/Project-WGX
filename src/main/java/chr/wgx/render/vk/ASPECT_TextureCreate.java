@@ -1,6 +1,5 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.config.Config;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.info.TextureCreateInfo;
@@ -32,10 +31,6 @@ public final class ASPECT_TextureCreate {
 
     public List<Texture> createTextureImpl(List<TextureCreateInfo> infoList) throws RenderException {
         VulkanRenderEngineContext cx = engine.cx;
-
-        @enumtype(VkFormat.class) int format = Config.config().vulkanConfig.forceUNORM ?
-                VkFormat.VK_FORMAT_R8G8B8A8_UNORM :
-                VkFormat.VK_FORMAT_R8G8B8A8_SRGB;
 
         List<Resource.Buffer> stagingBufferList = new ArrayList<>();
         List<Resource.Image> imageList = new ArrayList<>();
@@ -81,7 +76,7 @@ public final class ASPECT_TextureCreate {
                         info.image.getHeight(),
                         1,
                         VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
-                        format,
+                        VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
                         VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
                         VkImageUsageFlags.VK_IMAGE_USAGE_TRANSFER_DST_BIT
                         | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,

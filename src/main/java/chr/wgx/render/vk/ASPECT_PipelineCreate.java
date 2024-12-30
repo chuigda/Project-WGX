@@ -11,7 +11,6 @@ import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.bitmask.VkColorComponentFlags;
 import tech.icey.vk4j.bitmask.VkCullModeFlags;
-import tech.icey.vk4j.bitmask.VkSampleCountFlags;
 import tech.icey.vk4j.bitmask.VkShaderStageFlags;
 import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
@@ -98,14 +97,6 @@ public final class ASPECT_PipelineCreate {
             rasterizer.depthBiasSlopeFactor(0.0f);
 
             VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.allocate(arena);
-            multisampling.sampleShadingEnable(cx.msaaSampleCountFlags != VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT ?
-                    Constants.VK_TRUE :
-                    Constants.VK_FALSE);
-            multisampling.rasterizationSamples(cx.msaaSampleCountFlags);
-            multisampling.minSampleShading(cx.msaaSampleCountFlags != VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT ?
-                    0.2f :
-                    1.0f);
-            multisampling.pSampleMask(null);
 
             VkPipelineColorBlendAttachmentState colorBlendAttachment =
                     VkPipelineColorBlendAttachmentState.allocate(arena);

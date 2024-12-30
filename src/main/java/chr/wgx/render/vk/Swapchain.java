@@ -11,7 +11,6 @@ import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.*;
 import tech.icey.vk4j.handle.VkImage;
 import tech.icey.vk4j.handle.VkSwapchainKHR;
-import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
 
@@ -23,7 +22,6 @@ public final class Swapchain {
     public final VkSwapchainKHR vkSwapchain;
     public final Resource.SwapchainImage[] swapchainImages;
     public final Resource.Image depthImage;
-    public final Option<Resource.Image> msaaColorImage;
 
     public static Swapchain create(VulkanRenderEngineContext cx, int width, int height) throws RenderException {
         try (Arena arena = Arena.ofConfined()) {
@@ -61,29 +59,12 @@ public final class Swapchain {
                     extent.width(),
                     extent.height(),
                     1,
-                    cx.msaaSampleCountFlags,
+                    VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
                     depthFormat,
                     VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
                     VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                     VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT
             );
-
-            Option<Resource.Image> msaaColorImage;
-            if (cx.msaaSampleCountFlags != VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT) {
-                msaaColorImage = Option.some(Resource.Image.create(
-                        cx,
-                        extent.width(),
-                        extent.height(),
-                        1,
-                        cx.msaaSampleCountFlags,
-                        surfaceFormat.format(),
-                        VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                        VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                        VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
-                ));
-            } else {
-                msaaColorImage = Option.none();
-            }
 
             return new Swapchain(
                     surfaceFormat.format(),
@@ -91,8 +72,7 @@ public final class Swapchain {
                     extent,
                     swapchain,
                     swapchainImages,
-                    depthImage,
-                    msaaColorImage
+                    depthImage
             );
         }
     }
@@ -102,9 +82,7 @@ public final class Swapchain {
             swapchainImage.dispose(cx);
         }
         depthImage.dispose(cx);
-        if (msaaColorImage instanceof Option.Some<Resource.Image> someImage) {
-            someImage.value.dispose(cx);
-        }
+
         cx.dCmd.vkDestroySwapchainKHR(cx.device, vkSwapchain, null);
     }
 
@@ -114,8 +92,7 @@ public final class Swapchain {
             VkExtent2D swapExtent,
             VkSwapchainKHR swapchain,
             Resource.SwapchainImage[] swapchainImages,
-            Resource.Image depthImage,
-            Option<Resource.Image> msaaColorImage
+            Resource.Image depthImage
     ) {
         this.swapChainImageFormat = swapChainImageFormat;
         this.depthFormat = depthFormat;
@@ -123,7 +100,6 @@ public final class Swapchain {
         this.vkSwapchain = swapchain;
         this.swapchainImages = swapchainImages;
         this.depthImage = depthImage;
-        this.msaaColorImage = msaaColorImage;
     }
 
     private static VkSwapchainKHR createSwapchain(
@@ -258,9 +234,7 @@ public final class Swapchain {
     }
 
     private static VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(VkSurfaceFormatKHR[] formats) {
-        @enumtype(VkFormat.class) int preferredFormat = Config.config().vulkanConfig.forceUNORM ?
-                VkFormat.VK_FORMAT_B8G8R8A8_UNORM :
-                VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
+        @enumtype(VkFormat.class) int preferredFormat = VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
         for (VkSurfaceFormatKHR format : formats) {
             if (format.format() == preferredFormat &&
                 format.colorSpace() == VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {

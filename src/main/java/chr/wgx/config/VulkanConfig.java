@@ -23,20 +23,10 @@ public final class VulkanConfig {
     /// 最多允许同时渲染的帧数
     public int maxFramesInFlight = 2;
 
-    /// 是否启用多重采样抗锯齿
-    public boolean enableMSAA = false;
-    /// 多重采样抗锯齿层级
-    public int msaaSampleCount = 4;
-
     /// 是否启用各向异性过滤
     public boolean enableAnisotropy = false;
     /// 各向异性过滤层级
     public float anisotropyLevel = 1.0f;
-
-    /// 是否强制为所有图像和纹理使用 UNORM 格式而非 SRGB 格式
-    ///
-    /// 启用这一选项可以解决 AMD 驱动引起的一个 bug，该 bug 导致在多重采样启用时整个场景偏暗
-    public boolean forceUNORM = false;
 
     /// 是否总是使用图形队列进行传输操作（即使专门的传输队列可用）
     public boolean alwaysUploadWithGraphicsQueue = false;
@@ -54,11 +44,6 @@ public final class VulkanConfig {
         String validationLayers = System.getProperty("wgx.vulkan.validationLayers");
         if (validationLayers != null) {
             this.validationLayers = !validationLayers.isBlank();
-        }
-
-        String forceUNORM = System.getProperty("wgx.vulkan.forceUNORM");
-        if (forceUNORM != null) {
-            this.forceUNORM = !forceUNORM.isBlank();
         }
 
         String alwaysUploadWithGraphicsQueue = System.getProperty("wgx.vulkan.noTransferQueue");

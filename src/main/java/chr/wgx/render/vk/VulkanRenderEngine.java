@@ -50,8 +50,7 @@ public final class VulkanRenderEngine extends RenderEngine {
 
         swapchainColorAttachment = new VulkanSwapchainAttachment(
                 pseudoColorAttachmentInfo,
-                swapchain.swapchainImages[0],
-                swapchain.msaaColorImage
+                swapchain.swapchainImages[0]
         );
         swapchainDepthAttachment = new VulkanImageAttachment(
                 pseudoDepthAttachmentInfo,
@@ -89,7 +88,6 @@ public final class VulkanRenderEngine extends RenderEngine {
             throw e;
         }
 
-        swapchainColorAttachment.msaaColorImage = swapchain.msaaColorImage;
         swapchainDepthAttachment.image.value = swapchain.depthImage;
 
         List<Ref<Resource.Image>> updatedImages = new ArrayList<>();

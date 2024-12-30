@@ -1,13 +1,11 @@
 package chr.wgx.render.vk;
 
-import chr.wgx.config.Config;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.info.AttachmentCreateInfo;
 import chr.wgx.render.vk.data.CombinedImageSampler;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
-import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.bitmask.VkImageAspectFlags;
 import tech.icey.vk4j.bitmask.VkImageUsageFlags;
 import tech.icey.vk4j.bitmask.VkSampleCountFlags;
@@ -54,17 +52,13 @@ public final class ASPECT_AttachmentCreate {
             actualHeight = engine.swapchain.swapExtent.height();
         }
 
-        @enumtype(VkFormat.class) int format = Config.config().vulkanConfig.forceUNORM ?
-                VkFormat.VK_FORMAT_B8G8R8A8_UNORM :
-                VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
-
         return Resource.Image.create(
                 engine.cx,
                 actualWidth,
                 actualHeight,
                 1,
                 VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
-                format,
+                VkFormat.VK_FORMAT_B8G8R8A8_SRGB,
                 VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
                 VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
                 VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
