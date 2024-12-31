@@ -63,7 +63,8 @@ public final class ASPECT_RenderPassCompilation {
                 }
 
 
-                if (currentLayout != VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+                if (currentLayout != VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+                    || colorAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ONCE) {
                     transformedAttachments.add(attachment);
                     oldLayout.add(currentLayout);
                     newLayout.add(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
