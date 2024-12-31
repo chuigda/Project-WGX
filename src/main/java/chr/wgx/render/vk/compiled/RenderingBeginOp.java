@@ -33,9 +33,9 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             VulkanRenderEngineContext cx,
             VulkanRenderPass renderPass,
 
-            List<Boolean> colorAttachmentInitialized,
+            List<Boolean> colorAttachmentCleared,
             List<Boolean> colorAttachmentUsedInFuture,
-            boolean depthAttachmentInitialized,
+            boolean depthAttachmentCleared,
             boolean depthAttachmentUsedInFuture
     ) {
         this.renderPass = renderPass;
@@ -60,7 +60,7 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             colorAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
             if (attachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
-                || !colorAttachmentInitialized.get(i)) {
+                || !colorAttachmentCleared.get(i)) {
                 colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
                 attachmentInfo.clearColor.writeTo(colorAttachmentInfo.clearValue().color());
             } else {
@@ -80,7 +80,7 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
 
             info.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
             if (renderPassAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
-                || !depthAttachmentInitialized) {
+                || !depthAttachmentCleared) {
                 info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
                 info.clearValue().depthStencil().depth(1.0f);
             } else {

@@ -27,7 +27,7 @@ public final class ASPECT_RenderPassCompilation {
     public void recompileRenderPasses() {
         List<CompiledRenderPassOp> compiled = new ArrayList<>();
         HashMap<VulkanAttachment, Integer> currentLayouts = new HashMap<>();
-        HashSet<VulkanAttachment> attachmentInitialized = new HashSet<>();
+        HashSet<VulkanAttachment> attachmentCleared = new HashSet<>();
         HashMap<Attachment, AttachmentFutureUsageStat> attachmentFutureUsage = getAttachmentFutureUsage();
 
         for (VulkanRenderPass renderPass : engine.renderPasses) {
@@ -78,9 +78,17 @@ public final class ASPECT_RenderPassCompilation {
                 compiled.add(new ImageBarrierOp(engine.cx, transformedAttachments, oldLayout, newLayout));
             }
 
-            List<Boolean> colorAttachmentInitialized = renderPass.colorAttachments.stream()
-                    .map(attachmentInitialized::contains)
+            List<Boolean> colorAttachmentCleared = renderPass.colorAttachments.stream()
+                    .map(attachmentCleared::contains)
                     .toList();
+            boolean depthAttachmentCleared;
+            if (renderPass.depthAttachment instanceof Option.Some<VulkanImageAttachment> some) {
+                depthAttachmentCleared = attachmentCleared.contains(some.value);
+                attachmentCleared.add(some.value);
+            } else {
+                depthAttachmentCleared = false;
+            }
+
             List<Boolean> colorAttachmentUsedInFuture = renderPass.colorAttachments.stream()
                     .map(att -> {
                         // 总是假设对交换链颜色附件的写入会被使用
@@ -88,22 +96,15 @@ public final class ASPECT_RenderPassCompilation {
                             return true;
                         }
 
-                        AttachmentFutureUsageStat stat = attachmentFutureUsage.get(att);
+                        @Nullable AttachmentFutureUsageStat stat = attachmentFutureUsage.get(att);
                         return stat != null && !stat.isNotUsedInFuture(renderPass);
                     })
                     .toList();
-            attachmentInitialized.addAll(renderPass.colorAttachments);
+            attachmentCleared.addAll(renderPass.colorAttachments);
 
-            boolean depthAttachmentInitialized;
-            if (renderPass.depthAttachment instanceof Option.Some<VulkanImageAttachment> some) {
-                depthAttachmentInitialized = attachmentInitialized.contains(some.value);
-                attachmentInitialized.add(some.value);
-            } else {
-                depthAttachmentInitialized = false;
-            }
             boolean depthAttachmentUsedInFuture;
             if (renderPass.depthAttachment instanceof Option.Some<VulkanImageAttachment> some) {
-                AttachmentFutureUsageStat stat = attachmentFutureUsage.get(some.value);
+                @Nullable AttachmentFutureUsageStat stat = attachmentFutureUsage.get(some.value);
                 depthAttachmentUsedInFuture = stat != null && !stat.isNotUsedInFuture(renderPass);
             } else {
                 depthAttachmentUsedInFuture = false;
@@ -113,9 +114,9 @@ public final class ASPECT_RenderPassCompilation {
                     engine.cx,
                     renderPass,
 
-                    colorAttachmentInitialized,
+                    colorAttachmentCleared,
                     colorAttachmentUsedInFuture,
-                    depthAttachmentInitialized,
+                    depthAttachmentCleared,
                     depthAttachmentUsedInFuture
             ));
 
