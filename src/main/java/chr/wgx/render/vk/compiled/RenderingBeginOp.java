@@ -33,9 +33,9 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             VulkanRenderEngineContext cx,
             VulkanRenderPass renderPass,
 
-            List<Boolean> colorAttachmentCleared,
+            List<Boolean> colorAttachmentNeedClear,
             List<Boolean> colorAttachmentUsedInFuture,
-            boolean depthAttachmentCleared,
+            boolean depthAttachmentNeedClear,
             boolean depthAttachmentUsedInFuture
     ) {
         this.renderPass = renderPass;
@@ -51,18 +51,17 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
 
         colorAttachmentInfos = VkRenderingAttachmentInfo.allocate(
                 cx.prefabArena,
-                renderPass.colorAttachments.size()
+                renderPass.info.colorAttachmentInfos.size()
         );
-        for (int i = 0; i < renderPass.colorAttachments.size(); i++) {
+        for (int i = 0; i < renderPass.info.colorAttachmentInfos.size(); i++) {
             VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos[i];
-            RenderPassAttachmentInfo attachmentInfo = renderPass.info.colorAttachmentInfos.get(i);
+            RenderPassAttachmentInfo renderPassAttachmentInfo = renderPass.info.colorAttachmentInfos.get(i);
 
             colorAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-            if (attachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
-                || !colorAttachmentCleared.get(i)) {
+            if (colorAttachmentNeedClear.get(i)) {
                 colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
-                attachmentInfo.clearColor.writeTo(colorAttachmentInfo.clearValue().color());
+                renderPassAttachmentInfo.clearColor.writeTo(colorAttachmentInfo.clearValue().color());
             } else {
                 colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
             }
@@ -74,15 +73,14 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             );
         }
 
-        depthAttachmentInfo = renderPass.depthAttachment.map(_ -> {
+        depthAttachmentInfo = renderPass.info.depthAttachmentInfo.map(renderPassAttachmentInfo -> {
             VkRenderingAttachmentInfo info = VkRenderingAttachmentInfo.allocate(cx.prefabArena);
-            RenderPassAttachmentInfo renderPassAttachmentInfo = renderPass.info.depthAttachmentInfo.get();
 
             info.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-            if (renderPassAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
-                || !depthAttachmentCleared) {
+
+            if (depthAttachmentNeedClear) {
                 info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
-                info.clearValue().depthStencil().depth(1.0f);
+                renderPassAttachmentInfo.clearColor.writeTo(info.clearValue().color());
             } else {
                 info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
             }
