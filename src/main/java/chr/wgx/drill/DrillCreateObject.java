@@ -54,7 +54,7 @@ public class DrillCreateObject {
                         Option.some(shaderProgram1),
                         Option.some(shaderProgramOES1),
                         1,
-                        false
+                        true
                 ));
 
                 UniformBufferBindingInfo ubBindingInfo = new UniformBufferBindingInfo("uVP", ShaderStage.VERTEX, List.of(
@@ -111,6 +111,11 @@ public class DrillCreateObject {
                 ));
                 Attachment rttTargetAttachment = rttTarget.first();
                 Texture rttTexture = rttTarget.second();
+                Attachment rttDepthAttachment = engine.createDepthAttachment(new AttachmentCreateInfo(
+                        PixelFormat.DEPTH_BUFFER_OPTIMAL,
+                        640,
+                        640
+                ));
                 DescriptorSet descriptorSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
                         descriptorSetLayout,
                         List.of(ubo, rttTexture)
@@ -127,6 +132,10 @@ public class DrillCreateObject {
                                 rttTargetAttachment,
                                 ClearBehavior.CLEAR_ONCE,
                                 new Color(1.0f, 1.0f, 1.0f, 1.0f)
+                        ),
+                        new RenderPassAttachmentInfo(
+                                rttDepthAttachment,
+                                ClearBehavior.CLEAR_ONCE
                         )
                 ));
 

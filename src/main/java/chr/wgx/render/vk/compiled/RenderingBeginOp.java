@@ -80,7 +80,7 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
 
             if (depthAttachmentNeedClear) {
                 info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
-                renderPassAttachmentInfo.clearColor.writeTo(info.clearValue().color());
+                info.clearValue().depthStencil().depth(1.0f);
             } else {
                 info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
             }
