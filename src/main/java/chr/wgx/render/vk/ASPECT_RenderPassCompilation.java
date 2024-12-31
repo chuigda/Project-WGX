@@ -16,6 +16,7 @@ import tech.icey.xjbutil.container.Option;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.logging.Logger;
 
 public final class ASPECT_RenderPassCompilation {
     private final VulkanRenderEngine engine;
@@ -120,6 +121,12 @@ public final class ASPECT_RenderPassCompilation {
                 depthAttachmentUsedInFuture = false;
             }
 
+            logger.fine("compiling render pass " + renderPass.info.name
+                    + ", color attachment need clear = " + colorAttachmentNeedClear
+                    + ", color attachment used in future = " + colorAttachmentUsedInFuture
+                    + ", depth attachment need clear = " + depthAttachmentNeedClear
+                    + ", depth attachment used in future = " + depthAttachmentUsedInFuture);
+
             compiled.add(new RenderingBeginOp(
                     engine.cx,
                     renderPass,
@@ -219,4 +226,6 @@ public final class ASPECT_RenderPassCompilation {
         }
         return futureUsage;
     }
+
+    private static final Logger logger = Logger.getLogger(ASPECT_RenderPassCompilation.class.getName());
 }
