@@ -51,13 +51,17 @@ public final class ASPECT_RenderPassCompilation {
             for (RenderPassAttachmentInfo colorAttachmentInfo : renderPass.info.colorAttachmentInfos) {
                 VulkanAttachment attachment = (VulkanAttachment) colorAttachmentInfo.attachment;
 
-                @enumtype(VkImageLayout.class) int currentLayout;
-                if (colorAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS) {
-                    // 如果已经确定需要清除附件，则无需指定具体的起始布局
+                @enumtype(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
+                        attachment,
+                        VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
+                );
+
+                if (currentLayout != VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+                    && colorAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS) {
+                    // 如果确定需要清除附件，则起始布局不重要
                     currentLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
-                } else {
-                    currentLayout = currentLayouts.getOrDefault(attachment, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
                 }
+
 
                 if (currentLayout != VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
                     transformedAttachments.add(attachment);
