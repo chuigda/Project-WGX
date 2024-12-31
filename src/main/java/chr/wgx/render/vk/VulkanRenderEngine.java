@@ -137,7 +137,7 @@ public final class VulkanRenderEngine extends RenderEngine {
         boolean recompile = renderPassNeedCompilation.getAndSet(false);
         boolean updateUniform = uniformManuallyUpdated.getAndSet(false);
 
-        if (recompile || updateUniform) {
+        while (recompile || updateUniform) {
             cx.waitDeviceIdle();
 
             if (recompile) {
@@ -157,6 +157,9 @@ public final class VulkanRenderEngine extends RenderEngine {
                 long endTime = System.nanoTime();
                 logger.info("已更新标记为手动更新的 uniform 缓冲区, 共耗时 %d 微秒".formatted((endTime - startTime) / 1_000));
             }
+
+            recompile = renderPassNeedCompilation.getAndSet(false);
+            updateUniform = uniformManuallyUpdated.getAndSet(false);
         }
 
         renderFrameAspect.renderFrameImpl(currentFrameIndex);
