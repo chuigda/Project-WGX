@@ -4,7 +4,6 @@ import chr.wgx.config.Config;
 import chr.wgx.render.IRenderEngineFactory;
 import chr.wgx.render.RenderEngine;
 import chr.wgx.render.RenderException;
-import chr.wgx.render.common.Color;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
@@ -21,7 +20,6 @@ import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
 import tech.icey.vk4j.enumtype.VkResult;
 import tech.icey.vk4j.handle.VkCommandBuffer;
 import tech.icey.vk4j.handle.VkDescriptorPool;
-import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.container.Ref;
 

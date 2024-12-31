@@ -1,10 +1,7 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.common.ClearBehavior;
-import chr.wgx.render.common.PixelFormat;
-import chr.wgx.render.data.Attachment;
 import chr.wgx.render.info.RenderPassAttachmentInfo;
-import chr.wgx.render.task.RenderPass;
 import chr.wgx.render.vk.compiled.*;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
@@ -14,7 +11,6 @@ import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.xjbutil.container.Option;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -29,7 +25,6 @@ public final class ASPECT_RenderPassCompilation {
         List<CompiledRenderPassOp> compiled = new ArrayList<>();
         HashMap<VulkanAttachment, Integer> currentLayouts = new HashMap<>();
         HashSet<VulkanAttachment> attachmentCleared = new HashSet<>();
-        HashMap<Attachment, AttachmentFutureUsageStat> attachmentFutureUsage = getAttachmentFutureUsage();
 
         List<VulkanRenderPass> renderPassList = engine.renderPasses.stream().toList();
         for (int renderPassIndex = 0; renderPassIndex < renderPassList.size(); renderPassIndex++) {
@@ -100,32 +95,19 @@ public final class ASPECT_RenderPassCompilation {
                 depthAttachmentNeedClear = false;
             }
 
+            final int index = renderPassIndex;
             List<Boolean> colorAttachmentUsedInFuture = renderPass.colorAttachments.stream()
-                    .map(att -> {
-                        // 总是假设对交换链颜色附件的写入会被使用
-                        if (att == engine.swapchainColorAttachment) {
-                            return true;
-                        }
-
-                        @Nullable AttachmentFutureUsageStat stat = attachmentFutureUsage.get(att);
-                        return stat != null && !stat.isNotUsedInFuture(renderPass);
-                    })
+                    .map(att -> attachmentWriteUsedInTheFuture(att, renderPassList, index))
                     .toList();
             attachmentCleared.addAll(renderPass.colorAttachments);
 
             boolean depthAttachmentUsedInFuture;
             if (renderPass.depthAttachment instanceof Option.Some<VulkanImageAttachment> some) {
-                @Nullable AttachmentFutureUsageStat stat = attachmentFutureUsage.get(some.value);
-                depthAttachmentUsedInFuture = stat != null && !stat.isNotUsedInFuture(renderPass);
+                depthAttachmentUsedInFuture = attachmentWriteUsedInTheFuture(some.value, renderPassList, index);
+                attachmentCleared.add(some.value);
             } else {
                 depthAttachmentUsedInFuture = false;
             }
-
-            logger.fine("compiling render pass " + renderPass.info.name
-                    + ", color attachment need clear = " + colorAttachmentNeedClear
-                    + ", color attachment used in future = " + colorAttachmentUsedInFuture
-                    + ", depth attachment need clear = " + depthAttachmentNeedClear
-                    + ", depth attachment used in future = " + depthAttachmentUsedInFuture);
 
             compiled.add(new RenderingBeginOp(
                     engine.cx,
@@ -158,6 +140,39 @@ public final class ASPECT_RenderPassCompilation {
         engine.compiledRenderPassOps = compiled;
     }
 
+    private boolean attachmentWriteUsedInTheFuture(
+            VulkanAttachment attachment,
+            List<VulkanRenderPass> renderPasses,
+            int currentPassIndex
+    ) {
+        if (attachment == engine.swapchainColorAttachment) {
+            return true;
+        }
+
+        for (int i = currentPassIndex + 1; i < renderPasses.size(); i++) {
+            VulkanRenderPass renderPass = renderPasses.get(i);
+            if (renderPass.inputAttachments.contains(attachment)) {
+                return true;
+            }
+
+            for (RenderPassAttachmentInfo colorAttachmentInfo : renderPass.info.colorAttachmentInfos) {
+                if (colorAttachmentInfo.attachment == attachment) {
+                    return colorAttachmentInfo.clearBehavior != ClearBehavior.CLEAR_ALWAYS;
+                }
+            }
+
+            if (renderPass.info.depthAttachmentInfo instanceof Option.Some<RenderPassAttachmentInfo> some) {
+                if (some.value.attachment == attachment) {
+                    return some.value.clearBehavior != ClearBehavior.CLEAR_ALWAYS;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // Reserved for future use maybe
+    /*
     private static class AttachmentFutureUsageStat {
         public @Nullable RenderPass lastRenderPassAsInput = null;
         public ArrayList<RenderPass> futureNotUsedPasses = new ArrayList<>();
@@ -226,6 +241,7 @@ public final class ASPECT_RenderPassCompilation {
         }
         return futureUsage;
     }
+    */
 
     private static final Logger logger = Logger.getLogger(ASPECT_RenderPassCompilation.class.getName());
 }
