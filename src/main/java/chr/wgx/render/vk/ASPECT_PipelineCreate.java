@@ -98,14 +98,8 @@ public final class ASPECT_PipelineCreate {
             rasterizer.depthBiasSlopeFactor(0.0f);
 
             VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.allocate(arena);
-            multisampling.sampleShadingEnable(cx.msaaSampleCountFlags != VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT ?
-                    Constants.VK_TRUE :
-                    Constants.VK_FALSE);
-            multisampling.rasterizationSamples(cx.msaaSampleCountFlags);
-            multisampling.minSampleShading(cx.msaaSampleCountFlags != VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT ?
-                    0.2f :
-                    1.0f);
-            multisampling.pSampleMask(null);
+            multisampling.sampleShadingEnable(Constants.VK_FALSE);
+            multisampling.rasterizationSamples(VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT);
 
             VkPipelineColorBlendAttachmentState colorBlendAttachment =
                     VkPipelineColorBlendAttachmentState.allocate(arena);

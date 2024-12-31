@@ -47,7 +47,6 @@ final class VREContextInitialiser {
     private Option<VkDebugUtilsMessengerEXT> debugMessenger;
     private VkSurfaceKHR surface;
     private VkPhysicalDevice physicalDevice;
-    private @enumtype(VkSampleCountFlags.class) int msaaSampleCountFlags;
     private int graphicsQueueFamilyIndex;
     private int presentQueueFamilyIndex;
     private Option<Integer> dedicatedTransferQueueFamilyIndex;
@@ -95,7 +94,6 @@ final class VREContextInitialiser {
                 graphicsQueueFamilyIndex,
                 presentQueueFamilyIndex,
                 dedicatedTransferQueueFamilyIndex,
-                msaaSampleCountFlags,
 
                 instance,
                 debugMessenger,
@@ -261,10 +259,6 @@ final class VREContextInitialiser {
                 VkPhysicalDeviceProperties deviceProperty = deviceProperties[i];
                 if (physicalDeviceID == 0 || deviceProperty.deviceID() == physicalDeviceID) {
                     physicalDevice = pDevices.read(i);
-                    msaaSampleCountFlags = pickMSAASampleCount(
-                            deviceProperty.limits().framebufferColorSampleCounts() &
-                            deviceProperty.limits().framebufferDepthSampleCounts()
-                    );
 
                     if (physicalDeviceID == 0) {
                         logger.info("自动选定 Vulkan 物理设备: " + deviceProperty.deviceName().readString());
@@ -371,9 +365,6 @@ final class VREContextInitialiser {
             VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.allocate(arena);
             if (config.enableAnisotropy) {
                 deviceFeatures.samplerAnisotropy(Constants.VK_TRUE);
-            }
-            if (config.enableMSAA) {
-                deviceFeatures.sampleRateShading(Constants.VK_TRUE);
             }
 
             FloatBuffer pQueuePriorities = FloatBuffer.allocate(arena);
@@ -612,41 +603,6 @@ final class VREContextInitialiser {
                         VkDebugUtilsMessageTypeFlagsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
         );
         debugCreateInfo.pfnUserCallback(DebugMessengerUtil.DEBUG_CALLBACK_PTR);
-    }
-
-    private @enumtype(VkSampleCountFlags.class) int pickMSAASampleCount(
-            @enumtype(VkSampleCountFlags.class) int supportedSampleCountFlags
-    ) {
-        VulkanConfig config = Config.config().vulkanConfig;
-        if (!config.enableMSAA) {
-            return VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT;
-        }
-
-        int sampleCount = config.msaaSampleCount;
-        @enumtype(VkSampleCountFlags.class) int sampleCountBits = sampleCountToBits(sampleCount);
-        if ((supportedSampleCountFlags & sampleCountBits) == 0) {
-            logger.warning("不支持的 MSAA 样本数: " + sampleCount + ", 将不使用 MSAA");
-            logger.info("设备支持的 MSAA 样本数有: " + VkSampleCountFlags.explain(supportedSampleCountFlags));
-            return VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT;
-        }
-
-        return sampleCountBits;
-    }
-
-    private static @enumtype(VkSampleCountFlags.class) int sampleCountToBits(int sampleCount) {
-        return switch (sampleCount) {
-            case 1 -> VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT;
-            case 2 -> VkSampleCountFlags.VK_SAMPLE_COUNT_2_BIT;
-            case 4 -> VkSampleCountFlags.VK_SAMPLE_COUNT_4_BIT;
-            case 8 -> VkSampleCountFlags.VK_SAMPLE_COUNT_8_BIT;
-            case 16 -> VkSampleCountFlags.VK_SAMPLE_COUNT_16_BIT;
-            case 32 -> VkSampleCountFlags.VK_SAMPLE_COUNT_32_BIT;
-            case 64 -> VkSampleCountFlags.VK_SAMPLE_COUNT_64_BIT;
-            default -> {
-                logger.warning("不支持的 MSAA 样本数: " + sampleCount + ", 将不使用 MSAA");
-                yield VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT;
-            }
-        };
     }
 
     private static final ByteBuffer APP_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "Project-WGX");

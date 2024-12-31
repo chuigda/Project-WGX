@@ -1,4 +1,4 @@
-package chr.wgx.render.gles2;
+package chr.wgx.render.gles2.glext;
 
 import org.jetbrains.annotations.Nullable;
 import tech.icey.panama.IPointer;
@@ -12,7 +12,9 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.util.Objects;
 
-public final class GLES2KHRDebug {
+public final class KHR_debug {
+    public static final String EXTENSION_NAME = "GL_KHR_debug";
+
     public static final int DEBUG_SOURCE_API                                 = 0x8246;
     public static final int DEBUG_SOURCE_WINDOW_SYSTEM                       = 0x8247;
     public static final int DEBUG_SOURCE_SHADER_COMPILER                     = 0x8248;
@@ -65,7 +67,7 @@ public final class GLES2KHRDebug {
         }
     }
 
-    public GLES2KHRDebug(RawFunctionLoader loader) {
+    public KHR_debug(RawFunctionLoader loader) {
         MemorySegment segment$glDebugMessageCallback = loader.apply("glDebugMessageCallback");
         MemorySegment segment$glDebugMessageControl = loader.apply("glDebugMessageControl");
 

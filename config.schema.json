@@ -63,14 +63,6 @@
                         2
                     ]
                 },
-                "enableMSAA": {
-                    "type": "boolean",
-                    "description": "启用多重采样抗锯齿"
-                },
-                "msaaSampleCount": {
-                    "type": "integer",
-                    "description": "多重采样抗锯齿采样次数"
-                },
                 "enableAnisotropy": {
                     "type": "boolean",
                     "description": "启用各向异性过滤"
@@ -78,10 +70,6 @@
                 "anisotropyLevel": {
                     "type": "number",
                     "description": "各向异性过滤级别"
-                },
-                "forceUNORM": {
-                    "type": "boolean",
-                    "description": "强制使用 UNORM 格式"
                 },
                 "alwaysUploadWithGraphicsQueue": {
                     "type": "boolean",

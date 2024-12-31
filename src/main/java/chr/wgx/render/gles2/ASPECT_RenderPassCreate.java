@@ -1,10 +1,9 @@
 package chr.wgx.render.gles2;
 
 import chr.wgx.render.RenderException;
-import chr.wgx.render.common.Color;
-import chr.wgx.render.data.Attachment;
 import chr.wgx.render.gles2.data.GLES2TextureAttachment;
 import chr.wgx.render.gles2.task.GLES2RenderPass;
+import chr.wgx.render.info.RenderPassCreateInfo;
 import tech.icey.gles2.GLES2;
 import tech.icey.gles2.GLES2Constants;
 import tech.icey.panama.annotation.enumtype;
@@ -19,20 +18,14 @@ public final class ASPECT_RenderPassCreate {
         this.engine = engine;
     }
 
-    GLES2RenderPass createRenderPassImpl(
-            String renderPassName,
-            int priority,
-            List<Attachment> colorAttachments,
-            List<Color> clearColors,
-            Option<Attachment> depthAttachment
-    ) throws RenderException {
+    GLES2RenderPass createRenderPassImpl(RenderPassCreateInfo info) throws RenderException {
         GLES2 gles2 = engine.gles2;
 
-        List<GLES2TextureAttachment> colorTextureAttachments = colorAttachments.stream()
-                .map(attachment -> (GLES2TextureAttachment) attachment)
+        List<GLES2TextureAttachment> colorTextureAttachments = info.colorAttachmentInfos.stream()
+                .map(attachmentInfo -> (GLES2TextureAttachment) attachmentInfo.attachment)
                 .toList();
-        Option<GLES2TextureAttachment> depthTextureAttachment = depthAttachment
-                .map(attachment -> (GLES2TextureAttachment) attachment);
+        Option<GLES2TextureAttachment> depthTextureAttachment = info.depthAttachmentInfo
+                .map(attachment -> (GLES2TextureAttachment) attachment.attachment);
 
         try (Arena arena = Arena.ofConfined()) {
             IntBuffer pFramebufferObject = IntBuffer.allocate(arena);
@@ -69,10 +62,8 @@ public final class ASPECT_RenderPassCreate {
             gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, 0);
 
             GLES2RenderPass ret =  new GLES2RenderPass(
-                    renderPassName,
-                    priority,
+                    info,
                     colorTextureAttachments,
-                    clearColors,
                     depthTextureAttachment,
                     framebufferObject
             );

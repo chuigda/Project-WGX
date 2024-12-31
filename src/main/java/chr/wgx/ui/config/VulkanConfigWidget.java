@@ -44,18 +44,8 @@ public final class VulkanConfigWidget extends JPanel {
                 maxFramesInFlightField,
                 "允许渲染器同时渲染多少帧，设置过大的值可能导致延迟"
         );
-        SwingUtil.addConfigItemFast(this, 5, "多重采样抗锯齿", enableMSAAComboBox);
-        SwingUtil.addConfigItemFast(this, 6, "多重采样样本数", msaaSampleCountField);
         SwingUtil.addConfigItemFast(this, 7, "各向异性过滤", enableAnisotropyComboBox);
         SwingUtil.addConfigItemFast(this, 8, "各向异性过滤级别", anisotropyLevelField);
-        SwingUtil.addConfigItemFast(
-                this,
-                9,
-                "强制 UNORM 格式",
-                forceUNORMComboBox,
-                "强制为所有图像使用 UNORM 格式而非 SRGB 格式\n" +
-                "在某些 AMD 显卡上启用，可以解决启用 MSAA 时场景整体偏暗的问题"
-        );
         SwingUtil.addConfigItemFast(
                 this,
                 10,
@@ -93,11 +83,8 @@ public final class VulkanConfigWidget extends JPanel {
     });
     final JTextField maxFPSField = new JTextField(Integer.toString(VulkanConfig.DEFAULT.maxFPS));
     final JTextField maxFramesInFlightField = new JTextField(Integer.toString(VulkanConfig.DEFAULT.maxFramesInFlight));
-    final JComboBox<String> enableMSAAComboBox = new JComboBox<>(new String[]{ "关闭", "启用" });
-    final JTextField msaaSampleCountField = new JTextField(Integer.toString(VulkanConfig.DEFAULT.msaaSampleCount));
     final JComboBox<String> enableAnisotropyComboBox = new JComboBox<>(new String[]{ "关闭", "启用" });
     final JTextField anisotropyLevelField = new JTextField(Float.toString(VulkanConfig.DEFAULT.anisotropyLevel));
-    final JComboBox<String> forceUNORMComboBox = new JComboBox<>(new String[]{ "关闭", "启用" });
     final JComboBox<String> alwaysUploadWithGraphicsQueueComboBox = new JComboBox<>(new String[]{ "关闭", "启用" });
 
     final VulkanConfig currentConfig = new VulkanConfig();

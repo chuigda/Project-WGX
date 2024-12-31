@@ -1,8 +1,8 @@
 package chr.wgx.render.vk.task;
 
-import chr.wgx.render.common.Color;
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
+import chr.wgx.render.info.RenderPassCreateInfo;
 import chr.wgx.render.task.RenderPass;
 import chr.wgx.render.task.RenderPipelineBind;
 import chr.wgx.render.vk.data.VulkanAttachment;
@@ -30,17 +30,18 @@ public final class VulkanRenderPass extends RenderPass {
     private final AtomicBoolean renderPassesNeedRecompilation;
 
     public VulkanRenderPass(
-            String renderPassName,
-            int priority,
-            List<Color> clearColors,
-            List<VulkanAttachment> colorAttachments,
-            Option<VulkanImageAttachment> depthAttachment,
+            RenderPassCreateInfo createInfo,
             Arena prefabArena,
             AtomicBoolean renderPassesNeedRecompilation
     ) {
-        super(renderPassName, priority, clearColors);
-        this.colorAttachments = colorAttachments;
-        this.depthAttachment = depthAttachment;
+        super(createInfo);
+
+        this.colorAttachments = createInfo.colorAttachmentInfos.stream()
+                .map(attachmentInfo -> (VulkanAttachment) attachmentInfo.attachment)
+                .toList();
+        this.depthAttachment = createInfo.depthAttachmentInfo
+                .map(attachmentInfo -> (VulkanImageAttachment) attachmentInfo.attachment);
+
         this.renderAreaWidth = colorAttachments.getFirst().createInfo.width;
         this.renderAreaHeight = colorAttachments.getFirst().createInfo.height;
 

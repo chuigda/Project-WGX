@@ -7,6 +7,9 @@ import chr.wgx.render.common.Color;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
 import chr.wgx.render.gles2.data.*;
+import chr.wgx.render.gles2.glext.EXT_draw_buffers;
+import chr.wgx.render.gles2.glext.EXT_texture_storage;
+import chr.wgx.render.gles2.glext.KHR_debug;
 import chr.wgx.render.gles2.task.GLES2RenderPass;
 import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
@@ -50,10 +53,10 @@ public final class GLES2RenderEngine extends RenderEngine {
             String extensionsString = extensions.readString();
             logger.info("支持的 OpenGL ES2 扩展: " + extensionsString);
 
-            if (Config.config().gles2Config.debug && extensionsString.contains("GL_KHR_debug")) {
-                GLES2KHRDebug debugFunctions;
+            if (Config.config().gles2Config.debug && extensionsString.contains(KHR_debug.EXTENSION_NAME)) {
+                KHR_debug debugFunctions;
                 try {
-                    debugFunctions = new GLES2KHRDebug(loadWithGLFW);
+                    debugFunctions = new KHR_debug(loadWithGLFW);
                     debugFunctions.glDebugMessageControl(
                             GLES2Constants.GL_DONT_CARE,
                             GLES2Constants.GL_DONT_CARE,
@@ -69,14 +72,22 @@ public final class GLES2RenderEngine extends RenderEngine {
                 }
             }
 
-            hasEXTDrawBuffers = extensionsString.contains("GL_EXT_draw_buffers");
+            hasEXTDrawBuffers = extensionsString.contains(EXT_draw_buffers.EXTENSION_NAME);
             if (hasEXTDrawBuffers) {
                 logger.info("已找到 GL_EXT_draw_buffers 扩展, 将会支持多个颜色附件");
             } else {
                 logger.warning("未找到 GL_EXT_draw_buffers 扩展, GLES2 渲染器将只能支持单个颜色附件");
             }
+
+            hasEXTTextureStorage = extensionsString.contains(EXT_texture_storage.EXTENSION_NAME);
+            if (hasEXTTextureStorage) {
+                logger.info("已找到 GL_EXT_texture_storage 扩展, 将会支持 R32 纹理格式");
+            } else {
+                logger.warning("未找到 GL_EXT_texture_storage 扩展, GLES2 渲染器将不支持 R32 纹理格式");
+            }
         } else {
             hasEXTDrawBuffers = false;
+            hasEXTTextureStorage = false;
             logger.warning("无法获取 OpenGL ES2 扩展列表, 所有扩展均不会启用");
         }
 
@@ -95,7 +106,7 @@ public final class GLES2RenderEngine extends RenderEngine {
 
         Pair<Attachment, Texture> colorAttachment = attachmentCreateAspect.createColorAttachmentImpl(
                 new AttachmentCreateInfo(
-                        PixelFormat.RGBA8888_FLOAT,
+                        PixelFormat.RGBA_OPTIMAL,
                         -1,
                         -1
                 )
@@ -230,20 +241,8 @@ public final class GLES2RenderEngine extends RenderEngine {
     }
 
     @Override
-    public RenderPass createRenderPass(
-            String renderPassName,
-            int priority,
-            List<Attachment> colorAttachments,
-            List<Color> clearColors,
-            Option<Attachment> depthAttachment
-    ) throws RenderException {
-        return invokeWithGLContext(() -> renderPassCreateAspect.createRenderPassImpl(
-                renderPassName,
-                priority,
-                colorAttachments,
-                clearColors,
-                depthAttachment
-        ));
+    public RenderPass createRenderPass(RenderPassCreateInfo info) throws RenderException {
+        return invokeWithGLContext(() -> renderPassCreateAspect.createRenderPassImpl(info));
     }
 
     public static final GLES2RenderEngineFactory FACTORY = new GLES2RenderEngineFactory();
@@ -278,6 +277,7 @@ public final class GLES2RenderEngine extends RenderEngine {
     final GLFW glfw;
     final GLFWwindow window;
     final boolean hasEXTDrawBuffers;
+    final boolean hasEXTTextureStorage;
 
     int framebufferWidth;
     int framebufferHeight;

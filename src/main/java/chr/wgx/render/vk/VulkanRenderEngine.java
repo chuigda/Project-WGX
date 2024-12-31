@@ -45,13 +45,12 @@ public final class VulkanRenderEngine extends RenderEngine {
             logger.info("交换链已创建, 图像数量=" + swapchain.swapchainImages.length);
         }
 
-        AttachmentCreateInfo pseudoColorAttachmentInfo = new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1);
+        AttachmentCreateInfo pseudoColorAttachmentInfo = new AttachmentCreateInfo(PixelFormat.RGBA_SWAPCHAIN, -1, -1);
         AttachmentCreateInfo pseudoDepthAttachmentInfo = new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1);
 
         swapchainColorAttachment = new VulkanSwapchainAttachment(
                 pseudoColorAttachmentInfo,
-                swapchain.swapchainImages[0],
-                swapchain.msaaColorImage
+                swapchain.swapchainImages[0]
         );
         swapchainDepthAttachment = new VulkanImageAttachment(
                 pseudoDepthAttachmentInfo,
@@ -89,7 +88,6 @@ public final class VulkanRenderEngine extends RenderEngine {
             throw e;
         }
 
-        swapchainColorAttachment.msaaColorImage = swapchain.msaaColorImage;
         swapchainDepthAttachment.image.value = swapchain.depthImage;
 
         List<Ref<Resource.Image>> updatedImages = new ArrayList<>();
@@ -139,7 +137,7 @@ public final class VulkanRenderEngine extends RenderEngine {
         boolean recompile = renderPassNeedCompilation.getAndSet(false);
         boolean updateUniform = uniformManuallyUpdated.getAndSet(false);
 
-        if (recompile || updateUniform) {
+        while (recompile || updateUniform) {
             cx.waitDeviceIdle();
 
             if (recompile) {
@@ -159,6 +157,9 @@ public final class VulkanRenderEngine extends RenderEngine {
                 long endTime = System.nanoTime();
                 logger.info("已更新标记为手动更新的 uniform 缓冲区, 共耗时 %d 微秒".formatted((endTime - startTime) / 1_000));
             }
+
+            recompile = renderPassNeedCompilation.getAndSet(false);
+            updateUniform = uniformManuallyUpdated.getAndSet(false);
         }
 
         renderFrameAspect.renderFrameImpl(currentFrameIndex);
@@ -271,22 +272,8 @@ public final class VulkanRenderEngine extends RenderEngine {
     }
 
     @Override
-    public RenderPass createRenderPass(
-            String renderPassName,
-            int priority,
-            List<Attachment> colorAttachments,
-            List<Color> clearColors,
-            Option<Attachment> depthAttachment
-    ) {
-        VulkanRenderPass ret = new VulkanRenderPass(
-                renderPassName,
-                priority,
-                clearColors,
-                colorAttachments.stream().map(attachment -> (VulkanAttachment) attachment).toList(),
-                depthAttachment.map(attachment -> (VulkanImageAttachment) attachment),
-                this.cx.prefabArena,
-                this.renderPassNeedCompilation
-        );
+    public RenderPass createRenderPass(RenderPassCreateInfo info) {
+        VulkanRenderPass ret = new VulkanRenderPass(info, this.cx.prefabArena, this.renderPassNeedCompilation);
         this.renderPasses.add(ret);
         this.renderPassNeedCompilation.set(true);
         return ret;
