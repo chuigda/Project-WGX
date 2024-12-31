@@ -63,11 +63,5 @@ public abstract class RenderEngine {
     public abstract DescriptorSet createDescriptorSet(DescriptorSetCreateInfo info) throws RenderException;
     public abstract RenderPipeline createPipeline(RenderPipelineCreateInfo info) throws RenderException;
 
-    public abstract RenderPass createRenderPass(
-            String renderPassName,
-            int priority,
-            List<Attachment> colorAttachments,
-            List<Color> clearColors,
-            Option<Attachment> depthAttachment
-    ) throws RenderException;
+    public abstract RenderPass createRenderPass(RenderPassCreateInfo info) throws RenderException;
 }

@@ -5,6 +5,7 @@ import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
 import chr.wgx.render.gles2.data.GLES2RenderPipeline;
 import chr.wgx.render.gles2.data.GLES2TextureAttachment;
+import chr.wgx.render.info.RenderPassCreateInfo;
 import chr.wgx.render.task.RenderPass;
 import chr.wgx.render.task.RenderPipelineBind;
 import tech.icey.xjbutil.container.Option;
@@ -23,14 +24,13 @@ public final class GLES2RenderPass extends RenderPass {
     public final ConcurrentSkipListSet<GLES2RenderPipelineBind> bindList = new ConcurrentSkipListSet<>();
 
     public GLES2RenderPass(
-            String renderPassName,
-            int priority,
+            RenderPassCreateInfo info,
             List<GLES2TextureAttachment> colorAttachments,
-            List<Color> clearColors,
             Option<GLES2TextureAttachment> depthAttachment,
             int framebufferObject
     ) {
-        super(renderPassName, priority, clearColors);
+        super(info);
+
         this.colorAttachments = colorAttachments;
         this.depthAttachment = depthAttachment;
         this.framebufferObject = framebufferObject;

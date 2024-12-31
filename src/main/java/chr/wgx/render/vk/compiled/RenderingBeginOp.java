@@ -1,11 +1,12 @@
 package chr.wgx.render.vk.compiled;
 
-import chr.wgx.render.common.Color;
+import chr.wgx.render.info.RenderPassAttachmentInfo;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.data.VulkanSwapchainAttachment;
+import chr.wgx.render.vk.task.VulkanRenderPass;
 import tech.icey.vk4j.datatype.*;
 import tech.icey.vk4j.enumtype.VkAttachmentLoadOp;
 import tech.icey.vk4j.enumtype.VkAttachmentStoreOp;
@@ -16,38 +17,30 @@ import tech.icey.xjbutil.container.Option;
 import java.util.List;
 
 public final class RenderingBeginOp implements CompiledRenderPassOp {
-    private final List<VulkanAttachment> colorAttachments;
-    private final List<Color> clearColors;
-    private final Option<VulkanImageAttachment> depthAttachment;
-    private final int renderAreaWidth;
-    private final int renderAreaHeight;
+    private final VulkanRenderPass renderPass;
 
     private final VkRenderingInfo renderingInfo;
     private final VkRenderingAttachmentInfo[] colorAttachmentInfos;
     private final Option<VkRenderingAttachmentInfo> depthAttachmentInfo;
 
+    private final VkExtent2D renderAreaExtent;
     private final VkViewport viewport;
     private final VkRect2D scissor;
     private final VkExtent2D scissorExtent;
 
     public RenderingBeginOp(
             VulkanRenderEngineContext cx,
-            List<VulkanAttachment> colorAttachments,
-            List<Color> clearColors,
-            Option<VulkanImageAttachment> depthAttachment,
-            int renderAreaWidth,
-            int renderAreaHeight,
+            VulkanRenderPass renderPass,
 
             List<Boolean> colorAttachmentInitialized,
             List<Boolean> colorAttachmentUsedInFuture,
             boolean depthAttachmentInitialized,
             boolean depthAttachmentUsedInFuture
     ) {
-        this.colorAttachments = colorAttachments;
-        this.clearColors = clearColors;
-        this.depthAttachment = depthAttachment;
-        this.renderAreaWidth = renderAreaWidth;
-        this.renderAreaHeight = renderAreaHeight;
+        this.renderPass = renderPass;
+
+        int renderAreaWidth = renderPass.renderAreaWidth;
+        int renderAreaHeight = renderPass.renderAreaHeight;
 
         renderingInfo = VkRenderingInfo.allocate(cx.prefabArena);
         if (renderAreaWidth != -1) {
@@ -55,17 +48,20 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             renderingInfo.renderArea().extent().height(renderAreaHeight);
         }
 
-        colorAttachmentInfos = VkRenderingAttachmentInfo.allocate(cx.prefabArena, colorAttachments.size());
-        for (int i = 0; i < colorAttachments.size(); i++) {
+        colorAttachmentInfos = VkRenderingAttachmentInfo.allocate(
+                cx.prefabArena,
+                renderPass.colorAttachments.size()
+        );
+        for (int i = 0; i < renderPass.colorAttachments.size(); i++) {
             VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos[i];
-            VulkanAttachment colorAttachment = colorAttachments.get(i);
+            RenderPassAttachmentInfo attachmentInfo = renderPass.info.colorAttachmentInfos.get(i);
 
             colorAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             if (colorAttachmentInitialized.get(i)) {
                 colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
             } else {
                 colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
-                clearColors.get(i).writeTo(colorAttachmentInfo.clearValue().color());
+                attachmentInfo.clearColor.writeTo(colorAttachmentInfo.clearValue().color());
             }
 
             colorAttachmentInfo.storeOp(
@@ -75,7 +71,7 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             );
         }
 
-        depthAttachmentInfo = depthAttachment.map(_ -> {
+        depthAttachmentInfo = renderPass.depthAttachment.map(_ -> {
             VkRenderingAttachmentInfo info = VkRenderingAttachmentInfo.allocate(cx.prefabArena);
             info.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
             if (depthAttachmentInitialized) {
@@ -99,6 +95,8 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             renderingInfo.pDepthAttachment(some.value);
         }
 
+        renderAreaExtent = renderingInfo.renderArea().extent();
+
         this.viewport = VkViewport.allocate(cx.prefabArena);
         viewport.minDepth(0.0f);
         viewport.maxDepth(1.0f);
@@ -113,12 +111,18 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             VkCommandBuffer cmdBuf,
             int frameIndex
     ) {
+        int renderAreaWidth = renderPass.renderAreaWidth;
+        int renderAreaHeight = renderPass.renderAreaHeight;
         if (renderAreaWidth == -1) {
-            renderingInfo.renderArea().extent(swapchain.swapExtent);
+            renderAreaWidth = swapchain.swapExtent.width();
+            renderAreaHeight = swapchain.swapExtent.height();
         }
 
-        for (int i = 0; i < colorAttachments.size(); i++) {
-            VulkanAttachment colorAttachment = colorAttachments.get(i);
+        renderAreaExtent.width(renderAreaWidth);
+        renderAreaExtent.height(renderAreaHeight);
+
+        for (int i = 0; i < colorAttachmentInfos.length; i++) {
+            VulkanAttachment colorAttachment = renderPass.colorAttachments.get(i);
             VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos[i];
 
             switch (colorAttachment) {
@@ -132,18 +136,11 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
         }
 
         if (depthAttachmentInfo instanceof Option.Some<VkRenderingAttachmentInfo> some) {
-            VulkanImageAttachment attachment = depthAttachment.get();
+            VulkanImageAttachment attachment = renderPass.depthAttachment.get();
             some.value.imageView(attachment.image.value.imageView);
         }
 
         cx.dCmd.vkCmdBeginRendering(cmdBuf, renderingInfo);
-
-        int renderAreaWidth = colorAttachments.getFirst().createInfo.width;
-        int renderAreaHeight = colorAttachments.getFirst().createInfo.height;
-        if (renderAreaWidth == -1) {
-            renderAreaWidth = swapchain.swapExtent.width();
-            renderAreaHeight = swapchain.swapExtent.height();
-        }
 
         viewport.width(renderAreaWidth);
         viewport.height(renderAreaHeight);

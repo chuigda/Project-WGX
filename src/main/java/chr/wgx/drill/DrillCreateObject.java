@@ -120,13 +120,16 @@ public class DrillCreateObject {
                 Attachment defaultColorAttachment = defaultAttachments.first();
                 Attachment defaultDepthAttachment = defaultAttachments.second();
 
-                RenderPass renderPass1 = engine.createRenderPass(
+                RenderPass renderPass1 = engine.createRenderPass(new RenderPassCreateInfo(
                         "FIRST_renderToTexture",
                         0,
-                        List.of(rttTargetAttachment),
-                        List.of(new Color(1.0f, 1.0f, 1.0f, 1.0f)),
-                        Option.none()
-                );
+                        new RenderPassAttachmentInfo(
+                                rttTargetAttachment,
+                                ClearBehavior.CLEAR_ONCE,
+                                new Color(1.0f, 1.0f, 1.0f, 1.0f)
+                        )
+                ));
+
                 RenderPipelineBind pipelineBind1 = renderPass1.createPipelineBind(0, pipeline1);
                 RenderTaskGroup taskGroup1 = pipelineBind1.createRenderTaskGroup(List.of());
                 RenderTask task1 = taskGroup1.addRenderTask(
@@ -138,14 +141,21 @@ public class DrillCreateObject {
                         List.of()
                 );
 
-                RenderPass renderPass2 = engine.createRenderPass(
+                RenderPass renderPass2 = engine.createRenderPass(new RenderPassCreateInfo(
                         "FINAL_presentToScreen",
                         1,
-                        List.of(defaultColorAttachment),
-                        List.of(new Color(0.0f, 0.0f, 0.2f, 1.0f)),
-                        Option.some(defaultDepthAttachment)
-                );
+                        new RenderPassAttachmentInfo(
+                                defaultColorAttachment,
+                                ClearBehavior.CLEAR_ONCE,
+                                new Color(0.0f, 0.0f, 0.2f, 1.0f)
+                        ),
+                        new RenderPassAttachmentInfo(
+                                defaultDepthAttachment,
+                                ClearBehavior.CLEAR_ONCE
+                        )
+                ));
                 renderPass2.addInputAttachments(List.of(rttTargetAttachment));
+
                 RenderPipelineBind pipelineBind2 = renderPass2.createPipelineBind(0, pipeline2);
                 RenderTaskGroup taskGroup2 = pipelineBind2.createRenderTaskGroup(List.of());
                 RenderTask task2 = taskGroup2.addRenderTask(

@@ -84,7 +84,9 @@ public final class ASPECT_RenderFrame {
                     : firstAttachment.createInfo.height;
             gles2.glViewport(0, 0, actualWidth, actualHeight);
 
-            Color clearColor = renderPass.clearColors.getFirst();
+            // TODO find a way to support multiple clear colors
+            // TODO attachment clear analysis
+            Color clearColor = renderPass.info.colorAttachmentInfos.getFirst().clearColor;
             gles2.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
             gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT | GLES2Constants.GL_DEPTH_BUFFER_BIT);
 

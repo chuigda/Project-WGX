@@ -1,20 +1,16 @@
 package chr.wgx.render.task;
 
-import chr.wgx.render.common.Color;
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
+import chr.wgx.render.info.RenderPassCreateInfo;
 
 import java.util.List;
 
 public abstract class RenderPass implements Comparable<RenderPass> {
-    public final String renderPassName;
-    public final int priority;
-    public final List<Color> clearColors;
+    public final RenderPassCreateInfo info;
 
-    protected RenderPass(String renderPassName, int priority, List<Color> clearColors) {
-        this.renderPassName = renderPassName;
-        this.priority = priority;
-        this.clearColors = clearColors;
+    protected RenderPass(RenderPassCreateInfo info) {
+        this.info = info;
     }
 
     public abstract void addInputAttachments(List<Attachment> attachments);
@@ -23,6 +19,6 @@ public abstract class RenderPass implements Comparable<RenderPass> {
 
     @Override
     public final int compareTo(RenderPass o) {
-        return Integer.compare(priority, o.priority);
+        return Integer.compare(info.priority, o.info.priority);
     }
 }

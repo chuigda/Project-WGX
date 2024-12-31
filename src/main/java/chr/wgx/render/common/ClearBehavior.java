@@ -1,7 +1,10 @@
 package chr.wgx.render.common;
 
 public enum ClearBehavior {
-    DONT_CLEAR,
+    /// 如果附件在被使用时尚未被清除，则清除它
     CLEAR_ONCE,
-    CLEAR_ALWAYS
+    /// 总是清除附件
+    CLEAR_ALWAYS,
+    /// 总是不清除附件
+    CLEAR_NEVER
 }

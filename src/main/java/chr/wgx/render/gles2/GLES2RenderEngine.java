@@ -241,20 +241,8 @@ public final class GLES2RenderEngine extends RenderEngine {
     }
 
     @Override
-    public RenderPass createRenderPass(
-            String renderPassName,
-            int priority,
-            List<Attachment> colorAttachments,
-            List<Color> clearColors,
-            Option<Attachment> depthAttachment
-    ) throws RenderException {
-        return invokeWithGLContext(() -> renderPassCreateAspect.createRenderPassImpl(
-                renderPassName,
-                priority,
-                colorAttachments,
-                clearColors,
-                depthAttachment
-        ));
+    public RenderPass createRenderPass(RenderPassCreateInfo info) throws RenderException {
+        return invokeWithGLContext(() -> renderPassCreateAspect.createRenderPassImpl(info));
     }
 
     public static final GLES2RenderEngineFactory FACTORY = new GLES2RenderEngineFactory();

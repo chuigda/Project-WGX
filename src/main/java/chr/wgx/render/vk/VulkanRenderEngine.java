@@ -269,22 +269,8 @@ public final class VulkanRenderEngine extends RenderEngine {
     }
 
     @Override
-    public RenderPass createRenderPass(
-            String renderPassName,
-            int priority,
-            List<Attachment> colorAttachments,
-            List<Color> clearColors,
-            Option<Attachment> depthAttachment
-    ) {
-        VulkanRenderPass ret = new VulkanRenderPass(
-                renderPassName,
-                priority,
-                clearColors,
-                colorAttachments.stream().map(attachment -> (VulkanAttachment) attachment).toList(),
-                depthAttachment.map(attachment -> (VulkanImageAttachment) attachment),
-                this.cx.prefabArena,
-                this.renderPassNeedCompilation
-        );
+    public RenderPass createRenderPass(RenderPassCreateInfo info) {
+        VulkanRenderPass ret = new VulkanRenderPass(info, this.cx.prefabArena, this.renderPassNeedCompilation);
         this.renderPasses.add(ret);
         this.renderPassNeedCompilation.set(true);
         return ret;
