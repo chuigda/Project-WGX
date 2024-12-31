@@ -45,7 +45,7 @@ public final class VulkanRenderEngine extends RenderEngine {
             logger.info("交换链已创建, 图像数量=" + swapchain.swapchainImages.length);
         }
 
-        AttachmentCreateInfo pseudoColorAttachmentInfo = new AttachmentCreateInfo(PixelFormat.RGBA8888_FLOAT, -1, -1);
+        AttachmentCreateInfo pseudoColorAttachmentInfo = new AttachmentCreateInfo(PixelFormat.RGBA_SWAPCHAIN, -1, -1);
         AttachmentCreateInfo pseudoDepthAttachmentInfo = new AttachmentCreateInfo(PixelFormat.DEPTH_BUFFER_OPTIMAL, -1, -1);
 
         swapchainColorAttachment = new VulkanSwapchainAttachment(

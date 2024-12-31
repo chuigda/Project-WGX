@@ -1,4 +1,4 @@
-package chr.wgx.render.gles2;
+package chr.wgx.render.gles2.glext;
 
 import tech.icey.panama.RawFunctionLoader;
 import tech.icey.panama.buffer.IntBuffer;
@@ -10,7 +10,9 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.util.Objects;
 
-public class GLES2EXTDrawBuffers {
+public class EXT_draw_buffers {
+    public static final String EXTENSION_NAME = "GL_EXT_draw_buffers";
+
     public static final int GL_MAX_COLOR_ATTACHMENTS_EXT = 0x8CDF;
 
     public static final int GL_COLOR_ATTACHMENT0_EXT = 0x8CE0;
@@ -40,7 +42,7 @@ public class GLES2EXTDrawBuffers {
         }
     }
 
-    public GLES2EXTDrawBuffers(RawFunctionLoader loader) {
+    public EXT_draw_buffers(RawFunctionLoader loader) {
         MemorySegment pfn = loader.apply("glDrawBuffersEXT");
         HANDLE$glDrawBuffersEXT = Objects.requireNonNull(RawFunctionLoader.link(pfn, DESCRIPTOR$glDrawBuffersEXT));
     }
