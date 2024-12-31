@@ -14,6 +14,7 @@ import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.xjbutil.container.Option;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 public final class ASPECT_RenderPassCompilation {
@@ -27,7 +28,7 @@ public final class ASPECT_RenderPassCompilation {
         List<CompiledRenderPassOp> compiled = new ArrayList<>();
         HashMap<VulkanAttachment, Integer> currentLayouts = new HashMap<>();
         HashSet<VulkanAttachment> attachmentInitialized = new HashSet<>();
-        HashMap<Attachment, Integer> attachmentUsageCounts = getAttachmentFutureUsageCounts();
+        HashMap<Attachment, AttachmentFutureUsageStat> attachmentFutureUsage = getAttachmentFutureUsage();
 
         for (VulkanRenderPass renderPass : engine.renderPasses) {
             List<VulkanAttachment> transformedAttachments = new ArrayList<>();
@@ -71,14 +72,15 @@ public final class ASPECT_RenderPassCompilation {
                 compiled.add(new ImageBarrierOp(engine.cx, transformedAttachments, oldLayout, newLayout));
             }
 
-            updateAttachmentFutureUsageCounts(attachmentUsageCounts, renderPass);
-
             List<Boolean> colorAttachmentInitialized = renderPass.colorAttachments.stream()
                     .map(attachmentInitialized::contains)
                     .toList();
             // 分析附件被写入之后，后续的使用情况
             List<Boolean> colorAttachmentUsedInFuture = renderPass.colorAttachments.stream()
-                    .map(att -> attachmentUsageCounts.getOrDefault(att, 0) > 0)
+                    .map(att -> {
+                        var stat = attachmentFutureUsage.get(att);
+                        return stat != null && !stat.isNotUsedInFuture(renderPass);
+                    })
                     .toList();
             attachmentInitialized.addAll(renderPass.colorAttachments);
             boolean depthAttachmentInitialized;
@@ -120,56 +122,72 @@ public final class ASPECT_RenderPassCompilation {
         engine.compiledRenderPassOps = compiled;
     }
 
-    private HashMap<Attachment, Integer> getAttachmentFutureUsageCounts() {
-        HashMap<Attachment, Integer> totalFutureUsageCounts = new HashMap<>();
-        for (VulkanRenderPass renderPass : engine.renderPasses) {
-            // 如果是 input，则被用到
-            for (VulkanAttachment attachment : renderPass.inputAttachments) {
-                totalFutureUsageCounts.compute(attachment, (_, value) -> value == null ? 1 : value + 1);
+    private static class AttachmentFutureUsageStat {
+        public @Nullable RenderPass lastRenderPassAsInput = null;
+        public ArrayList<RenderPass> futureNotUsedPasses = new ArrayList<>();
+
+        private boolean pastLastRenderPassAsInput = false;
+
+        // used for initialization
+        private boolean isNextOneClearAlways = true;
+
+        public void initWithOutputPassAndAttachment(RenderPass pass, ClearBehavior clearBehavior) {
+            if (isNextOneClearAlways) {
+                futureNotUsedPasses.add(pass);
             }
-            // 如果 output 清除方式是 CLEAR_NEVER 或 CLEAR_ONCE，则被用到
-            for (RenderPassAttachmentInfo attachmentInfo : renderPass.info.colorAttachmentInfos) {
-                if (attachmentInfo.clearBehavior == ClearBehavior.CLEAR_NEVER
-                        || attachmentInfo.clearBehavior == ClearBehavior.CLEAR_ONCE) {
-                    totalFutureUsageCounts.compute(
-                            attachmentInfo.attachment,
-                            (_, value) -> value == null ? 1 : value + 1);
-                }
-            }
-            if (renderPass.info.depthAttachmentInfo.isSome() && (
-                    renderPass.info.depthAttachmentInfo.get().clearBehavior == ClearBehavior.CLEAR_NEVER
-                    || renderPass.info.depthAttachmentInfo.get().clearBehavior == ClearBehavior.CLEAR_ONCE)
-            ) {
-                totalFutureUsageCounts.compute(
-                        renderPass.info.depthAttachmentInfo.get().attachment,
-                        (_, value) -> value == null ? 1 : value + 1);
-            }
+            isNextOneClearAlways = clearBehavior == ClearBehavior.CLEAR_ALWAYS;
         }
-        return totalFutureUsageCounts;
+
+        public boolean isNotUsedInFuture(RenderPass renderPass) {
+            if (lastRenderPassAsInput != null && lastRenderPassAsInput == renderPass) {
+                pastLastRenderPassAsInput = true;
+            }
+            if (futureNotUsedPasses.isEmpty()) {
+                return pastLastRenderPassAsInput;
+            } else if (futureNotUsedPasses.getLast() == renderPass) {
+                futureNotUsedPasses.removeLast();
+            } else {
+                return false;
+            }
+            return pastLastRenderPassAsInput;
+        }
     }
 
-    private void updateAttachmentFutureUsageCounts(HashMap<Attachment, Integer> futureUsageCounts, VulkanRenderPass renderPass) {
-        // 如果是 input，则被用到，计数 -1
-        for (VulkanAttachment attachment : renderPass.inputAttachments) {
-            // map 中如果没有这个元素，说明值发生变化，会触发下一次 recompile。这次将会是未定义行为。直接返回 null。
-            futureUsageCounts.compute(attachment, (_, cnt) -> cnt == null ? null : cnt - 1);
-        }
-        // 如果 output 清除方式是 CLEAR_NEVER 或 CLEAR_ONCE，则被用到，计数 -1
-        for (RenderPassAttachmentInfo attachmentInfo : renderPass.info.colorAttachmentInfos) {
-            if (attachmentInfo.clearBehavior == ClearBehavior.CLEAR_NEVER
-                    || attachmentInfo.clearBehavior == ClearBehavior.CLEAR_ONCE) {
-                futureUsageCounts.compute(
-                        attachmentInfo.attachment,
-                        (_, cnt) -> cnt == null ? null : cnt - 1);
+    private HashMap<Attachment, AttachmentFutureUsageStat> getAttachmentFutureUsage() {
+        HashMap<Attachment, AttachmentFutureUsageStat> futureUsage = new HashMap<>();
+        var passes = engine.renderPasses.stream().toList();
+        for (int i = passes.size() - 1; i >= 0; i--) {
+            var renderPass = passes.get(i);
+            // input
+            for (VulkanAttachment attachment : renderPass.inputAttachments) {
+                futureUsage.compute(attachment, (_, value) -> {
+                    if (value == null || value.lastRenderPassAsInput == null) {
+                        value = new AttachmentFutureUsageStat();
+                        value.lastRenderPassAsInput = renderPass;
+                    }
+                    return value;
+                });
+            }
+            // output
+            for (RenderPassAttachmentInfo attachmentInfo : renderPass.info.colorAttachmentInfos) {
+                futureUsage.compute(attachmentInfo.attachment, (_, value) -> {
+                    if (value == null) {
+                        value = new AttachmentFutureUsageStat();
+                    }
+                    value.initWithOutputPassAndAttachment(renderPass, attachmentInfo.clearBehavior);
+                    return value;
+                });
+            }
+            if (renderPass.info.depthAttachmentInfo.isSome()) {
+                futureUsage.compute(renderPass.info.depthAttachmentInfo.get().attachment, (_, value) -> {
+                    if (value == null) {
+                        value = new AttachmentFutureUsageStat();
+                    }
+                    value.initWithOutputPassAndAttachment(renderPass, renderPass.info.depthAttachmentInfo.get().clearBehavior);
+                    return value;
+                });
             }
         }
-        if (renderPass.info.depthAttachmentInfo.isSome() && (
-                renderPass.info.depthAttachmentInfo.get().clearBehavior == ClearBehavior.CLEAR_NEVER
-                        || renderPass.info.depthAttachmentInfo.get().clearBehavior == ClearBehavior.CLEAR_ONCE)
-        ) {
-            futureUsageCounts.compute(
-                    renderPass.info.depthAttachmentInfo.get().attachment,
-                    (_, cnt) -> cnt == null ? null : cnt - 1);
-        }
+        return futureUsage;
     }
 }
