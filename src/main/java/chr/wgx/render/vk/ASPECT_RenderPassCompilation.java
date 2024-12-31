@@ -54,18 +54,24 @@ public final class ASPECT_RenderPassCompilation {
             }
 
             // 将所有输出附件的布局转换为可供颜色附件使用的布局
-            for (VulkanAttachment colorAttachment : renderPass.colorAttachments) {
-                @enumtype(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
-                        colorAttachment,
-                        VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
-                );
+            for (RenderPassAttachmentInfo colorAttachmentInfo : renderPass.info.colorAttachmentInfos) {
+                VulkanAttachment attachment = (VulkanAttachment) colorAttachmentInfo.attachment;
+
+                @enumtype(VkImageLayout.class) int currentLayout;
+                if (colorAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS) {
+                    // 如果已经确定需要清除附件，则无需指定具体的起始布局
+                    currentLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+                } else {
+                    currentLayout = currentLayouts.getOrDefault(attachment, VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
+                }
+
                 if (currentLayout != VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-                    transformedAttachments.add(colorAttachment);
+                    transformedAttachments.add(attachment);
                     oldLayout.add(currentLayout);
                     newLayout.add(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
                 }
 
-                currentLayouts.put(colorAttachment, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                currentLayouts.put(attachment, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             }
 
             if (!transformedAttachments.isEmpty()) {
@@ -75,21 +81,33 @@ public final class ASPECT_RenderPassCompilation {
             List<Boolean> colorAttachmentInitialized = renderPass.colorAttachments.stream()
                     .map(attachmentInitialized::contains)
                     .toList();
-            // 分析附件被写入之后，后续的使用情况
             List<Boolean> colorAttachmentUsedInFuture = renderPass.colorAttachments.stream()
                     .map(att -> {
-                        var stat = attachmentFutureUsage.get(att);
+                        // 总是假设对交换链颜色附件的写入会被使用
+                        if (att == engine.swapchainColorAttachment) {
+                            return true;
+                        }
+
+                        AttachmentFutureUsageStat stat = attachmentFutureUsage.get(att);
                         return stat != null && !stat.isNotUsedInFuture(renderPass);
                     })
                     .toList();
             attachmentInitialized.addAll(renderPass.colorAttachments);
+
             boolean depthAttachmentInitialized;
             if (renderPass.depthAttachment instanceof Option.Some<VulkanImageAttachment> some) {
                 depthAttachmentInitialized = attachmentInitialized.contains(some.value);
+                attachmentInitialized.add(some.value);
             } else {
                 depthAttachmentInitialized = false;
             }
-            boolean depthAttachmentUsedInFuture = true; // TODO: 分析深度附件被写入之后，后续的使用情况
+            boolean depthAttachmentUsedInFuture;
+            if (renderPass.depthAttachment instanceof Option.Some<VulkanImageAttachment> some) {
+                AttachmentFutureUsageStat stat = attachmentFutureUsage.get(some.value);
+                depthAttachmentUsedInFuture = stat != null && !stat.isNotUsedInFuture(renderPass);
+            } else {
+                depthAttachmentUsedInFuture = false;
+            }
 
             compiled.add(new RenderingBeginOp(
                     engine.cx,
@@ -155,9 +173,9 @@ public final class ASPECT_RenderPassCompilation {
 
     private HashMap<Attachment, AttachmentFutureUsageStat> getAttachmentFutureUsage() {
         HashMap<Attachment, AttachmentFutureUsageStat> futureUsage = new HashMap<>();
-        var passes = engine.renderPasses.stream().toList();
+        List<VulkanRenderPass> passes = engine.renderPasses.stream().toList();
         for (int i = passes.size() - 1; i >= 0; i--) {
-            var renderPass = passes.get(i);
+            VulkanRenderPass renderPass = passes.get(i);
             // input
             for (VulkanAttachment attachment : renderPass.inputAttachments) {
                 futureUsage.compute(attachment, (_, value) -> {
@@ -178,12 +196,12 @@ public final class ASPECT_RenderPassCompilation {
                     return value;
                 });
             }
-            if (renderPass.info.depthAttachmentInfo.isSome()) {
-                futureUsage.compute(renderPass.info.depthAttachmentInfo.get().attachment, (_, value) -> {
+            if (renderPass.info.depthAttachmentInfo instanceof Option.Some<RenderPassAttachmentInfo> some) {
+                futureUsage.compute(some.value.attachment, (_, value) -> {
                     if (value == null) {
                         value = new AttachmentFutureUsageStat();
                     }
-                    value.initWithOutputPassAndAttachment(renderPass, renderPass.info.depthAttachmentInfo.get().clearBehavior);
+                    value.initWithOutputPassAndAttachment(renderPass, some.value.clearBehavior);
                     return value;
                 });
             }

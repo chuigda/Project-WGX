@@ -1,5 +1,6 @@
 package chr.wgx.render.vk.compiled;
 
+import chr.wgx.render.common.ClearBehavior;
 import chr.wgx.render.info.RenderPassAttachmentInfo;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
@@ -57,11 +58,13 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             RenderPassAttachmentInfo attachmentInfo = renderPass.info.colorAttachmentInfos.get(i);
 
             colorAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            if (colorAttachmentInitialized.get(i)) {
-                colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
-            } else {
+
+            if (attachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
+                || !colorAttachmentInitialized.get(i)) {
                 colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
                 attachmentInfo.clearColor.writeTo(colorAttachmentInfo.clearValue().color());
+            } else {
+                colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
             }
 
             colorAttachmentInfo.storeOp(
@@ -73,18 +76,22 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
 
         depthAttachmentInfo = renderPass.depthAttachment.map(_ -> {
             VkRenderingAttachmentInfo info = VkRenderingAttachmentInfo.allocate(cx.prefabArena);
+            RenderPassAttachmentInfo renderPassAttachmentInfo = renderPass.info.depthAttachmentInfo.get();
+
             info.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-            if (depthAttachmentInitialized) {
-                info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
-            } else {
+            if (renderPassAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
+                || !depthAttachmentInitialized) {
                 info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
                 info.clearValue().depthStencil().depth(1.0f);
-            }
-            if (depthAttachmentUsedInFuture) {
-                info.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE);
             } else {
-                info.storeOp(VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE);
+                info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
             }
+
+            info.storeOp(
+                    depthAttachmentUsedInFuture
+                            ? VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE
+                            : VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE
+            );
             return info;
         });
 
