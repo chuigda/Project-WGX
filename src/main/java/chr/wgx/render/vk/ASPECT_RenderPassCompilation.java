@@ -83,7 +83,7 @@ public final class ASPECT_RenderPassCompilation {
             } else {
                 depthAttachmentInitialized = false;
             }
-            boolean depthAttachmentUsedInFuture = true; // 分析深度附件被写入之后，后续的使用情况
+            boolean depthAttachmentUsedInFuture = true; // TODO: 分析深度附件被写入之后，后续的使用情况
 
             compiled.add(new RenderingBeginOp(
                     engine.cx,
