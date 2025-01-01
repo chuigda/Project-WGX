@@ -3,7 +3,6 @@ package chr.wgx.render.gles2;
 import chr.wgx.config.Config;
 import chr.wgx.render.RenderEngine;
 import chr.wgx.render.RenderException;
-import chr.wgx.render.common.Color;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.*;
 import chr.wgx.render.gles2.data.*;
@@ -22,7 +21,6 @@ import tech.icey.panama.RawFunctionLoader;
 import tech.icey.panama.buffer.ByteBuffer;
 import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.xjbutil.container.Either;
-import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.sync.Oneshot;
 

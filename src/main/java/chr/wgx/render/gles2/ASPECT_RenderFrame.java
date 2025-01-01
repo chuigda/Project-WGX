@@ -68,6 +68,8 @@ public final class ASPECT_RenderFrame {
 
     void renderFrameImpl() throws RenderException {
         GLES2 gles2 = engine.gles2;
+        gles2.glDisable(GLES2Constants.GL_CULL_FACE);
+        gles2.glDisable(GLES2Constants.GL_BLEND);
 
         gles2.glGetIntegerv(GLES2Constants.GL_FRAMEBUFFER_BINDING, pDefaultFramebuffer);
         int defaultFramebuffer = pDefaultFramebuffer.read();
@@ -88,7 +90,10 @@ public final class ASPECT_RenderFrame {
             // TODO attachment clear analysis
             Color clearColor = renderPass.info.colorAttachmentInfos.getFirst().clearColor;
             gles2.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-            gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT | GLES2Constants.GL_DEPTH_BUFFER_BIT);
+            gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
+            if (renderPass.info.depthAttachmentInfo.isSome()) {
+                gles2.glClear(GLES2Constants.GL_DEPTH_BUFFER_BIT);
+            }
 
             for (GLES2RenderPipelineBind pipelineBind : renderPass.bindList) {
                 gles2.glUseProgram(pipelineBind.pipeline.shaderProgram);
@@ -185,8 +190,8 @@ public final class ASPECT_RenderFrame {
                             }
                         }
 
-                        gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, renderTask.renderObject.vertexVBO);
                         gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, renderTask.renderObject.indexVBO);
+                        gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, renderTask.renderObject.vertexVBO);
 
                         for (FieldInfo vertexInput : pipelineBind.pipeline.createInfo.vertexInputInfo.attributes) {
                             int location = vertexInput.location;

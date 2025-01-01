@@ -32,7 +32,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                 ShaderStage.VERTEX,
                 List.of(
                         new FieldInfoInput("view", CGType.Mat4),
-                        new FieldInfoInput("projection", CGType.Mat4)
+                        new FieldInfoInput("proj", CGType.Mat4)
                 )
         );
         UniformBufferBindingInfo materialBindingInfo = new UniformBufferBindingInfo(
@@ -206,7 +206,10 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                         ResourceUtil.readBinaryFile("/resources/shader/wgc0310v1/vk/phong.vert.spv"),
                         ResourceUtil.readBinaryFile("/resources/shader/wgc0310v1/vk/phong.frag.spv")
                 )),
-                Option.none(),
+                Option.some(new ShaderProgram.GLES2(
+                        ResourceUtil.readTextFile("/resources/shader/wgc0310v1/gles2/phong.vert"),
+                        ResourceUtil.readTextFile("/resources/shader/wgc0310v1/gles2/phong.frag")
+                )),
                 1,
                 true
         ));
