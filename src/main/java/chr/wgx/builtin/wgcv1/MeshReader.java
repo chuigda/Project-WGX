@@ -39,8 +39,8 @@ public final class MeshReader {
                     Vector3f v2 = vertexBank.get(index2);
                     Vector3f v3 = vertexBank.get(index3);
 
-                    Vector3f v2v1 = v2.sub(v1);
-                    Vector3f v3v2 = v3.sub(v2);
+                    Vector3f v2v1 = new Vector3f(v2).sub(v1);
+                    Vector3f v3v2 = new Vector3f(v3).sub(v2);
                     Vector3f normal = v2v1.cross(v3v2).normalize();
 
                     addVector(vertices, v1); addVector(vertices, normal);
