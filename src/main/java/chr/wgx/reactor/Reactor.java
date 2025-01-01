@@ -2,6 +2,7 @@ package chr.wgx.reactor;
 
 import chr.wgx.builtin.wgcv1.WGCV1Factory;
 import chr.wgx.reactor.plugin.IPlugin;
+import chr.wgx.reactor.plugin.IPluginBehavior;
 import chr.wgx.reactor.plugin.IPluginFactory;
 import chr.wgx.render.RenderEngine;
 import chr.wgx.ui.ControlWindow;
@@ -9,6 +10,8 @@ import tech.icey.xjbutil.container.Pair;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -52,11 +55,17 @@ public final class Reactor {
 
         // TODO make this configurable, or maybe construct this list somewhere else
         List<IPluginFactory> pluginFactoryList = List.of(new WGCV1Factory());
+        SortedSet<IPluginBehavior> pluginBehaviors = new TreeSet<>();
 
         for (IPluginFactory factory : pluginFactoryList) {
             try {
                 IPlugin plugin = factory.create(reactor);
-                logger.info("插件初始化成功: " + factory.name() + " (" + plugin.className() + ")");
+                logger.info("插件 " + factory.name() + " (" + plugin.className() + ") 初始化成功");
+
+                for (IPluginBehavior behavior : plugin.behaviors()) {
+                    pluginBehaviors.add(behavior);
+                    logger.info("插件 " + factory.name() + " 注册行为 " + behavior.name());
+                }
             } catch (Throwable e) {
                 logger.severe("无法初始化插件 " + factory.name() + ": " + e.getMessage());
             }
@@ -71,6 +80,14 @@ public final class Reactor {
                 reactor.framebufferWidth = reactor.framebufferSize.get().first();
                 reactor.framebufferHeight = reactor.framebufferSize.get().second();
                 reactor.framebufferResized = true;
+            }
+
+            for (IPluginBehavior behavior : pluginBehaviors) {
+                try {
+                    behavior.tick(reactor);
+                } catch (Throwable e) {
+                    logger.severe("行为 " + behavior.name() + " 执行时发生异常: " + e.getMessage());
+                }
             }
 
             // finalize

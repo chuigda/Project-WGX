@@ -40,9 +40,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                 ShaderStage.FRAGMENT,
                 List.of(
                         new FieldInfoInput("ambient", CGType.Vec4),
-                        new FieldInfoInput("diffuse", CGType.Vec4),
-                        new FieldInfoInput("specular", CGType.Vec4),
-                        new FieldInfoInput("shininess", CGType.Float)
+                        new FieldInfoInput("diffuse", CGType.Vec4)
                 )
         );
         DescriptorSetLayout colorPassDescriptorSetLayout = engine.createDescriptorSetLayout(
@@ -51,56 +49,55 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         );
         reactor.stablePool.put("WGCV1_ViewProjSetLayout", colorPassDescriptorSetLayout);
 
-        UniformBuffer viewProj = engine.createUniform(
+        this.viewProjBuffer = engine.createUniform(
                 new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, viewProjBindingInfo)
         );
-        viewProj.updateBufferContent(segment -> {
-            Matrix4f view = new Matrix4f();
-            view.lookAt(0.0f, 0.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-            view.get(segment.asByteBuffer().asFloatBuffer());
 
-            Matrix4f projection = new Matrix4f();
-            projection.scale(1.0f, -1.0f, 1.0f)
-                    .perspective((float) Math.toRadians(45.0f), 1.0f, 0.1f, 100.0f, true);
-            projection.get(segment.asSlice(16 * Float.BYTES).asByteBuffer().asFloatBuffer());
-        });
-        reactor.stablePool.put("WGCV1_ViewProj", viewProj);
+        float[] viewProjData = new float[32];
+        Matrix4f view = new Matrix4f();
+        view.scale(1.0f, -1.0f, 1.0f);
+        view.lookAt(40.0f, 40.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+        view.get(viewProjData, 0);
+        Matrix4f projection = new Matrix4f();
+        projection.perspective(
+                (float) Math.toRadians(45.0f),
+                reactor.framebufferWidth / (float) reactor.framebufferHeight,
+                0.1f,
+                100.0f,
+                true
+        );
+        projection.get(viewProjData, 16);
+
+        viewProjBuffer.updateBufferContent(MemorySegment.ofArray(viewProjData));
+        reactor.stablePool.put("WGCV1_ViewProj", viewProjBuffer);
 
         UniformBuffer plasticMaterial = engine.createUniform(
-                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, viewProjBindingInfo)
+                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, materialBindingInfo)
         );
         UniformBuffer chromeMaterial = engine.createUniform(
-                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, viewProjBindingInfo)
+                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, materialBindingInfo)
         );
         UniformBuffer steelMaterial = engine.createUniform(
-                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, viewProjBindingInfo)
+                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, materialBindingInfo)
         );
         UniformBuffer brassMaterial = engine.createUniform(
-                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, viewProjBindingInfo)
+                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, materialBindingInfo)
         );
         plasticMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
                 0.2f, 0.2f, 0.2f, 1.0f,
-                0.55f, 0.55f, 0.55f, 1.0f,
-                0.7f, 0.7f, 0.7f, 1.0f,
-                32.0f
+                0.55f, 0.55f, 0.55f, 1.0f
         }));
         chromeMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
                 0.25f, 0.25f, 0.25f, 1.0f,
-                0.4f, 0.4f, 0.4f, 1.0f,
-                0.774597f, 0.774597f, 0.774597f, 1.0f,
-                76.8f
+                0.4f, 0.4f, 0.4f, 1.0f
         }));
         steelMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
                 0.15f, 0.15f, 0.15f, 1.0f,
-                0.25f, 0.25f, 0.25f, 1.0f,
-                0.774597f, 0.774597f, 0.774597f, 1.0f,
-                76.8f
+                0.25f, 0.25f, 0.25f, 1.0f
         }));
         brassMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
                 0.329412f, 0.223529f, 0.027451f, 1.0f,
-                0.780392f, 0.568627f, 0.113725f, 1.0f,
-                0.992157f, 0.941176f, 0.807843f, 1.0f,
-                27.8974f
+                0.780392f, 0.568627f, 0.113725f, 1.0f
         }));
         reactor.stablePool.put("WGCV1_PlasticMaterial", plasticMaterial);
         reactor.stablePool.put("WGCV1_ChromeMaterial", chromeMaterial);
@@ -126,15 +123,15 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         ));
         PushConstant pcChestModel = engine.createPushConstant(pushConstantInfo, 1).getFirst();
         pcChestModel.updateBufferContent(MemorySegment.ofArray(new float[] {
-                0.01f, 0.0f, 0.0f, 0.0f,
-                0.0f, 0.01f, 0.0f, 0.0f,
-                0.0f, 0.0f, 0.01f, 0.0f,
+                1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f,
                 0.0f, 0.0f, 0.0f, 1.0f
         }));
 
         DescriptorSet plasticMaterialSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
                 colorPassDescriptorSetLayout,
-                List.of(viewProj, plasticMaterial)
+                List.of(viewProjBuffer, plasticMaterial)
         ));
 
         Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
@@ -173,11 +170,52 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
 
     @Override
     public List<IPluginBehavior> behaviors() {
-        return List.of();
+        return List.of(
+                new IPluginBehavior() {
+                    @Override
+                    public String name() {
+                        return "WGCV1_UpdateViewProj";
+                    }
+
+                    @Override
+                    public String description() {
+                        return "用于更新视图投影矩阵";
+                    }
+
+                    @Override
+                    public int priority() {
+                        return 0;
+                    }
+
+                    @Override
+                    public void tick(Reactor reactor) throws Exception {
+                        if (reactor.framebufferResized) {
+                            float[] viewProjData = new float[32];
+                            Matrix4f view = new Matrix4f();
+                            view.scale(1.0f, -1.0f, 1.0f);
+                            view.lookAt(40.0f, 40.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+                            view.get(viewProjData, 0);
+                            Matrix4f projection = new Matrix4f();
+                            projection.perspective(
+                                    (float) Math.toRadians(45.0f),
+                                    reactor.framebufferWidth / (float) reactor.framebufferHeight,
+                                    0.1f,
+                                    100.0f,
+                                    true
+                            );
+                            projection.get(viewProjData, 16);
+
+                            viewProjBuffer.updateBufferContent(MemorySegment.ofArray(viewProjData));
+                        }
+                    }
+                }
+        );
     }
 
     @Override
     public List<Pair<DockTarget, IWidget>> provide() {
         return List.of();
     }
+
+    private final UniformBuffer viewProjBuffer;
 }
