@@ -46,6 +46,8 @@ public abstract class RenderEngine {
     protected abstract void renderFrame() throws RenderException;
     protected abstract void close();
 
+    public abstract Pair<Integer, Integer> framebufferSize();
+
     public abstract RenderObject createObject(ObjectCreateInfo info) throws RenderException;
     public abstract List<RenderObject> createObject(List<ObjectCreateInfo> info) throws RenderException;
     public abstract Pair<Attachment, Texture> createColorAttachment(AttachmentCreateInfo i) throws RenderException;

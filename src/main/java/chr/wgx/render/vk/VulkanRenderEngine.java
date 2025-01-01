@@ -17,6 +17,7 @@ import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.vk4j.bitmask.VkCommandBufferUsageFlags;
 import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
+import tech.icey.vk4j.datatype.VkExtent2D;
 import tech.icey.vk4j.enumtype.VkResult;
 import tech.icey.vk4j.handle.VkCommandBuffer;
 import tech.icey.vk4j.handle.VkDescriptorPool;
@@ -204,6 +205,12 @@ public final class VulkanRenderEngine extends RenderEngine {
         }
 
         cx.dispose();
+    }
+
+    @Override
+    public Pair<Integer, Integer> framebufferSize() {
+        VkExtent2D extent = swapchain.swapExtent;
+        return new Pair<>(extent.width(), extent.height());
     }
 
     @Override

@@ -1,6 +1,7 @@
 package chr.wgx.main;
 
 import chr.wgx.config.Config;
+import chr.wgx.reactor.Reactor;
 import chr.wgx.ui.ControlWindow;
 import chr.wgx.ui.LicenseWindow;
 import chr.wgx.util.JULUtil;
@@ -41,16 +42,15 @@ public final class Main {
         logger.info(String.format("配置文件内容:\n%s", config.toPrettyJSON()));
 
         try {
-            RenderApplication.applicationStart();
-        }
-        catch (Throwable e) {
+            RenderApplication.applicationStart(Reactor::startReactor);
+        } catch (Throwable e) {
             StringBuilder sb = new StringBuilder();
             sb.append("应用程序遇到致命错误:\n");
             sb.append(e.getClass().getCanonicalName())
                     .append(": ")
                     .append(e.getMessage());
             for (StackTraceElement ste : e.getStackTrace()) {
-                sb.append("\n\tat ").append(ste.toString());
+                sb.append("\n\tat ").append(ste);
             }
             logger.severe(sb.toString());
         }

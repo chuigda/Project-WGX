@@ -1,8 +1,8 @@
 package chr.wgx.main;
 
 import chr.wgx.config.Config;
-import chr.wgx.drill.DrillCreateObject;
 import chr.wgx.render.IRenderEngineFactory;
+import chr.wgx.render.RenderEngine;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.RenderWindow;
 import chr.wgx.render.gles2.GLES2RenderEngine;
@@ -12,12 +12,13 @@ import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
 import tech.icey.glfw.GLFWLoader;
 import tech.icey.vk4j.VulkanLoader;
+import tech.icey.xjbutil.functional.Action1;
 
 import java.util.Objects;
 import java.util.logging.Logger;
 
 public final class RenderApplication {
-    public static void applicationStart() {
+    public static void applicationStart(Action1<RenderEngine> afterRenderEngineInit) {
         logger.info("应用程序已启动");
         loadNativeLibraries();
         logger.info("本地库已加载完成");
@@ -38,7 +39,8 @@ public final class RenderApplication {
                 config.windowWidth,
                 config.windowHeight
         )) {
-            DrillCreateObject.createObjectInThread(w.renderEngine);
+            afterRenderEngineInit.apply(w.renderEngine);
+
             w.mainLoop();
         } catch (RenderException e) {
             throw new RuntimeException(e);

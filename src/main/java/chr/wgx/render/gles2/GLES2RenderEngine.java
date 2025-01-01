@@ -172,6 +172,12 @@ public final class GLES2RenderEngine extends RenderEngine {
 
     @Override
     protected void close() {
+        // TODO
+    }
+
+    @Override
+    public Pair<Integer, Integer> framebufferSize() {
+        return new Pair<>(framebufferWidth, framebufferHeight);
     }
 
     @Override
