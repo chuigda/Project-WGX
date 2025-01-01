@@ -10,7 +10,8 @@ import tech.icey.xjbutil.container.Pair;
 import java.util.List;
 
 public final class WGCV1 implements IPlugin, IWidgetProvider {
-    public WGCV1(Reactor reactor) {}
+    WGCV1(Reactor reactor) {
+    }
 
     @Override
     public List<IPluginBehavior> behaviors() {
