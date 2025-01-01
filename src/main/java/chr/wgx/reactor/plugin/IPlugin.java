@@ -7,7 +7,5 @@ public interface IPlugin {
         return this.getClass().getName();
     }
 
-    default List<IPluginBehavior> behaviors() {
-        return List.of();
-    }
+    List<IPluginBehavior> behaviors();
 }

@@ -45,6 +45,7 @@ public final class Reactor {
     public static void reactorMain(RenderEngine renderEngine, ControlWindow controlWindow) {
         Reactor reactor = new Reactor(renderEngine);
 
+        //noinspection InfiniteLoopStatement
         while (true) {
             long startTime = System.nanoTime();
 
