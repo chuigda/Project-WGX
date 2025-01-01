@@ -18,7 +18,7 @@ public enum PixelFormat {
     /// 用于存储 ID 类数据的纹理使用的格式；GLES2 不支持单通道无符号整数纹理，仍然使用浮点纹理
     R32_UINT(VkFormat.VK_FORMAT_R32_UINT, GL_R32F_EXT, GL_R32F_EXT, GL_FLOAT),
     /// 深度缓冲附件使用的格式
-    DEPTH_BUFFER_OPTIMAL(VK_FORMAT_D32_SFLOAT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
+    DEPTH_BUFFER_OPTIMAL(VK_FORMAT_D32_SFLOAT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
 
     public final @enumtype(VkFormat.class) int vkFormat;
     public final @enumtype(GLES2Constants.class) int glFormat;

@@ -33,5 +33,4 @@ void main() {
     vec4 diffuse2 = diff2 * uMaterial_diffuse;
 
     gl_FragColor = ambient + (diffuse1 + diffuse2) / 2.0;
-    gl_FragColor = vec4(vNormal, 1.0);
 }
