@@ -52,23 +52,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         this.viewProjBuffer = engine.createUniform(
                 new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, viewProjBindingInfo)
         );
-
-        float[] viewProjData = new float[32];
-        Matrix4f view = new Matrix4f();
-        view.scale(1.0f, -1.0f, 1.0f);
-        view.lookAt(40.0f, 40.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-        view.get(viewProjData, 0);
-        Matrix4f projection = new Matrix4f();
-        projection.perspective(
-                (float) Math.toRadians(45.0f),
-                reactor.framebufferWidth / (float) reactor.framebufferHeight,
-                0.1f,
-                100.0f,
-                true
-        );
-        projection.get(viewProjData, 16);
-
-        viewProjBuffer.updateBufferContent(MemorySegment.ofArray(viewProjData));
+        fillViewProj(viewProjBuffer, reactor.framebufferWidth, reactor.framebufferHeight);
         reactor.stablePool.put("WGCV1_ViewProj", viewProjBuffer);
 
         UniformBuffer plasticMaterial = engine.createUniform(
@@ -81,6 +65,9 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                 new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, materialBindingInfo)
         );
         UniformBuffer brassMaterial = engine.createUniform(
+                new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, materialBindingInfo)
+        );
+        UniformBuffer blackPlasticMaterial = engine.createUniform(
                 new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, materialBindingInfo)
         );
         plasticMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
@@ -99,45 +86,84 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                 0.329412f, 0.223529f, 0.027451f, 1.0f,
                 0.780392f, 0.568627f, 0.113725f, 1.0f
         }));
+        blackPlasticMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
+                0.1f, 0.1f, 0.1f, 1.0f,
+                0.25f, 0.25f, 0.25f, 1.0f
+        }));
         reactor.stablePool.put("WGCV1_PlasticMaterial", plasticMaterial);
         reactor.stablePool.put("WGCV1_ChromeMaterial", chromeMaterial);
         reactor.stablePool.put("WGCV1_SteelMaterial", steelMaterial);
         reactor.stablePool.put("WGCV1_BrassMaterial", brassMaterial);
-
-        PushConstantRange pushConstantRange = new PushConstantRange("model", ShaderStage.VERTEX, CGType.Mat4, 0);
-        PushConstantInfo pushConstantInfo = new PushConstantInfo(List.of(pushConstantRange));
-
-        VertexInputInfo colorPassVertexInputInfo = new VertexInputInfo(List.of(
-                new FieldInfoInput("position", CGType.Vec3),
-                new FieldInfoInput("normal", CGType.Vec3)
-        ));
-        reactor.stablePool.put("WGCV1_MajorPassVertexInputInfo", colorPassVertexInputInfo);
-
-        Pair<float[], int[]> chestBoxData = MeshReader.parseV1Mesh(ResourceUtil.readTextFile(
-                "/resources/model/wgc0310v1/chest-box.mesh"
-        ));
-        RenderObject chest = engine.createObject(new ObjectCreateInfo(
-                colorPassVertexInputInfo,
-                MemorySegment.ofArray(chestBoxData.first()),
-                MemorySegment.ofArray(chestBoxData.second())
-        ));
-        PushConstant pcChestModel = engine.createPushConstant(pushConstantInfo, 1).getFirst();
-        pcChestModel.updateBufferContent(MemorySegment.ofArray(new float[] {
-                1.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, 1.0f
-        }));
+        reactor.stablePool.put("WGCV1_BlackPlasticMaterial", blackPlasticMaterial);
 
         DescriptorSet plasticMaterialSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
                 colorPassDescriptorSetLayout,
                 List.of(viewProjBuffer, plasticMaterial)
         ));
+        DescriptorSet chromeMaterialSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
+                colorPassDescriptorSetLayout,
+                List.of(viewProjBuffer, chromeMaterial)
+        ));
+        DescriptorSet brassMaterialSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
+                colorPassDescriptorSetLayout,
+                List.of(viewProjBuffer, brassMaterial)
+        ));
+        DescriptorSet blackPlasticMaterialSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
+                colorPassDescriptorSetLayout,
+                List.of(viewProjBuffer, blackPlasticMaterial)
+        ));
+
+        PushConstantRange pushConstantRange = new PushConstantRange("model", ShaderStage.VERTEX, CGType.Mat4, 0);
+        PushConstantInfo pushConstantInfo = new PushConstantInfo(List.of(pushConstantRange));
+
+        VertexInputInfo colorPassVertexInfo = new VertexInputInfo(List.of(
+                new FieldInfoInput("position", CGType.Vec3),
+                new FieldInfoInput("normal", CGType.Vec3)
+        ));
+        reactor.stablePool.put("WGCV1_MajorPassVertexInputInfo", colorPassVertexInfo);
+
+        RenderObject chestBox = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/chest-box.mesh");
+        RenderObject chestPlate = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/chest-plate.mesh");
+        RenderObject powerSlot = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/power.mesh");
+        RenderObject powerPin = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/power-pin.mesh");
+        RenderObject headWheel = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/wheel.mesh");
+        RenderObject monitor = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/monitor.mesh");
+        RenderObject monitorIntake = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/monitor-intake.mesh");
+        RenderObject waist = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/waist.mesh");
+        RenderObject abdomen = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/abdomen.mesh");
+
+        List<PushConstant> pushConstants = engine.createPushConstant(pushConstantInfo, 23);
+        this.pcAbdomen = new PushConstant[10];
+        this.pcWaist = new PushConstant[10];
+        for (int i = 0; i < 10; i++) {
+            this.pcAbdomen[i] = pushConstants.get(i);
+            this.pcWaist[i] = pushConstants.get(i + 10);
+        }
+
+        this.pcChest = pushConstants.get(20);
+        this.pcHeadWheel = pushConstants.get(21);
+        this.pcHead = pushConstants.get(22);
+
+        Matrix4f transform0 = new Matrix4f().identity();
+        transform0.translate(0.0f, -30.0f, 0.0f);
+
+        for (int i = 0; i < 10; i++) {
+            fillPushConstant(this.pcAbdomen[i], transform0);
+            transform0.translate(0.0f, 1.0f, 0.0f);
+            fillPushConstant(this.pcWaist[i], transform0);
+            transform0.translate(0.0f, 1.0f, 0.0f);
+        }
+
+        fillPushConstant(this.pcChest, transform0);
+        transform0.translate(0.0f, 12.875f, 0.0f);
+        fillPushConstant(this.pcHeadWheel, transform0);
+        transform0.translate(0.0f, 0.375f, 0.0f);
+        fillPushConstant(this.pcHead, transform0);
 
         Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
 
         RenderPipeline colorPassPipeline = engine.createPipeline(new RenderPipelineCreateInfo(
-                colorPassVertexInputInfo,
+                colorPassVertexInfo,
                 List.of(colorPassDescriptorSetLayout),
                 Option.some(pushConstantInfo),
                 Option.some(new ShaderProgram.Vulkan(
@@ -165,7 +191,25 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
 
         RenderPipelineBind bind = colorPass.createPipelineBind(2000, colorPassPipeline);
         RenderTaskGroup plasticGroup = bind.createRenderTaskGroup(List.of(plasticMaterialSet));
-        RenderTask chestBoxTask = plasticGroup.addRenderTask(chest, List.of(), pcChestModel);
+        RenderTask chestBoxTask = plasticGroup.addRenderTask(chestBox, pcChest);
+        RenderTask headTask = plasticGroup.addRenderTask(monitor, pcHead);
+        for (int i = 0; i < 10; i++) {
+            RenderTask waistTask = plasticGroup.addRenderTask(waist, pcWaist[i]);
+        }
+
+        RenderTaskGroup chromeGroup = bind.createRenderTaskGroup(List.of(chromeMaterialSet));
+        RenderTask chestPlateTask = chromeGroup.addRenderTask(chestPlate, pcChest);
+        RenderTask monitorIntakeTask = chromeGroup.addRenderTask(monitorIntake, pcHead);
+
+        RenderTaskGroup brassGroup = bind.createRenderTaskGroup(List.of(brassMaterialSet));
+        RenderTask powerPinTask = brassGroup.addRenderTask(powerPin, pcChest);
+
+        RenderTaskGroup blackPlasticGroup = bind.createRenderTaskGroup(List.of(blackPlasticMaterialSet));
+        RenderTask powerSlotTask = blackPlasticGroup.addRenderTask(powerSlot, pcChest);
+        RenderTask headWheelTask = blackPlasticGroup.addRenderTask(headWheel, pcHeadWheel);
+        for (int i = 0; i < 10; i++) {
+            RenderTask abdomenTask = blackPlasticGroup.addRenderTask(abdomen, pcAbdomen[i]);
+        }
     }
 
     @Override
@@ -188,24 +232,9 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                     }
 
                     @Override
-                    public void tick(Reactor reactor) throws Exception {
+                    public void tick(Reactor reactor) {
                         if (reactor.framebufferResized) {
-                            float[] viewProjData = new float[32];
-                            Matrix4f view = new Matrix4f();
-                            view.scale(1.0f, -1.0f, 1.0f);
-                            view.lookAt(40.0f, 40.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-                            view.get(viewProjData, 0);
-                            Matrix4f projection = new Matrix4f();
-                            projection.perspective(
-                                    (float) Math.toRadians(45.0f),
-                                    reactor.framebufferWidth / (float) reactor.framebufferHeight,
-                                    0.1f,
-                                    100.0f,
-                                    true
-                            );
-                            projection.get(viewProjData, 16);
-
-                            viewProjBuffer.updateBufferContent(MemorySegment.ofArray(viewProjData));
+                            fillViewProj(viewProjBuffer, reactor.framebufferWidth, reactor.framebufferHeight);
                         }
                     }
                 }
@@ -218,4 +247,47 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
     }
 
     private final UniformBuffer viewProjBuffer;
+    private final PushConstant pcAbdomen[];
+    private final PushConstant pcWaist[];
+    private final PushConstant pcChest;
+    private final PushConstant pcHeadWheel;
+    private final PushConstant pcHead;
+
+    private static RenderObject loadMeshFromResc(
+            RenderEngine engine,
+            VertexInputInfo vertexInputInfo,
+            String path
+    ) throws IOException, RenderException {
+        Pair<float[], int[]> data = MeshReader.parseV1Mesh(ResourceUtil.readTextFile(path));
+        return engine.createObject(new ObjectCreateInfo(
+                vertexInputInfo,
+                MemorySegment.ofArray(data.first()),
+                MemorySegment.ofArray(data.second())
+        ));
+    }
+
+    private static void fillViewProj(UniformBuffer viewProjBuffer, int width, int height) {
+        float[] viewProjData = new float[32];
+        Matrix4f view = new Matrix4f();
+        view.scale(1.0f, -1.0f, 1.0f);
+        view.lookAt(20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+        view.get(viewProjData, 0);
+        Matrix4f projection = new Matrix4f();
+        projection.perspective(
+                (float) Math.toRadians(45.0f),
+                width / (float) height,
+                0.1f,
+                1000.0f,
+                true
+        );
+        projection.get(viewProjData, 16);
+
+        viewProjBuffer.updateBufferContent(MemorySegment.ofArray(viewProjData));
+    }
+
+    private static void fillPushConstant(PushConstant pc, Matrix4f model) {
+        float[] modelData = new float[16];
+        model.get(modelData);
+        pc.updateBufferContent(MemorySegment.ofArray(modelData));
+    }
 }

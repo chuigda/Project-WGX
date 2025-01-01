@@ -39,6 +39,10 @@ public abstract class RenderTaskGroup {
         return this.addRenderTask(renderObject, List.of(), Option.none());
     }
 
+    public final RenderTask addRenderTask(RenderObject renderObject, PushConstant pushConstant) {
+        return this.addRenderTask(renderObject, List.of(), Option.some(pushConstant));
+    }
+
     public final RenderTaskDynamic addDynamicRenderTask(
             RenderObject renderObject,
             List<DescriptorSet> descriptorSets,
