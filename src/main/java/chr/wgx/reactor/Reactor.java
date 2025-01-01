@@ -1,12 +1,17 @@
 package chr.wgx.reactor;
 
+import chr.wgx.builtin.wgcv1.WGCV1Factory;
+import chr.wgx.reactor.plugin.IPlugin;
+import chr.wgx.reactor.plugin.IPluginFactory;
 import chr.wgx.render.RenderEngine;
 import chr.wgx.ui.ControlWindow;
 import tech.icey.xjbutil.container.Pair;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
 public final class Reactor {
     public final RenderEngine renderEngine;
@@ -45,6 +50,18 @@ public final class Reactor {
     public static void reactorMain(RenderEngine renderEngine, ControlWindow controlWindow) {
         Reactor reactor = new Reactor(renderEngine);
 
+        // TODO make this configurable, or maybe construct this list somewhere else
+        List<IPluginFactory> pluginFactoryList = List.of(new WGCV1Factory());
+
+        for (IPluginFactory factory : pluginFactoryList) {
+            try {
+                IPlugin plugin = factory.create(reactor);
+                logger.info("插件初始化成功: " + factory.name() + " (" + plugin.className() + ")");
+            } catch (Throwable e) {
+                logger.severe("无法初始化插件 " + factory.name() + ": " + e.getMessage());
+            }
+        }
+
         //noinspection InfiniteLoopStatement
         while (true) {
             long startTime = System.nanoTime();
@@ -72,4 +89,6 @@ public final class Reactor {
             }
         }
     }
+
+    private static final Logger logger = Logger.getLogger(Reactor.class.getName());
 }
