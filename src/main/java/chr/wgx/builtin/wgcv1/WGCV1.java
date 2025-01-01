@@ -104,6 +104,10 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                 colorPassDescriptorSetLayout,
                 List.of(viewProjBuffer, chromeMaterial)
         ));
+        DescriptorSet steelMaterialSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
+                colorPassDescriptorSetLayout,
+                List.of(viewProjBuffer, steelMaterial)
+        ));
         DescriptorSet brassMaterialSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
                 colorPassDescriptorSetLayout,
                 List.of(viewProjBuffer, brassMaterial)
@@ -131,8 +135,18 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         RenderObject monitorIntake = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/monitor-intake.mesh");
         RenderObject waist = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/waist.mesh");
         RenderObject abdomen = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/abdomen.mesh");
+        RenderObject shoulderConnector = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/shoulder-connector.mesh");
+        RenderObject shoulderPlate = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/shoulder-plate.mesh");
+        RenderObject bigArm = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/big-arm.mesh");
+        RenderObject bigArmCover = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/big-arm-cover.mesh");
+        RenderObject bigArmConnector = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/big-arm-connector.mesh");
+        RenderObject wheelSmall = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/wheel-small.mesh");
+        RenderObject smallArm = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/small-arm.mesh");
+        RenderObject smallArmCover = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/small-arm-cover.mesh");
+        RenderObject claw = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/claw.mesh");
+        RenderObject clawCover = loadMeshFromResc(engine, colorPassVertexInfo, "/resources/model/wgc0310v1/claw-cover.mesh");
 
-        List<PushConstant> pushConstants = engine.createPushConstant(pushConstantInfo, 23);
+        List<PushConstant> pushConstants = engine.createPushConstant(pushConstantInfo, 20 + 9);
         this.pcAbdomen = new PushConstant[10];
         this.pcWaist = new PushConstant[10];
         for (int i = 0; i < 10; i++) {
@@ -144,21 +158,43 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         this.pcHeadWheel = pushConstants.get(21);
         this.pcHead = pushConstants.get(22);
 
+        this.pcLeftShoulder = pushConstants.get(23);
+        this.pcLeftWheel = pushConstants.get(24);
+        this.pcLeftBigArm = pushConstants.get(25);
+        this.pcLeftBigArmConnector = pushConstants.get(26);
+        this.pcLeftSmallArm = pushConstants.get(27);
+        this.pcLeftClaw = pushConstants.get(28);
+
         Matrix4f transform0 = new Matrix4f().identity();
-        transform0.translate(0.0f, -30.0f, 0.0f);
+        transform0.translate(0.0f, -12.0f, 0.0f);
 
         for (int i = 0; i < 10; i++) {
-            fillPushConstant(this.pcAbdomen[i], transform0);
-            transform0.translate(0.0f, 1.0f, 0.0f);
             fillPushConstant(this.pcWaist[i], transform0);
             transform0.translate(0.0f, 1.0f, 0.0f);
+            fillPushConstant(this.pcAbdomen[i], transform0);
+            transform0.translate(0.0f, 1.0f, 0.0f);
         }
-
+        transform0.translate(0.0f, 1.0f, 0.0f);
         fillPushConstant(this.pcChest, transform0);
-        transform0.translate(0.0f, 12.875f, 0.0f);
-        fillPushConstant(this.pcHeadWheel, transform0);
-        transform0.translate(0.0f, 0.375f, 0.0f);
-        fillPushConstant(this.pcHead, transform0);
+
+        Matrix4f transform1 = new Matrix4f(transform0);
+        transform1.translate(0.0f, 12.875f, 0.0f);
+        fillPushConstant(this.pcHeadWheel, transform1);
+        transform1.translate(0.0f, 0.375f, 0.0f);
+        fillPushConstant(this.pcHead, transform1);
+
+        Matrix4f transform2 = new Matrix4f(transform0);
+        transform2.translate(14.5f, 7.5f, 0.0f);
+        fillPushConstant(this.pcLeftShoulder, transform2);
+        transform2.translate(4.75f, 0.0f, 0.0f);
+        transform2.rotateZ((float) Math.toRadians(-90.0f));
+        fillPushConstant(this.pcLeftBigArm, transform2);
+        transform2.translate(20.0f, 0.0f, 0.0f);
+        fillPushConstant(this.pcLeftBigArmConnector, transform2);
+        transform2.translate(4.5f, 0.0f, 0.0f);
+        fillPushConstant(this.pcLeftSmallArm, transform2);
+        transform2.translate(25.0f, 0.0f, 0.0f);
+        fillPushConstant(this.pcLeftClaw, transform2);
 
         Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
 
@@ -196,10 +232,21 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         for (int i = 0; i < 10; i++) {
             RenderTask waistTask = plasticGroup.addRenderTask(waist, pcWaist[i]);
         }
+        RenderTask leftShoulderConnectorTask = plasticGroup.addRenderTask(shoulderConnector, pcLeftShoulder);
+        RenderTask leftBigArmCoverTask = plasticGroup.addRenderTask(bigArmCover, pcLeftBigArm);
+        RenderTask leftSmallArmCoverTask = plasticGroup.addRenderTask(smallArmCover, pcLeftSmallArm);
+        RenderTask leftClawCoverTask = plasticGroup.addRenderTask(clawCover, pcLeftClaw);
 
         RenderTaskGroup chromeGroup = bind.createRenderTaskGroup(List.of(chromeMaterialSet));
         RenderTask chestPlateTask = chromeGroup.addRenderTask(chestPlate, pcChest);
         RenderTask monitorIntakeTask = chromeGroup.addRenderTask(monitorIntake, pcHead);
+        RenderTask leftShoulderPlateTask = chromeGroup.addRenderTask(shoulderPlate, pcLeftShoulder);
+        RenderTask leftBigArmTask = chromeGroup.addRenderTask(bigArm, pcLeftBigArm);
+        RenderTask leftSmallArmtask = chromeGroup.addRenderTask(smallArm, pcLeftSmallArm);
+
+        RenderTaskGroup steelGroup = bind.createRenderTaskGroup(List.of(steelMaterialSet));
+        RenderTask leftBigArmConnectorTask = steelGroup.addRenderTask(bigArmConnector, pcLeftBigArmConnector);
+        RenderTask leftClawTask = steelGroup.addRenderTask(claw, pcLeftClaw);
 
         RenderTaskGroup brassGroup = bind.createRenderTaskGroup(List.of(brassMaterialSet));
         RenderTask powerPinTask = brassGroup.addRenderTask(powerPin, pcChest);
@@ -210,6 +257,8 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         for (int i = 0; i < 10; i++) {
             RenderTask abdomenTask = blackPlasticGroup.addRenderTask(abdomen, pcAbdomen[i]);
         }
+        RenderTask leftShoulderWheel = blackPlasticGroup.addRenderTask(wheelSmall, pcLeftWheel);
+        RenderTask leftSmallWheel = blackPlasticGroup.addRenderTask(wheelSmall, pcLeftSmallArm);
     }
 
     @Override
@@ -252,6 +301,12 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
     private final PushConstant pcChest;
     private final PushConstant pcHeadWheel;
     private final PushConstant pcHead;
+    private final PushConstant pcLeftShoulder;
+    private final PushConstant pcLeftBigArm;
+    private final PushConstant pcLeftWheel;
+    private final PushConstant pcLeftBigArmConnector;
+    private final PushConstant pcLeftSmallArm;
+    private final PushConstant pcLeftClaw;
 
     private static RenderObject loadMeshFromResc(
             RenderEngine engine,
@@ -270,7 +325,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         float[] viewProjData = new float[32];
         Matrix4f view = new Matrix4f();
         view.scale(1.0f, -1.0f, 1.0f);
-        view.lookAt(20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+        view.lookAt(20.0f, 20.0f, 120.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
         view.get(viewProjData, 0);
         Matrix4f projection = new Matrix4f();
         projection.perspective(

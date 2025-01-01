@@ -67,6 +67,27 @@ public final class MeshReader {
         return new Pair<>(verticesArray, indicesArray);
     }
 
+    public static Pair<float[], int[]> mirrorX(Pair<float[], int[]> mesh) {
+        float[] verticesCopy = new float[mesh.first().length];
+        for (int i = 0; i < mesh.first().length; i += 6) {
+            verticesCopy[i] = -mesh.first()[i];
+            verticesCopy[i + 1] = mesh.first()[i + 1];
+            verticesCopy[i + 2] = mesh.first()[i + 2];
+            verticesCopy[i + 3] = -mesh.first()[i + 3];
+            verticesCopy[i + 4] = mesh.first()[i + 4];
+            verticesCopy[i + 5] = mesh.first()[i + 5];
+        }
+
+        int[] indices = new int[mesh.second().length];
+        for (int i = 0; i < indices.length; i += 3) {
+            indices[i] = mesh.second()[i];
+            indices[i + 1] = mesh.second()[i + 2];
+            indices[i + 2] = mesh.second()[i + 1];
+        }
+
+        return new Pair<>(verticesCopy, indices);
+    }
+
     private static void addVector(List<Float> output, Vector3f vector) {
         output.add(vector.x);
         output.add(vector.y);
