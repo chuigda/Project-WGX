@@ -1,6 +1,7 @@
 package chr.wgx.reactor;
 
 import chr.wgx.render.RenderEngine;
+import chr.wgx.ui.ControlWindow;
 import tech.icey.xjbutil.container.Pair;
 
 import java.util.HashMap;
@@ -41,12 +42,8 @@ public final class Reactor {
     private final AtomicReference<Pair<Integer, Integer>> framebufferSize;
     private final AtomicBoolean framebufferSizeChanged;
 
-    public static void startReactor(RenderEngine engine) {
-        new Thread(() -> reactorMain(engine)).start();
-    }
-
-    private static void reactorMain(RenderEngine engine) {
-        Reactor reactor = new Reactor(engine);
+    public static void reactorMain(RenderEngine renderEngine, ControlWindow controlWindow) {
+        Reactor reactor = new Reactor(renderEngine);
 
         while (true) {
             long startTime = System.nanoTime();

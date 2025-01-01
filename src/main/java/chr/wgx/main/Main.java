@@ -42,7 +42,7 @@ public final class Main {
         logger.info(String.format("配置文件内容:\n%s", config.toPrettyJSON()));
 
         try {
-            RenderApplication.applicationStart(Reactor::startReactor);
+            RenderApplication.applicationStart(controlWindow);
         } catch (Throwable e) {
             StringBuilder sb = new StringBuilder();
             sb.append("应用程序遇到致命错误:\n");
