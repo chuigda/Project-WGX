@@ -5,7 +5,7 @@ import chr.wgx.reactor.plugin.IPluginBehavior;
 
 import java.util.List;
 
-public class WGXScript implements IPlugin {
+public final class WGXScript implements IPlugin {
     @Override
     public List<IPluginBehavior> behaviors() {
         return List.of();

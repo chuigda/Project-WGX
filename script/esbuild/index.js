@@ -6,6 +6,6 @@ fs.rmSync('build', { recursive: true, force: true })
 fs.mkdirSync('build')
 
 await esbuild.build(makeBuildOptions(
-    'src/entry/generator.ts',
-    'build/generator.js'
+    'src/entry/drill.ts',
+    'build/drill.js'
 ));
