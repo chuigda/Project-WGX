@@ -39,6 +39,6 @@ declare global {
 
     /// 用来防止用户错误地用一个字面量赋值给一个 JVM 类型的变量
     export class JvmClass {
-        __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: number
+        private __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: number
     }
 }

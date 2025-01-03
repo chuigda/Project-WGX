@@ -74,12 +74,29 @@ export const Color: ColorStatic = Java.type('chr.wgx.render.common.Color')
 
 /// ------ package chr.wgx.render.info ------ ///
 
+export declare class DescriptorTypeT extends JvmClass { private constructor() }
+
+export interface DescriptorTypeStatic {
+    COMBINED_IMAGE_SAMPLER: DescriptorTypeT
+    UNIFORM_BUFFER: DescriptorTypeT
+}
+
+export const DescriptorType: DescriptorTypeStatic = Java.type('chr.wgx.render.info.DescriptorType')
+
 export declare class AttachmentCreateInfoT extends JvmClass {
     pixelFormat: PixelFormatT
     width: number
     height: number
 
     private constructor()
+}
+
+export declare class DescriptorLayoutBindingInfoT extends JvmClass {
+    descriptorType: DescriptorTypeT
+    bindingName: string
+    stage: ShaderStageT
+
+    protected constructor()
 }
 
 export interface AttachmentCreateInfoStatic {
