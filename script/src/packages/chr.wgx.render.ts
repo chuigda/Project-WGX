@@ -1,5 +1,6 @@
 /// ------ package chr.wgx.render.common ------ ///
 
+import { MemorySegmentT } from "./java"
 import { OptionT } from "./tech.icey.xjbutil"
 
 export declare class BlendModeT extends JvmObject { private constructor() }
@@ -146,9 +147,9 @@ export declare class DescriptorSetLayoutCreateInfoT extends JvmObject {
 }
 
 export declare class ObjectCreateInfoT extends JvmObject {
-    vertexInputInfo: VertexInputInfoT;
-    pVertices: MemorySegment;
-    pIndices: MemorySegment;
+    vertexInputInfo: VertexInputInfoT
+    pVertices: MemorySegmentT
+    pIndices: MemorySegmentT
 
     private constructor()
 }
@@ -238,7 +239,7 @@ export declare class TextureCreateInfoT extends JvmObject {
 export declare class UniformBufferCreateInfoT extends JvmObject {
     updateFrequency: UniformUpdateFrequencyT
     bindingInfo: UniformBufferBindingInfoT
-    init: OptionT<MemorySegment>
+    init: OptionT<MemorySegmentT>
 
     private constructor()
 }
@@ -269,7 +270,7 @@ export interface DescriptorSetLayoutCreateInfoStatic extends JvmClass {
 }
 
 export interface ObjectCreateInfoStatic extends JvmClass {
-    new(vertexInputInfo: VertexInputInfoT, pVertices: MemorySegment, pIndices: MemorySegment): ObjectCreateInfoT
+    new(vertexInputInfo: VertexInputInfoT, pVertices: MemorySegmentT, pIndices: MemorySegmentT): ObjectCreateInfoT
 }
 
 export interface VertexInputInfoStatic extends JvmClass {
@@ -368,7 +369,7 @@ export interface UniformBufferCreateInfoStatic extends JvmClass {
     new(
         updateFrequency: UniformUpdateFrequencyT,
         bindingInfo: UniformBufferBindingInfoT,
-        init: MemorySegment
+        init: MemorySegmentT
     ): UniformBufferCreateInfoT
 }
 

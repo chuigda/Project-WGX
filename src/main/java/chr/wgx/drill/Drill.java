@@ -9,14 +9,7 @@ public final class Drill {
     private static final String SOURCE_CODE = """
 "use strict";
 (function() {
-  // src/jvm.ts
-  var System = java.lang.System;
-
-  // src/wgx/tech.icey.xjbutil.ts
-  var Pair = Java.type("tech.icey.xjbutil.container.Pair");
-  var Option = Java.type("tech.icey.xjbutil.container.Option");
-
-  // src/wgx/chr.wgx.render.ts
+  // src/packages/chr.wgx.render.ts
   var BlendMode = Java.type("chr.wgx.render.common.BlendMode");
   var CGType = Java.type("chr.wgx.render.common.CGType");
   var ClearBehavior = Java.type("chr.wgx.render.common.ClearBehavior");
@@ -36,7 +29,6 @@ public final class Drill {
   var PushConstantInfo = Java.type("chr.wgx.render.info.PushConstantInfo");
   var PushConstantRange = Java.type("chr.wgx.render.info.PushConstantRange");
   var RenderPassAttachmentInfo = Java.type("chr.wgx.render.info.RenderPassAttachmentInfo");
-  var Attachment = Java.type("chr.wgx.render.data.Attachment");
   var RenderPassCreateInfo = Java.type("chr.wgx.render.info.RenderPassCreateInfo");
   var RenderPipelineCreateInfo = Java.type("chr.wgx.render.info.RenderPipelineCreateInfo");
   var ShaderProgram = Java.type("chr.wgx.render.info.ShaderProgram");
@@ -44,25 +36,54 @@ public final class Drill {
   var TextureCreateInfo = Java.type("chr.wgx.render.info.TextureCreateInfo");
   var UniformBufferCreateInfo = Java.type("chr.wgx.render.info.UniformBufferCreateInfo");
 
+  // src/packages/java.ts
+  var IntArray = Java.type("int[]");
+  var FloatArray = Java.type("float[]");
+  var MemorySegment = java.lang.foreign.MemorySegment;
+  function makeIntSegment(array) {
+    var intArray = Java.to(array, IntArray);
+    return MemorySegment.ofArray(intArray);
+  }
+  function makeFloatSegment(array) {
+    var floatArray = Java.to(array, FloatArray);
+    return MemorySegment.ofArray(floatArray);
+  }
+
   // src/entry/drill.ts
-  var p = new Pair("asd", "def");
-  System.err.println(p.first());
-  System.err.println(p.second());
-  var opt1 = Option.some([
-    114,
-    514,
-    1919,
-    810
-  ]);
-  System.err.println(opt1);
-  System.err.println(opt1.isSome());
-  System.err.println("opt1.get() = " + opt1.get());
-  var opt2 = Option.none();
-  System.err.println(opt2);
-  System.err.println(opt2.isNone());
-  System.err.println("opt2.nullable() = " + opt2.nullable());
-  System.err.println(UniformUpdateFrequency.PER_FRAME);
-  System.err.println(new AttachmentCreateInfo(PixelFormat.RGBA_OPTIMAL, 1920, 1080));
+  var objCreateInfo = new ObjectCreateInfo(new VertexInputInfo([
+    new FieldInfoInput("position", CGType.Vec2),
+    new FieldInfoInput("color", CGType.Vec3)
+  ]), makeFloatSegment([
+    // vec2 pos, vec3 color
+    -0.5,
+    -0.5,
+    1,
+    0,
+    0,
+    0.5,
+    -0.5,
+    0,
+    1,
+    0,
+    0.5,
+    0.5,
+    0,
+    0,
+    1,
+    -0.5,
+    0.5,
+    1,
+    1,
+    1
+  ]), makeIntSegment([
+    0,
+    1,
+    2,
+    2,
+    3,
+    0
+  ]));
+  print(objCreateInfo);
 })();
 """;
 
