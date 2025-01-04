@@ -41,4 +41,8 @@ declare global {
     export class JvmClass {
         private __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: number
     }
+
+    export class MemorySegment extends JvmClass { private constructor() }
+    export class MemoryLayout extends JvmClass { private constructor() }
+    export class BufferedImage extends JvmClass { private constructor() }
 }

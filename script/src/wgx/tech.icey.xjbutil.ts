@@ -7,7 +7,7 @@ export declare class PairT extends JvmClass {
     private constructor()
 }
 
-export declare class OptionT extends JvmClass {
+export declare class OptionT<T> extends JvmClass {
     get(): any
     nullable(): any | null
     isSome(): boolean
@@ -21,9 +21,9 @@ export interface PairStatic {
 }
 
 export interface OptionStatic {
-    some(value: any): OptionT
-    none(): OptionT
-    fromNullable(value: any | null): OptionT
+    some<T>(value: T): OptionT<T>
+    none<T>(): OptionT<T>
+    fromNullable<T>(value: T | null): OptionT<T>
 }
 
 export const Pair: PairStatic = Java.type('tech.icey.xjbutil.container.Pair')

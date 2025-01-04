@@ -1,6 +1,6 @@
 /// ------ package chr.wgx.render.common ------ ///
 
-import { BufferedImage, MemoryLayout, MemorySegment } from "../jvm"
+import { OptionT } from "./tech.icey.xjbutil"
 
 export declare class BlendModeT extends JvmClass { private constructor() }
 export declare class CGTypeT extends JvmClass { private constructor() }
@@ -131,7 +131,7 @@ export declare class DescriptorSetCreateInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class DescriptorT extends JvmClass { }
+export declare class DescriptorT extends JvmClass {}
 
 export declare class DescriptorSetLayoutT extends JvmClass {
     info: DescriptorSetLayoutCreateInfoT
@@ -178,7 +178,6 @@ export declare class PushConstantRangeT extends JvmClass {
     private constructor()
 }
 
-
 export declare class RenderPassAttachmentInfoT extends JvmClass {
     attachment: AttachmentT
     clearBehavior: ClearBehaviorT
@@ -186,7 +185,6 @@ export declare class RenderPassAttachmentInfoT extends JvmClass {
 
     private constructor()
 }
-
 
 export declare class AttachmentT extends JvmClass {
     createInfo: AttachmentCreateInfoT
@@ -199,34 +197,33 @@ export declare class RenderPassCreateInfoT extends JvmClass {
     priority: number
 
     colorAttachmentInfos: RenderPassAttachmentInfoT[]
-    depthAttachmentInfo: RenderPassAttachmentInfoT | null
+    depthAttachmentInfo: OptionT<RenderPassAttachmentInfoT>
 
     private constructor()
 }
 
-
 export declare class RenderPipelineCreateInfoT extends JvmClass {
     vertexInputInfo: VertexInputInfoT
     descriptorSetLayouts: DescriptorSetLayoutT[]
-    pushConstantInfo: PushConstantInfoT | null
-    vulkanShaderProgram: ShaderProgram$VulkanT | null
-    gles2ShaderProgram: ShaderProgram$GLES2T | null
+    pushConstantInfo: OptionT<PushConstantInfoT>
+    vulkanShaderProgram: OptionT<ShaderProgram$VulkanT>
+    gles2ShaderProgram: OptionT<ShaderProgram$GLES2T>
     colorAttachmentCount: number
     depthTest: boolean
 
     private constructor()
 }
 
-export declare class ShaderProgram extends JvmClass { }
+export declare class ShaderProgramT extends JvmClass { protected constructor() }
 
-export declare class ShaderProgram$GLES2T extends ShaderProgram {
+export declare class ShaderProgram$GLES2T extends ShaderProgramT {
     vertexShader: string
     fragmentShader: string
 
     private constructor()
 }
 
-export declare class ShaderProgram$VulkanT extends ShaderProgram {
+export declare class ShaderProgram$VulkanT extends ShaderProgramT {
     vertexShader: number[];
     fragmentShader: number[];
 
@@ -247,7 +244,7 @@ export declare class TextureCreateInfoT extends JvmClass {
 export declare class UniformBufferCreateInfoT extends JvmClass {
     updateFrequency: UniformUpdateFrequencyT
     bindingInfo: UniformBufferBindingInfoT
-    init: MemorySegment | null
+    init: OptionT<MemorySegment>
 
     private constructor()
 }
@@ -265,12 +262,8 @@ export interface UniformBufferBindingInfoStatic {
     new(bindingName: string, stage: ShaderStageT, fieldInfoInputs: FieldInfoInputT[]): UniformBufferBindingInfoT
 }
 
-
 export interface DescriptorSetCreateInfoStatic {
     new(descriptorType: DescriptorTypeT, bindingName: string, stage: ShaderStageT): DescriptorSetCreateInfoT
-}
-
-export interface DescriptorStatic {
 }
 
 export interface DescriptorSetLayoutStatic {
@@ -311,7 +304,7 @@ export interface RenderPassCreateInfoStatic {
         name: string,
         priority: number,
         colorAttachmentInfos: RenderPassAttachmentInfoT,
-        depthAttachmentInfo: RenderPassAttachmentInfoT | null
+        depthAttachmentInfo: OptionT<RenderPassAttachmentInfoT>
     ): RenderPassCreateInfoT
     new(
         name: string,
@@ -328,7 +321,7 @@ export interface RenderPassCreateInfoStatic {
         name: string,
         priority: number,
         colorAttachment: RenderPassAttachmentInfoT,
-        depthAttachmentInfo: RenderPassAttachmentInfoT | null
+        depthAttachmentInfo: OptionT<RenderPassAttachmentInfoT>
     ): RenderPassCreateInfoT
     new(
         name: String,
@@ -348,9 +341,9 @@ export interface RenderPipelineCreateInfoStatic {
     new(
         vertexInputInfo: VertexInputInfoT,
         descriptorSetLayouts: DescriptorSetLayoutT[],
-        pushConstantInfo: PushConstantInfoT | null,
-        vulkanShaderProgram: ShaderProgram$VulkanT | null,
-        gles2ShaderProgram: ShaderProgram$GLES2T | null,
+        pushConstantInfo: OptionT<PushConstantInfoT>,
+        vulkanShaderProgram: OptionT<ShaderProgram$VulkanT>,
+        gles2ShaderProgram: OptionT<ShaderProgram$GLES2T>,
         colorAttachmentCount: number,
         depthTest: boolean
     ): RenderPipelineCreateInfoT
@@ -362,7 +355,11 @@ export interface ShaderProgram$GLES2Static {
 
 export interface ShaderProgram$VulkanStatic {
     new(vertexShader: number[], fragmentShader: number[]): ShaderProgram$VulkanStatic
+}
 
+export interface ShaderProgramStatic {
+    GLES2: ShaderProgram$GLES2Static
+    Vulkan: ShaderProgram$VulkanStatic
 }
 
 export interface TextureBindingInfoStatic {
@@ -388,9 +385,7 @@ export interface UniformBufferCreateInfoStatic {
 export const AttachmentCreateInfo: AttachmentCreateInfoStatic = Java.type('chr.wgx.render.info.AttachmentCreateInfo')
 export const FieldInfoInput: FieldInputStatic = Java.type('chr.wgx.render.info.FieldInfoInput')
 export const UniformBufferBindingInfo: UniformBufferBindingInfoStatic = Java.type('chr.wgx.render.info.UniformBufferBindingInfo')
-
 export const DescriptorSetCreateInfo: DescriptorSetCreateInfoStatic = Java.type('chr.wgx.render.info.DescriptorSetCreateInfo')
-export const Descriptor: DescriptorStatic = Java.type('chr.wgx.render.data.Descriptor')
 export const DescriptorSetLayout: DescriptorSetLayoutStatic = Java.type('chr.wgx.render.data.DescriptorSetLayout')
 export const DescriptorSetLayoutCreateInfo: DescriptorSetLayoutCreateInfoStatic = Java.type('chr.wgx.render.info.DescriptorSetLayoutCreateInfo')
 export const ObjectCreateInfo: ObjectCreateInfoStatic = Java.type('chr.wgx.render.info.ObjectCreateInfo')
@@ -401,8 +396,7 @@ export const RenderPassAttachmentInfo: RenderPassAttachmentInfoStatic = Java.typ
 export const Attachment: AttachmentStatic = Java.type('chr.wgx.render.data.Attachment')
 export const RenderPassCreateInfo: RenderPassCreateInfoStatic = Java.type('chr.wgx.render.info.RenderPassCreateInfo')
 export const RenderPipelineCreateInfo: RenderPipelineCreateInfoStatic = Java.type('chr.wgx.render.info.RenderPipelineCreateInfo')
-export const ShaderProgram$GLES2: ShaderProgram$GLES2Static = Java.type('chr.wgx.render.info.ShaderProgram') // FIXME
-export const ShaderProgram$Vulkan: ShaderProgram$VulkanStatic = Java.type('chr.wgx.render.info.ShaderProgram') // FIXME
+export const ShaderProgram: ShaderProgramStatic = Java.type('chr.wgx.render.info.ShaderProgram')
 export const TextureBindingInfo: TextureBindingInfoStatic = Java.type('chr.wgx.render.info.TextureBindingInfo')
 export const TextureCreateInfo: TextureCreateInfoStatic = Java.type('chr.wgx.render.info.TextureCreateInfo')
 export const UniformBufferCreateInfo: UniformBufferCreateInfoStatic = Java.type('chr.wgx.render.info.UniformBufferCreateInfo')

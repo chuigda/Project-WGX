@@ -23,7 +23,25 @@ public final class Drill {
   var ShaderStage = Java.type("chr.wgx.render.common.ShaderStage");
   var UniformUpdateFrequency = Java.type("chr.wgx.render.common.UniformUpdateFrequency");
   var Color = Java.type("chr.wgx.render.common.Color");
+  var DescriptorType = Java.type("chr.wgx.render.info.DescriptorType");
   var AttachmentCreateInfo = Java.type("chr.wgx.render.info.AttachmentCreateInfo");
+  var FieldInfoInput = Java.type("chr.wgx.render.info.FieldInfoInput");
+  var UniformBufferBindingInfo = Java.type("chr.wgx.render.info.UniformBufferBindingInfo");
+  var DescriptorSetCreateInfo = Java.type("chr.wgx.render.info.DescriptorSetCreateInfo");
+  var DescriptorSetLayout = Java.type("chr.wgx.render.data.DescriptorSetLayout");
+  var DescriptorSetLayoutCreateInfo = Java.type("chr.wgx.render.info.DescriptorSetLayoutCreateInfo");
+  var ObjectCreateInfo = Java.type("chr.wgx.render.info.ObjectCreateInfo");
+  var VertexInputInfo = Java.type("chr.wgx.render.info.VertexInputInfo");
+  var PushConstantInfo = Java.type("chr.wgx.render.info.PushConstantInfo");
+  var PushConstantRange = Java.type("chr.wgx.render.info.PushConstantRange");
+  var RenderPassAttachmentInfo = Java.type("chr.wgx.render.info.RenderPassAttachmentInfo");
+  var Attachment = Java.type("chr.wgx.render.data.Attachment");
+  var RenderPassCreateInfo = Java.type("chr.wgx.render.info.RenderPassCreateInfo");
+  var RenderPipelineCreateInfo = Java.type("chr.wgx.render.info.RenderPipelineCreateInfo");
+  var ShaderProgram = Java.type("chr.wgx.render.info.ShaderProgram");
+  var TextureBindingInfo = Java.type("chr.wgx.render.info.TextureBindingInfo");
+  var TextureCreateInfo = Java.type("chr.wgx.render.info.TextureCreateInfo");
+  var UniformBufferCreateInfo = Java.type("chr.wgx.render.info.UniformBufferCreateInfo");
 
   // src/entry/drill.ts
   var p = new Pair("asd", "def");
