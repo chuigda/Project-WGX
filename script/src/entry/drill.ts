@@ -1,7 +1,7 @@
 import { System } from '../jvm'
 
-import { Option, Pair } from '../wgx/tech.icey.xjbutil'
-import { AttachmentCreateInfo, PixelFormat, UniformUpdateFrequency } from '../wgx/chr.wgx.render'
+import { Option, Pair } from '../packages/tech.icey.xjbutil'
+import { AttachmentCreateInfo, PixelFormat, UniformUpdateFrequency } from '../packages/chr.wgx.render'
 
 const p = new Pair("asd", "def")
 

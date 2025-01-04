@@ -2,19 +2,19 @@
 
 import { OptionT } from "./tech.icey.xjbutil"
 
-export declare class BlendModeT extends JvmClass { private constructor() }
-export declare class CGTypeT extends JvmClass { private constructor() }
-export declare class ClearBehaviorT extends JvmClass { private constructor() }
-export declare class PixelFormatT extends JvmClass { private constructor() }
-export declare class ShaderStageT extends JvmClass { private constructor() }
-export declare class UniformUpdateFrequencyT extends JvmClass { private constructor() }
+export declare class BlendModeT extends JvmObject { private constructor() }
+export declare class CGTypeT extends JvmObject { private constructor() }
+export declare class ClearBehaviorT extends JvmObject { private constructor() }
+export declare class PixelFormatT extends JvmObject { private constructor() }
+export declare class ShaderStageT extends JvmObject { private constructor() }
+export declare class UniformUpdateFrequencyT extends JvmObject { private constructor() }
 
-export interface BlendModeStatic {
+export interface BlendModeStatic extends JvmClass {
     NONE: BlendModeT
     COMMON_TRANSPARENT_BLENDING: BlendModeT
 }
 
-export interface CGTypeStatic {
+export interface CGTypeStatic extends JvmClass {
     Float: CGTypeT
     Int: CGTypeT
 
@@ -27,12 +27,12 @@ export interface CGTypeStatic {
     Mat4: CGTypeT
 }
 
-export interface ClearBehaviorStatic {
+export interface ClearBehaviorStatic extends JvmClass {
     CLEAR_ONCE: ClearBehaviorT
     CLEAR_ALWAYS: ClearBehaviorT
 }
 
-export interface PixelFormatStatic {
+export interface PixelFormatStatic extends JvmClass {
     RGBA_OPTIMAL: PixelFormatT
     RGBA_SWAPCHAIN: PixelFormatT
     R32_FLOAT: PixelFormatT
@@ -40,25 +40,25 @@ export interface PixelFormatStatic {
     DEPTH_BUFFER_OPTIMAL: PixelFormatT
 }
 
-export interface ShaderStageStatic {
+export interface ShaderStageStatic extends JvmClass {
     VERTEX: ShaderStageT
     FRAGMENT: ShaderStageT
     VERTEX_AND_FRAGMENT: ShaderStageT
 }
 
-export interface UniformUpdateFrequencyStatic {
+export interface UniformUpdateFrequencyStatic extends JvmClass {
     PER_FRAME: UniformUpdateFrequencyT
     MANUAL: UniformUpdateFrequencyT
 }
 
-export const BlendMode: BlendModeStatic = Java.type('chr.wgx.render.common.BlendMode')
-export const CGType: CGTypeStatic = Java.type('chr.wgx.render.common.CGType')
-export const ClearBehavior: ClearBehaviorStatic = Java.type('chr.wgx.render.common.ClearBehavior')
-export const PixelFormat: PixelFormatStatic = Java.type('chr.wgx.render.common.PixelFormat')
-export const ShaderStage: ShaderStageStatic = Java.type('chr.wgx.render.common.ShaderStage')
-export const UniformUpdateFrequency: UniformUpdateFrequencyStatic = Java.type('chr.wgx.render.common.UniformUpdateFrequency')
+export const BlendMode = Java.type<BlendModeStatic>('chr.wgx.render.common.BlendMode')
+export const CGType = Java.type<CGTypeStatic>('chr.wgx.render.common.CGType')
+export const ClearBehavior = Java.type<ClearBehaviorStatic>('chr.wgx.render.common.ClearBehavior')
+export const PixelFormat = Java.type<PixelFormatStatic>('chr.wgx.render.common.PixelFormat')
+export const ShaderStage = Java.type<ShaderStageStatic>('chr.wgx.render.common.ShaderStage')
+export const UniformUpdateFrequency = Java.type<UniformUpdateFrequencyStatic>('chr.wgx.render.common.UniformUpdateFrequency')
 
-export declare class ColorT extends JvmClass {
+export declare class ColorT extends JvmObject {
     public r: number
     public g: number
     public b: number
@@ -67,25 +67,25 @@ export declare class ColorT extends JvmClass {
     private constructor()
 }
 
-export interface ColorStatic {
+export interface ColorStatic extends JvmClass {
     new(r: number, g: number, b: number, a: number): ColorT
     new(r: number, g: number, b: number): ColorT
 }
 
-export const Color: ColorStatic = Java.type('chr.wgx.render.common.Color')
+export const Color = Java.type<ColorStatic>('chr.wgx.render.common.Color')
 
 /// ------ package chr.wgx.render.info ------ ///
 
-export declare class DescriptorTypeT extends JvmClass { private constructor() }
+export declare class DescriptorTypeT extends JvmObject { private constructor() }
 
-export interface DescriptorTypeStatic {
+export interface DescriptorTypeStatic extends JvmClass {
     COMBINED_IMAGE_SAMPLER: DescriptorTypeT
     UNIFORM_BUFFER: DescriptorTypeT
 }
 
-export const DescriptorType: DescriptorTypeStatic = Java.type('chr.wgx.render.info.DescriptorType')
+export const DescriptorType = Java.type<DescriptorTypeStatic>('chr.wgx.render.info.DescriptorType')
 
-export declare class AttachmentCreateInfoT extends JvmClass {
+export declare class AttachmentCreateInfoT extends JvmObject {
     pixelFormat: PixelFormatT
     width: number
     height: number
@@ -93,7 +93,7 @@ export declare class AttachmentCreateInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class FieldInfoT extends JvmClass {
+export declare class FieldInfoT extends JvmObject {
     name: string
     type: CGTypeT
     location: number
@@ -102,14 +102,14 @@ export declare class FieldInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class FieldInfoInputT extends JvmClass {
+export declare class FieldInfoInputT extends JvmObject {
     name: string
     type: CGTypeT
 
     private constructor()
 }
 
-export declare class DescriptorLayoutBindingInfoT extends JvmClass {
+export declare class DescriptorLayoutBindingInfoT extends JvmObject {
     descriptorType: DescriptorTypeT
     bindingName: string
     stage: ShaderStageT
@@ -124,28 +124,28 @@ export declare class UniformBufferBindingInfoT extends DescriptorLayoutBindingIn
     private constructor()
 }
 
-export declare class DescriptorSetCreateInfoT extends JvmClass {
+export declare class DescriptorSetCreateInfoT extends JvmObject {
     layout: DescriptorSetLayoutT
     descriptors: DescriptorT[]
 
     private constructor()
 }
 
-export declare class DescriptorT extends JvmClass {}
+export declare class DescriptorT extends JvmObject {}
 
-export declare class DescriptorSetLayoutT extends JvmClass {
+export declare class DescriptorSetLayoutT extends JvmObject {
     info: DescriptorSetLayoutCreateInfoT
 
     private constructor()
 }
 
-export declare class DescriptorSetLayoutCreateInfoT extends JvmClass {
+export declare class DescriptorSetLayoutCreateInfoT extends JvmObject {
     bindings: DescriptorLayoutBindingInfoT[]
 
     private constructor()
 }
 
-export declare class ObjectCreateInfoT extends JvmClass {
+export declare class ObjectCreateInfoT extends JvmObject {
     vertexInputInfo: VertexInputInfoT;
     pVertices: MemorySegment;
     pIndices: MemorySegment;
@@ -153,7 +153,7 @@ export declare class ObjectCreateInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class VertexInputInfoT extends JvmClass {
+export declare class VertexInputInfoT extends JvmObject {
     attributes: FieldInfoT[]
     attributeMap: Map<string, FieldInfoT>
     stride: number
@@ -161,7 +161,7 @@ export declare class VertexInputInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class PushConstantInfoT extends JvmClass {
+export declare class PushConstantInfoT extends JvmObject {
     pushConstantRanges: PushConstantRangeT[]
     cpuLayout: MemoryLayout
     bufferSize: number
@@ -169,7 +169,7 @@ export declare class PushConstantInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class PushConstantRangeT extends JvmClass {
+export declare class PushConstantRangeT extends JvmObject {
     name: string
     shaderStage: ShaderStageT
     type: CGTypeT
@@ -178,7 +178,7 @@ export declare class PushConstantRangeT extends JvmClass {
     private constructor()
 }
 
-export declare class RenderPassAttachmentInfoT extends JvmClass {
+export declare class RenderPassAttachmentInfoT extends JvmObject {
     attachment: AttachmentT
     clearBehavior: ClearBehaviorT
     clearColor: ColorT
@@ -186,7 +186,7 @@ export declare class RenderPassAttachmentInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class RenderPassCreateInfoT extends JvmClass {
+export declare class RenderPassCreateInfoT extends JvmObject {
     name: string
     priority: number
 
@@ -196,7 +196,7 @@ export declare class RenderPassCreateInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class RenderPipelineCreateInfoT extends JvmClass {
+export declare class RenderPipelineCreateInfoT extends JvmObject {
     vertexInputInfo: VertexInputInfoT
     descriptorSetLayouts: DescriptorSetLayoutT[]
     pushConstantInfo: OptionT<PushConstantInfoT>
@@ -208,7 +208,7 @@ export declare class RenderPipelineCreateInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class ShaderProgramT extends JvmClass { protected constructor() }
+export declare class ShaderProgramT extends JvmObject { protected constructor() }
 
 export declare class ShaderProgram$GLES2T extends ShaderProgramT {
     vertexShader: string
@@ -228,14 +228,14 @@ export declare class TextureBindingInfoT extends DescriptorLayoutBindingInfoT {
     private constructor()
 }
 
-export declare class TextureCreateInfoT extends JvmClass {
+export declare class TextureCreateInfoT extends JvmObject {
     image: BufferedImage
     mipmap: boolean
 
     private constructor()
 }
 
-export declare class UniformBufferCreateInfoT extends JvmClass {
+export declare class UniformBufferCreateInfoT extends JvmObject {
     updateFrequency: UniformUpdateFrequencyT
     bindingInfo: UniformBufferBindingInfoT
     init: OptionT<MemorySegment>
@@ -243,53 +243,53 @@ export declare class UniformBufferCreateInfoT extends JvmClass {
     private constructor()
 }
 
-export interface AttachmentCreateInfoStatic {
+export interface AttachmentCreateInfoStatic extends JvmClass {
     new(pixelFormat: PixelFormatT, width: number, height: number): AttachmentCreateInfoT
     new(pixelFormat: PixelFormatT): AttachmentCreateInfoT
 }
 
-export interface FieldInputStatic {
+export interface FieldInputStatic extends JvmClass {
     new(name: string, type: CGTypeT): FieldInfoInputT
 }
 
-export interface UniformBufferBindingInfoStatic {
+export interface UniformBufferBindingInfoStatic extends JvmClass {
     new(bindingName: string, stage: ShaderStageT, fieldInfoInputs: FieldInfoInputT[]): UniformBufferBindingInfoT
 }
 
-export interface DescriptorSetCreateInfoStatic {
+export interface DescriptorSetCreateInfoStatic extends JvmClass {
     new(descriptorType: DescriptorTypeT, bindingName: string, stage: ShaderStageT): DescriptorSetCreateInfoT
 }
 
-export interface DescriptorSetLayoutStatic {
+export interface DescriptorSetLayoutStatic extends JvmClass {
     new(info: DescriptorSetLayoutCreateInfoT): DescriptorSetLayoutT
 }
 
-export interface DescriptorSetLayoutCreateInfoStatic {
+export interface DescriptorSetLayoutCreateInfoStatic extends JvmClass {
     new(bindings: DescriptorLayoutBindingInfoT[]): DescriptorSetLayoutCreateInfoT
 }
 
-export interface ObjectCreateInfoStatic {
+export interface ObjectCreateInfoStatic extends JvmClass {
     new(vertexInputInfo: VertexInputInfoT, pVertices: MemorySegment, pIndices: MemorySegment): ObjectCreateInfoT
 }
 
-export interface VertexInputInfoStatic {
+export interface VertexInputInfoStatic extends JvmClass {
     new(attributes: FieldInfoInputT[]): VertexInputInfoT
 }
 
-export interface PushConstantInfoStatic {
+export interface PushConstantInfoStatic extends JvmClass {
     new(pushConstantRanges: PushConstantRangeT[]): PushConstantInfoT
 }
 
-export interface PushConstantRangeStatic {
+export interface PushConstantRangeStatic extends JvmClass {
     new(name: string, shaderStage: ShaderStageT, type: CGTypeT, offset: number): PushConstantRangeT
 }
 
-export interface RenderPassAttachmentInfoStatic {
+export interface RenderPassAttachmentInfoStatic extends JvmClass {
     new(attachment: AttachmentT, clearBehavior: ClearBehaviorT): RenderPassAttachmentInfoT
     new(attachment: AttachmentT, clearBehavior: ClearBehaviorT, clearColor: ColorT): RenderPassAttachmentInfoT
 }
 
-export interface RenderPassCreateInfoStatic {
+export interface RenderPassCreateInfoStatic extends JvmClass {
     new(
         name: string,
         priority: number,
@@ -327,7 +327,7 @@ export interface RenderPassCreateInfoStatic {
 }
 
 
-export interface RenderPipelineCreateInfoStatic {
+export interface RenderPipelineCreateInfoStatic extends JvmClass {
     new(
         vertexInputInfo: VertexInputInfoT,
         descriptorSetLayouts: DescriptorSetLayoutT[],
@@ -339,28 +339,28 @@ export interface RenderPipelineCreateInfoStatic {
     ): RenderPipelineCreateInfoT
 }
 
-export interface ShaderProgram$GLES2Static {
+export interface ShaderProgram$GLES2Static extends JvmClass {
     new(vertexShader: string, fragmentShader: string): ShaderProgram$GLES2T
 }
 
-export interface ShaderProgram$VulkanStatic {
+export interface ShaderProgram$VulkanStatic extends JvmClass {
     new(vertexShader: number[], fragmentShader: number[]): ShaderProgram$VulkanStatic
 }
 
-export interface ShaderProgramStatic {
+export interface ShaderProgramStatic extends JvmClass {
     GLES2: ShaderProgram$GLES2Static
     Vulkan: ShaderProgram$VulkanStatic
 }
 
-export interface TextureBindingInfoStatic {
+export interface TextureBindingInfoStatic extends JvmClass {
     new(bindingName: string, stage: ShaderStageT): TextureBindingInfoT
 }
 
-export interface TextureCreateInfoStatic {
+export interface TextureCreateInfoStatic extends JvmClass {
     new(image: BufferedImage, mipmap: boolean): TextureCreateInfoT
 }
 
-export interface UniformBufferCreateInfoStatic {
+export interface UniformBufferCreateInfoStatic extends JvmClass {
     new(
         updateFrequency: UniformUpdateFrequencyT,
         bindingInfo: UniformBufferBindingInfoT
@@ -372,27 +372,27 @@ export interface UniformBufferCreateInfoStatic {
     ): UniformBufferCreateInfoT
 }
 
-export const AttachmentCreateInfo: AttachmentCreateInfoStatic = Java.type('chr.wgx.render.info.AttachmentCreateInfo')
-export const FieldInfoInput: FieldInputStatic = Java.type('chr.wgx.render.info.FieldInfoInput')
-export const UniformBufferBindingInfo: UniformBufferBindingInfoStatic = Java.type('chr.wgx.render.info.UniformBufferBindingInfo')
-export const DescriptorSetCreateInfo: DescriptorSetCreateInfoStatic = Java.type('chr.wgx.render.info.DescriptorSetCreateInfo')
-export const DescriptorSetLayout: DescriptorSetLayoutStatic = Java.type('chr.wgx.render.data.DescriptorSetLayout')
-export const DescriptorSetLayoutCreateInfo: DescriptorSetLayoutCreateInfoStatic = Java.type('chr.wgx.render.info.DescriptorSetLayoutCreateInfo')
-export const ObjectCreateInfo: ObjectCreateInfoStatic = Java.type('chr.wgx.render.info.ObjectCreateInfo')
-export const VertexInputInfo: VertexInputInfoStatic = Java.type('chr.wgx.render.info.VertexInputInfo')
-export const PushConstantInfo: PushConstantInfoStatic = Java.type('chr.wgx.render.info.PushConstantInfo')
-export const PushConstantRange: PushConstantRangeStatic = Java.type('chr.wgx.render.info.PushConstantRange')
-export const RenderPassAttachmentInfo: RenderPassAttachmentInfoStatic = Java.type('chr.wgx.render.info.RenderPassAttachmentInfo')
-export const RenderPassCreateInfo: RenderPassCreateInfoStatic = Java.type('chr.wgx.render.info.RenderPassCreateInfo')
-export const RenderPipelineCreateInfo: RenderPipelineCreateInfoStatic = Java.type('chr.wgx.render.info.RenderPipelineCreateInfo')
-export const ShaderProgram: ShaderProgramStatic = Java.type('chr.wgx.render.info.ShaderProgram')
-export const TextureBindingInfo: TextureBindingInfoStatic = Java.type('chr.wgx.render.info.TextureBindingInfo')
-export const TextureCreateInfo: TextureCreateInfoStatic = Java.type('chr.wgx.render.info.TextureCreateInfo')
-export const UniformBufferCreateInfo: UniformBufferCreateInfoStatic = Java.type('chr.wgx.render.info.UniformBufferCreateInfo')
+export const AttachmentCreateInfo = Java.type<AttachmentCreateInfoStatic>('chr.wgx.render.info.AttachmentCreateInfo')
+export const FieldInfoInput = Java.type<FieldInputStatic>('chr.wgx.render.info.FieldInfoInput')
+export const UniformBufferBindingInfo = Java.type<UniformBufferBindingInfoStatic>('chr.wgx.render.info.UniformBufferBindingInfo')
+export const DescriptorSetCreateInfo = Java.type<DescriptorSetCreateInfoStatic>('chr.wgx.render.info.DescriptorSetCreateInfo')
+export const DescriptorSetLayout = Java.type<DescriptorSetLayoutStatic>('chr.wgx.render.data.DescriptorSetLayout')
+export const DescriptorSetLayoutCreateInfo = Java.type<DescriptorSetLayoutCreateInfoStatic>('chr.wgx.render.info.DescriptorSetLayoutCreateInfo')
+export const ObjectCreateInfo = Java.type<ObjectCreateInfoStatic>('chr.wgx.render.info.ObjectCreateInfo')
+export const VertexInputInfo = Java.type<VertexInputInfoStatic>('chr.wgx.render.info.VertexInputInfo')
+export const PushConstantInfo = Java.type<PushConstantInfoStatic>('chr.wgx.render.info.PushConstantInfo')
+export const PushConstantRange = Java.type<PushConstantRangeStatic>('chr.wgx.render.info.PushConstantRange')
+export const RenderPassAttachmentInfo = Java.type<RenderPassAttachmentInfoStatic>('chr.wgx.render.info.RenderPassAttachmentInfo')
+export const RenderPassCreateInfo = Java.type<RenderPassCreateInfoStatic>('chr.wgx.render.info.RenderPassCreateInfo')
+export const RenderPipelineCreateInfo = Java.type<RenderPipelineCreateInfoStatic>('chr.wgx.render.info.RenderPipelineCreateInfo')
+export const ShaderProgram = Java.type<ShaderProgramStatic>('chr.wgx.render.info.ShaderProgram')
+export const TextureBindingInfo = Java.type<TextureBindingInfoStatic>('chr.wgx.render.info.TextureBindingInfo')
+export const TextureCreateInfo = Java.type<TextureCreateInfoStatic>('chr.wgx.render.info.TextureCreateInfo')
+export const UniformBufferCreateInfo = Java.type<UniformBufferCreateInfoStatic>('chr.wgx.render.info.UniformBufferCreateInfo')
 
 /// ------ package chr.wgx.render.data ------ ///
 
-export declare class AttachmentT extends JvmClass {
+export declare class AttachmentT extends JvmObject {
     createInfo: AttachmentCreateInfoT
 
     private constructor()

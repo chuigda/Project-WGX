@@ -1,13 +1,13 @@
-export declare class PairT extends JvmClass {
-    first(): any
-    second(): any
-    setFirst(first: any): void
-    setSecond(second: any): void
+export declare class PairT<T1, T2> extends JvmObject {
+    first(): T1
+    second(): T2
+    setFirst(first: T1): void
+    setSecond(second: T2): void
 
     private constructor()
 }
 
-export declare class OptionT<T> extends JvmClass {
+export declare class OptionT<T> extends JvmObject {
     get(): any
     nullable(): any | null
     isSome(): boolean
@@ -16,11 +16,11 @@ export declare class OptionT<T> extends JvmClass {
     private constructor()
 }
 
-export interface PairStatic {
-    new(first: any, second: any): PairT
+export interface PairStatic extends JvmClass {
+    new<T1, T2>(first: T1, second: T2): PairT<T1, T2>
 }
 
-export interface OptionStatic {
+export interface OptionStatic extends JvmClass {
     some<T>(value: T): OptionT<T>
     none<T>(): OptionT<T>
     fromNullable<T>(value: T | null): OptionT<T>

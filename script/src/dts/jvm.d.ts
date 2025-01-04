@@ -31,18 +31,22 @@ declare global {
 
     const java: jpackge_java
 
-    export interface JavaClass {
-        type(name: String): any
+    /// 用来防止用户错误地用一个字面量赋值给一个 JVM 类型的变量
+    export class JvmObject {
+        private __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: number
     }
 
-    const Java: JavaClass;
-
-    /// 用来防止用户错误地用一个字面量赋值给一个 JVM 类型的变量
     export class JvmClass {
         private __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: number
     }
 
-    export class MemorySegment extends JvmClass { private constructor() }
-    export class MemoryLayout extends JvmClass { private constructor() }
-    export class BufferedImage extends JvmClass { private constructor() }
+    export interface JavaClass {
+        type<T extends JvmClass>(name: String): T
+    }
+
+    const Java: JavaClass;
+
+    export class MemorySegment extends JvmObject { private constructor() }
+    export class MemoryLayout extends JvmObject { private constructor() }
+    export class BufferedImage extends JvmObject { private constructor() }
 }
