@@ -186,12 +186,6 @@ export declare class RenderPassAttachmentInfoT extends JvmClass {
     private constructor()
 }
 
-export declare class AttachmentT extends JvmClass {
-    createInfo: AttachmentCreateInfoT
-
-    private constructor()
-}
-
 export declare class RenderPassCreateInfoT extends JvmClass {
     name: string
     priority: number
@@ -295,10 +289,6 @@ export interface RenderPassAttachmentInfoStatic {
     new(attachment: AttachmentT, clearBehavior: ClearBehaviorT, clearColor: ColorT): RenderPassAttachmentInfoT
 }
 
-export interface AttachmentStatic {
-    new(createInfo: AttachmentCreateInfoT): AttachmentT
-}
-
 export interface RenderPassCreateInfoStatic {
     new(
         name: string,
@@ -393,10 +383,17 @@ export const VertexInputInfo: VertexInputInfoStatic = Java.type('chr.wgx.render.
 export const PushConstantInfo: PushConstantInfoStatic = Java.type('chr.wgx.render.info.PushConstantInfo')
 export const PushConstantRange: PushConstantRangeStatic = Java.type('chr.wgx.render.info.PushConstantRange')
 export const RenderPassAttachmentInfo: RenderPassAttachmentInfoStatic = Java.type('chr.wgx.render.info.RenderPassAttachmentInfo')
-export const Attachment: AttachmentStatic = Java.type('chr.wgx.render.data.Attachment')
 export const RenderPassCreateInfo: RenderPassCreateInfoStatic = Java.type('chr.wgx.render.info.RenderPassCreateInfo')
 export const RenderPipelineCreateInfo: RenderPipelineCreateInfoStatic = Java.type('chr.wgx.render.info.RenderPipelineCreateInfo')
 export const ShaderProgram: ShaderProgramStatic = Java.type('chr.wgx.render.info.ShaderProgram')
 export const TextureBindingInfo: TextureBindingInfoStatic = Java.type('chr.wgx.render.info.TextureBindingInfo')
 export const TextureCreateInfo: TextureCreateInfoStatic = Java.type('chr.wgx.render.info.TextureCreateInfo')
 export const UniformBufferCreateInfo: UniformBufferCreateInfoStatic = Java.type('chr.wgx.render.info.UniformBufferCreateInfo')
+
+/// ------ package chr.wgx.render.data ------ ///
+
+export declare class AttachmentT extends JvmClass {
+    createInfo: AttachmentCreateInfoT
+
+    private constructor()
+}
