@@ -148,7 +148,7 @@ public final class RenderOp implements CompiledRenderPassOp {
         if (pushConstantOption instanceof Option.Some<VulkanPushConstant> some) {
             VulkanPushConstant pushConstant = some.value;
             synchronized (pushConstant) {
-                for (PushConstantRange range : pushConstant.info.pushConstantRanges) {
+                for (PushConstantRange range : pushConstant.createInfo.pushConstantRanges) {
                     cx.dCmd.vkCmdPushConstants(
                             cmdBuf,
                             pipelineLayout,

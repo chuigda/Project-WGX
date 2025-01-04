@@ -6,10 +6,10 @@ import tech.icey.xjbutil.functional.Action1;
 import java.lang.foreign.MemorySegment;
 
 public abstract class PushConstant {
-    public final PushConstantInfo info;
+    public final PushConstantInfo createInfo;
 
-    protected PushConstant(PushConstantInfo info) {
-        this.info = info;
+    protected PushConstant(PushConstantInfo createInfo) {
+        this.createInfo = createInfo;
     }
 
     public abstract void updateBufferContent(MemorySegment segment);

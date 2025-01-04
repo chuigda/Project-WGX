@@ -30,7 +30,7 @@ public final class ASPECT_PipelineCreate {
         try (Arena arena = Arena.ofConfined()) {
             List<UniformLocation> uniformLocations = new ArrayList<>();
             for (DescriptorSetLayout layout : createInfo.descriptorSetLayouts) {
-                for (DescriptorLayoutBindingInfo bindingInfo : layout.info.bindings) {
+                for (DescriptorLayoutBindingInfo bindingInfo : layout.createInfo.bindings) {
                     switch (bindingInfo) {
                         case TextureBindingInfo textureBindingInfo -> {
                             int location = gles2.glGetUniformLocation(

@@ -3,9 +3,9 @@ package chr.wgx.render.data;
 import chr.wgx.render.info.DescriptorSetLayoutCreateInfo;
 
 public abstract class DescriptorSetLayout {
-    public final DescriptorSetLayoutCreateInfo info;
+    public final DescriptorSetLayoutCreateInfo createInfo;
 
-    protected DescriptorSetLayout(DescriptorSetLayoutCreateInfo info) {
-        this.info = info;
+    protected DescriptorSetLayout(DescriptorSetLayoutCreateInfo createInfo) {
+        this.createInfo = createInfo;
     }
 }

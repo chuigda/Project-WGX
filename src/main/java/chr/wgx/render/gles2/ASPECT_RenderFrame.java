@@ -177,7 +177,7 @@ public final class ASPECT_RenderFrame {
 
                         if (renderTask.pushConstant instanceof Option.Some<GLES2PushConstant> some) {
                             GLES2PushConstant pushConstant = some.value;
-                            for (PushConstantRange range : pushConstant.info.pushConstantRanges) {
+                            for (PushConstantRange range : pushConstant.createInfo.pushConstantRanges) {
                                 UniformLocation uniformLocation = pipelineBind.pipeline.uniformLocations.get(offset1);
                                 uploadUniformData(
                                         gles2,
