@@ -14,10 +14,10 @@ const object = engine.createObject(new ObjectCreateInfo(
     vertexInputInfo,
     makeFloatSegment([
         // vec2 position, vec3 color
-        -0.5, -0.5, 1.0, 0.0, 0.0,
-        0.5, -0.5, 1.0, 1.0, 0.0,
-        0.5, 0.5, 0.0, 1.0, 0.0,
-        -0.5, 0.5, 0.0, 0.0, 1.0
+        -0.25, -0.25, 1.0, 0.0, 0.0,
+        0.25, -0.25, 1.0, 1.0, 0.0,
+        0.25, 0.25, 0.0, 1.0, 0.0,
+        -0.25, 0.25, 0.0, 0.0, 1.0
     ]),
     makeIntSegment([
         0, 1, 2,

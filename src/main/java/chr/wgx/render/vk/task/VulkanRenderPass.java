@@ -67,6 +67,7 @@ public final class VulkanRenderPass extends RenderPass {
                 prefabArena
         );
         bindList.add(bind);
+        renderPassesNeedRecompilation.set(true);
         return bind;
     }
 

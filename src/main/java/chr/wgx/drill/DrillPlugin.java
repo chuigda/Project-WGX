@@ -69,8 +69,6 @@ public final class DrillPlugin implements IPlugin {
 
   // src/packages/chr.wgx.util.ts
   var ResourceUtil = Java.type("chr.wgx.util.ResourceUtil");
-  print(ResourceUtil)
-  print(ResourceUtil.readBinaryFile)
 
   // src/packages/java.ts
   var ByteArray = Java.type("byte[]");
@@ -98,23 +96,23 @@ public final class DrillPlugin implements IPlugin {
   ]);
   var object = engine.createObject(new ObjectCreateInfo(vertexInputInfo, makeFloatSegment([
     // vec2 position, vec3 color
-    -0.5,
-    -0.5,
+    -0.25,
+    -0.25,
     1,
     0,
     0,
-    0.5,
-    -0.5,
+    0.25,
+    -0.25,
     1,
     1,
     0,
-    0.5,
-    0.5,
+    0.25,
+    0.25,
     0,
     1,
     0,
-    -0.5,
-    0.5,
+    -0.25,
+    0.25,
     0,
     0,
     1
