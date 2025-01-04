@@ -1,7 +1,7 @@
 /// ------ package chr.wgx.render.common ------ ///
 
-import { MemorySegmentT } from "./java"
-import { OptionT } from "./tech.icey.xjbutil"
+import { ByteArrayT, JvmListBase, MemorySegmentT } from "./java"
+import { OptionT, PairT } from "./tech.icey.xjbutil"
 
 export declare class BlendModeT extends JvmObject { private constructor() }
 export declare class CGTypeT extends JvmObject { private constructor() }
@@ -128,14 +128,6 @@ export declare class UniformBufferBindingInfoT extends DescriptorLayoutBindingIn
 export declare class DescriptorSetCreateInfoT extends JvmObject {
     layout: DescriptorSetLayoutT
     descriptors: DescriptorT[]
-
-    private constructor()
-}
-
-export declare class DescriptorT extends JvmObject {}
-
-export declare class DescriptorSetLayoutT extends JvmObject {
-    info: DescriptorSetLayoutCreateInfoT
 
     private constructor()
 }
@@ -345,7 +337,7 @@ export interface ShaderProgram$GLES2Static extends JvmClass {
 }
 
 export interface ShaderProgram$VulkanStatic extends JvmClass {
-    new(vertexShader: number[], fragmentShader: number[]): ShaderProgram$VulkanStatic
+    new(vertexShader: ByteArrayT, fragmentShader: ByteArrayT): ShaderProgram$VulkanStatic
 }
 
 export interface ShaderProgramStatic extends JvmClass {
@@ -397,4 +389,115 @@ export declare class AttachmentT extends JvmObject {
     createInfo: AttachmentCreateInfoT
 
     private constructor()
+}
+
+export declare class DescriptorT extends JvmObject {
+    protected constructor()
+}
+
+export declare class UniformBufferT extends DescriptorT {
+    createInfo: UniformBufferCreateInfoT
+    updateBufferContent(segment: MemorySegmentT): void
+
+    private constructor()
+}
+
+export declare class TextureT extends DescriptorT {
+    isAttachment: boolean
+
+    private constructor()
+}
+
+export declare class DescriptorSetT extends JvmObject {
+    createInfo: DescriptorSetCreateInfoT
+
+    private constructor()
+}
+
+export declare class DescriptorSetLayoutT extends JvmObject {
+    createInfo: DescriptorSetLayoutCreateInfoT
+
+    private constructor()
+}
+
+export declare class PushConstantT extends JvmObject {
+    createInfo: PushConstantInfoT
+    updateBufferContent(segment: MemorySegmentT): void
+
+    private constructor()
+}
+
+export declare class RenderObjectT extends JvmObject {
+    vertexInputInfo: VertexInputInfoT
+
+    private constructor()
+}
+
+export declare class RenderPipelineT extends JvmObject {
+    createInfo: RenderPipelineCreateInfoT
+
+    private constructor()
+}
+
+/// ------ package chr.wgx.render.task ------ ///
+
+export declare class RenderPassT extends JvmObject {
+    info: RenderPassCreateInfoT
+    addInputAttachments(attachments: AttachmentT[]): void
+    createPipelineBind(priority: number, pipeline: RenderPipelineT): RenderPipelineBindT
+
+    private constructor()
+}
+
+export declare class RenderPipelineBindT extends JvmObject {
+    priority: number
+    createRenderTaskGroup(sharedDescriptorSets: DescriptorSetT[]): RenderTaskGroupT
+
+    private constructor()
+}
+
+export declare class RenderTaskGroupT extends JvmObject {
+    isEnabled(): boolean
+    setEnabled(enabled: boolean): void
+    addRenderTask(
+        renderObject: RenderObjectT,
+        descriptorSets: DescriptorSetT[],
+        pushConstant: OptionT<PushConstantT>
+    ): RenderTaskT
+    addRenderTask(
+        renderObject: RenderObjectT,
+        descriptorSets: DescriptorSetT[],
+        pushConstant: PushConstantT
+    ): RenderTaskT
+    addRenderTask(renderObject: RenderObjectT, descriptorSets: DescriptorSetT[]): RenderTaskT
+    addRenderTask(renderObject: RenderObjectT, pushConstant: PushConstantT): RenderTaskT
+    addRenderTask(renderObject: RenderObjectT): RenderTaskT
+
+    private constructor()
+}
+
+export declare class RenderTaskT extends JvmObject {
+    isEnabled(): boolean
+    setEnabled(enabled: boolean): void
+
+    private constructor()
+}
+
+/// ------ class chr.wgx.render.RenderEngine ------ ///
+
+export declare class RenderEngineT {
+    createObject(info: ObjectCreateInfoT): RenderObjectT
+    createObject(info: ObjectCreateInfoT[]): JvmListBase<RenderObjectT>
+
+    createColorAttachment(info: AttachmentCreateInfoT): PairT<AttachmentT, TextureT>
+    createDepthAttachment(info: AttachmentCreateInfoT): AttachmentT
+    getDefaultAttachments(): PairT<AttachmentT, AttachmentT>
+    createTexture(info: TextureCreateInfoT): TextureT
+    createTexture(info: TextureCreateInfoT[]): JvmListBase<TextureT>
+    createUniform(info: UniformBufferCreateInfoT): UniformBufferT
+    createPushConstant(info: PushConstantInfoT, count: number): JvmListBase<PushConstantT>
+    createDescriptorSetLayout(info: DescriptorSetLayoutCreateInfoT, maxSets: number): DescriptorSetLayoutT
+    createDescriptorSet(info: DescriptorSetCreateInfoT): DescriptorSetT
+    createPipeline(info: RenderPipelineCreateInfoT): RenderPipelineT
+    createRenderPass(info: RenderPassCreateInfoT): RenderPassT
 }

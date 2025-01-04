@@ -1,6 +1,7 @@
 package chr.wgx.reactor;
 
 import chr.wgx.builtin.wgcv1.WGCV1Factory;
+import chr.wgx.drill.DrillPlugin;
 import chr.wgx.reactor.plugin.IPlugin;
 import chr.wgx.reactor.plugin.IPluginBehavior;
 import chr.wgx.reactor.plugin.IPluginFactory;
@@ -54,7 +55,10 @@ public final class Reactor {
         Reactor reactor = new Reactor(renderEngine);
 
         // TODO make this configurable, or maybe construct this list somewhere else
-        List<IPluginFactory> pluginFactoryList = List.of(new WGCV1Factory());
+        List<IPluginFactory> pluginFactoryList = List.of(
+                new WGCV1Factory(),
+                new DrillPlugin.Factory()
+        );
         SortedSet<IPluginBehavior> pluginBehaviors = new TreeSet<>();
 
         for (IPluginFactory factory : pluginFactoryList) {

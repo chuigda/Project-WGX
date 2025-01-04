@@ -1,6 +1,4 @@
-import chr.wgx.util.NotNullByDefault;
-
-@NotNullByDefault
+@chr.wgx.util.NotNullByDefault
 module chr.wgx {
     requires com.formdev.flatlaf;
     requires com.google.gson;
@@ -25,8 +23,8 @@ module chr.wgx {
     exports chr.wgx.render.common;
     exports chr.wgx.render.data;
     exports chr.wgx.render.info;
-    exports chr.wgx.ui;
-
-    exports chr.wgx.drill;
     exports chr.wgx.render.task;
+    exports chr.wgx.ui;
+    exports chr.wgx.util;
+    exports chr.wgx.drill;
 }

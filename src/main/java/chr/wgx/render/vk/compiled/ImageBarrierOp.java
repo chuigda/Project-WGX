@@ -115,6 +115,10 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
                  && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
             return new Pair<>(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VkAccessFlags.VK_ACCESS_MEMORY_READ_BIT);
         }
+        else if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+                 && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+            return new Pair<>(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+        }
 
         throw new UnsupportedOperationException("不支持的布局转换: 从 " + VkImageLayout.explain(oldLayout) + " 到 " + VkImageLayout.explain(newLayout));
     }
