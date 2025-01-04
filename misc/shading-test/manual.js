@@ -63,15 +63,15 @@ void main() {
    }
    else if (intensity < 0.8) {
       ivec2 coord = ivec2(gl_FragCoord.xy);
-      if (modIsZero(coord.x, 2) && modIsZero(coord.y, 2)) {
+      if (modIsZero(coord.x, 3) && modIsZero(coord.y, 3)) {
          intensity = 0.4;
       }
       else {
-         intensity = 0.7;
+         intensity = 0.75;
       }
    }
    else {
-      intensity = 0.7;
+      intensity = 0.75;
    }
 
    gl_FragColor = vec4(vec3(intensity) * materialColor, 1.0);

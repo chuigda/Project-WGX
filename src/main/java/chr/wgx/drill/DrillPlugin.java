@@ -124,7 +124,7 @@ public final class DrillPlugin implements IPlugin {
     3,
     0
   ])));
-  var pipeline = engine.createPipeline(new RenderPipelineCreateInfo(vertexInputInfo, [], Option.none(), Option.some(new ShaderProgram.Vulkan(ResourceUtil.readBinaryFile("/resources/shader/wgc0310v1/vk/screen_content.vert.spv"), ResourceUtil.readBinaryFile("/resources/shader/wgc0310v1/vk/screen_content.frag.spv"))), Option.none(), 1, false));
+  var pipeline = engine.createPipeline(new RenderPipelineCreateInfo(vertexInputInfo, [], Option.none(), Option.some(new ShaderProgram.Vulkan(ResourceUtil.readBinaryFile("/resources/shader/wgc0310v1/vk/screen_content.vert.spv"), ResourceUtil.readBinaryFile("/resources/shader/wgc0310v1/vk/screen_content.frag.spv"))), Option.some(new ShaderProgram.GLES2(ResourceUtil.readTextFile("/resources/shader/wgc0310v1/gles2/screen_content.vert"), ResourceUtil.readTextFile("/resources/shader/wgc0310v1/gles2/screen_content.frag"))), 1, false));
   var defaultColorAttachment = engine.getDefaultAttachments().first();
   var renderPass = engine.createRenderPass(new RenderPassCreateInfo("FINAL_drill_typeScriptCreatedPass", 114514, new RenderPassAttachmentInfo(defaultColorAttachment, ClearBehavior.CLEAR_ONCE)));
   var pipelineBind = renderPass.createPipelineBind(0, pipeline);

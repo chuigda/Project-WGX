@@ -33,7 +33,10 @@ const pipeline = engine.createPipeline(new RenderPipelineCreateInfo(
         ResourceUtil.readBinaryFile('/resources/shader/wgc0310v1/vk/screen_content.vert.spv'),
         ResourceUtil.readBinaryFile('/resources/shader/wgc0310v1/vk/screen_content.frag.spv')
     )),
-    Option.none(), // TODO,
+    Option.some(new ShaderProgram.GLES2(
+        ResourceUtil.readTextFile('/resources/shader/wgc0310v1/gles2/screen_content.vert'),
+        ResourceUtil.readTextFile('/resources/shader/wgc0310v1/gles2/screen_content.frag')
+    )),
     1,
     false
 ))
