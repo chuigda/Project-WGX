@@ -2,6 +2,7 @@ package chr.wgx.render.gles2;
 
 import chr.wgx.render.RenderException;
 import chr.wgx.render.common.CGType;
+import chr.wgx.render.common.ClearBehavior;
 import chr.wgx.render.common.Color;
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.Descriptor;
@@ -14,6 +15,7 @@ import chr.wgx.render.gles2.task.GLES2RenderTask;
 import chr.wgx.render.gles2.task.GLES2RenderTaskGroup;
 import chr.wgx.render.info.FieldInfo;
 import chr.wgx.render.info.PushConstantRange;
+import chr.wgx.render.info.RenderPassAttachmentInfo;
 import org.intellij.lang.annotations.Language;
 import tech.icey.gles2.GLES2;
 import tech.icey.gles2.GLES2Constants;
@@ -24,6 +26,7 @@ import tech.icey.xjbutil.container.Option;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.util.HashSet;
 
 public final class ASPECT_RenderFrame {
     ASPECT_RenderFrame(GLES2RenderEngine engine) throws RenderException{
@@ -67,6 +70,8 @@ public final class ASPECT_RenderFrame {
     }
 
     void renderFrameImpl() throws RenderException {
+        HashSet<Attachment> clearedAttachments = new HashSet<>();
+
         GLES2 gles2 = engine.gles2;
         gles2.glDisable(GLES2Constants.GL_CULL_FACE);
         gles2.glDisable(GLES2Constants.GL_BLEND);
@@ -87,12 +92,23 @@ public final class ASPECT_RenderFrame {
             gles2.glViewport(0, 0, actualWidth, actualHeight);
 
             // TODO find a way to support multiple clear colors
-            // TODO attachment clear analysis
-            Color clearColor = renderPass.info.colorAttachmentInfos.getFirst().clearColor;
-            gles2.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-            gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
-            if (renderPass.info.depthAttachmentInfo.isSome()) {
-                gles2.glClear(GLES2Constants.GL_DEPTH_BUFFER_BIT);
+            RenderPassAttachmentInfo renderPassAttachmentInfo = renderPass.info.colorAttachmentInfos.getFirst();
+            if (renderPassAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
+                || !clearedAttachments.contains(firstAttachment)) {
+                Color clearColor = renderPassAttachmentInfo.clearColor;
+                gles2.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+                gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
+                clearedAttachments.add(firstAttachment);
+            }
+            if (renderPass.info.depthAttachmentInfo instanceof Option.Some<RenderPassAttachmentInfo> some) {
+                RenderPassAttachmentInfo depthAttachmentInfo = some.value;
+                Attachment depthAttachment = some.value.attachment;
+
+                if (depthAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
+                    || !clearedAttachments.contains(depthAttachment)) {
+                    gles2.glClear(GLES2Constants.GL_DEPTH_BUFFER_BIT);
+                    clearedAttachments.add(depthAttachment);
+                }
             }
 
             for (GLES2RenderPipelineBind pipelineBind : renderPass.bindList) {

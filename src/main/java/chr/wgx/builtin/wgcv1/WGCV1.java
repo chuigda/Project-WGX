@@ -211,7 +211,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                         ResourceUtil.readTextFile("/resources/shader/wgc0310v1/gles2/phong.frag")
                 )),
                 1,
-                true
+                false
         ));
 
         RenderPass colorPass = engine.createRenderPass(new RenderPassCreateInfo(
@@ -221,11 +221,11 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                         defaultAttachments.first(),
                         ClearBehavior.CLEAR_ONCE,
                         new Color(0.0f, 0.2f, 0.2f, 1.0f)
-                ),
-                new RenderPassAttachmentInfo(
-                        defaultAttachments.second(),
-                        ClearBehavior.CLEAR_ONCE
                 )
+//                new RenderPassAttachmentInfo(
+//                        defaultAttachments.second(),
+//                        ClearBehavior.CLEAR_ONCE
+//                )
         ));
 
         RenderPipelineBind bind = colorPass.createPipelineBind(2000, colorPassPipeline);
@@ -262,6 +262,60 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         }
         RenderTask leftShoulderWheel = blackPlasticGroup.addRenderTask(wheelSmall, pcLeftWheel);
         RenderTask leftSmallWheel = blackPlasticGroup.addRenderTask(wheelSmall, pcLeftSmallArm);
+
+        RenderObject testObject = engine.createObject(new ObjectCreateInfo(
+                colorPassVertexInfo,
+                MemorySegment.ofArray(new float[]{
+                        // a rect, with normal pointing out
+                        // vec3 position, vec3 normal
+                        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+                        1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+                        1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+                        -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+                }),
+                MemorySegment.ofArray(new int[]{
+                        0, 1, 2,
+                        0, 2, 3
+                })
+        ));
+        UniformBuffer testObjectViewProjBuffer = engine.createUniform(new UniformBufferCreateInfo(
+                UniformUpdateFrequency.MANUAL,
+                viewProjBindingInfo
+        ));
+        UniformBuffer testMaterial = engine.createUniform(new UniformBufferCreateInfo(
+                UniformUpdateFrequency.MANUAL,
+                materialBindingInfo
+        ));
+        DescriptorSet testObjectSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
+                colorPassDescriptorSetLayout,
+                List.of(testObjectViewProjBuffer, testMaterial)
+        ));
+        PushConstant pcTestObject = engine.createPushConstant(pushConstantInfo, 1).getFirst();
+
+        testObjectViewProjBuffer.updateBufferContent(MemorySegment.ofArray(new float[]{
+                1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f,
+
+                1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f,
+        }));
+        testMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
+                1.0f, 0.0f, 1.0f, 1.0f,
+                0.0f, 0.0f, 0.0f, 1.0f
+        }));
+        pcTestObject.updateBufferContent(MemorySegment.ofArray(new float[] {
+                1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f
+        }));
+
+        RenderTaskGroup testObjectGroup = bind.createRenderTaskGroup(List.of(testObjectSet));
+        RenderTask testObjectTask = testObjectGroup.addRenderTask(testObject, pcTestObject);
     }
 
     @Override
