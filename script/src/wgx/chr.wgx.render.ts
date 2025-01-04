@@ -91,6 +91,22 @@ export declare class AttachmentCreateInfoT extends JvmClass {
     private constructor()
 }
 
+export declare class FieldInfoT extends JvmClass {
+    name: string
+    type: CGTypeT
+    location: number
+    byteOffset: number
+
+    private constructor()
+}
+
+export declare class FieldInfoInputT extends JvmClass {
+    name: string
+    type: CGTypeT
+
+    private constructor()
+}
+
 export declare class DescriptorLayoutBindingInfoT extends JvmClass {
     descriptorType: DescriptorTypeT
     bindingName: string
@@ -99,9 +115,26 @@ export declare class DescriptorLayoutBindingInfoT extends JvmClass {
     protected constructor()
 }
 
+export declare class UniformBufferBindingInfoT extends DescriptorLayoutBindingInfoT {
+    fields: FieldInfoT[]
+    bufferSize: number
+
+    private constructor()
+}
+
 export interface AttachmentCreateInfoStatic {
     new(pixelFormat: PixelFormatT, width: number, height: number): AttachmentCreateInfoT
     new(pixelFormat: PixelFormatT): AttachmentCreateInfoT
 }
 
+export interface FieldInputStatic {
+    new(name: string, type: CGTypeT): FieldInfoInputT
+}
+
+export interface UniformBufferBindingInfoStatic {
+    new(bindingName: string, stage: ShaderStageT, fieldInfoInputs: FieldInfoInputT[]): UniformBufferBindingInfoT
+}
+
 export const AttachmentCreateInfo: AttachmentCreateInfoStatic = Java.type('chr.wgx.render.info.AttachmentCreateInfo')
+export const FieldInfoInput: FieldInputStatic = Java.type('chr.wgx.render.info.FieldInfoInput')
+export const UniformBufferBindingInfo: UniformBufferBindingInfoStatic = Java.type('chr.wgx.render.info.UniformBufferBindingInfo')
