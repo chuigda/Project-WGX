@@ -4,9 +4,9 @@ import tech.icey.gles2.GLES2Constants;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkFormat;
 
+import static chr.wgx.render.gles2.glext.EXT_texture_storage.GL_R32F_EXT;
 import static tech.icey.gles2.GLES2Constants.*;
 import static tech.icey.vk4j.enumtype.VkFormat.VK_FORMAT_D32_SFLOAT;
-import static chr.wgx.render.gles2.glext.EXT_texture_storage.GL_R32F_EXT;
 
 public enum PixelFormat {
     /// 供一般彩色附件和纹理使用的格式，这个格式也非常方便从 CPU 上传 RGBA 数据到 GPU

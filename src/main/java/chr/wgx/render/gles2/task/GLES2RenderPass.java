@@ -1,6 +1,5 @@
 package chr.wgx.render.gles2.task;
 
-import chr.wgx.render.common.Color;
 import chr.wgx.render.data.Attachment;
 import chr.wgx.render.data.RenderPipeline;
 import chr.wgx.render.gles2.data.GLES2RenderPipeline;

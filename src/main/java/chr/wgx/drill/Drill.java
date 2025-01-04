@@ -2,7 +2,8 @@ package chr.wgx.drill;
 
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
-import javax.script.*;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 
 public final class Drill {
     private static final String SOURCE_CODE = """

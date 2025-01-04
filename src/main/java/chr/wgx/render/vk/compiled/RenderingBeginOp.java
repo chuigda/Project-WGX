@@ -1,6 +1,5 @@
 package chr.wgx.render.vk.compiled;
 
-import chr.wgx.render.common.ClearBehavior;
 import chr.wgx.render.info.RenderPassAttachmentInfo;
 import chr.wgx.render.vk.Swapchain;
 import chr.wgx.render.vk.VulkanRenderEngineContext;

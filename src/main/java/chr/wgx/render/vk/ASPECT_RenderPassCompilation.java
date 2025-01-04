@@ -11,7 +11,10 @@ import tech.icey.panama.annotation.enumtype;
 import tech.icey.vk4j.enumtype.VkImageLayout;
 import tech.icey.xjbutil.container.Option;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.logging.Logger;
 
 public final class ASPECT_RenderPassCompilation {

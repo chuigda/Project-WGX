@@ -1,10 +1,8 @@
 package chr.wgx.render;
 
-import chr.wgx.render.common.Color;
 import chr.wgx.render.data.*;
 import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
-import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.functional.Action0;
 import tech.icey.xjbutil.functional.Action2;
