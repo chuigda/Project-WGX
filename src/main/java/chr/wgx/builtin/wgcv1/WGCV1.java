@@ -119,7 +119,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
 
         PushConstantRange pushConstantRange = new PushConstantRange("model", ShaderStage.VERTEX, CGType.Mat4, 0);
         PushConstantInfo pushConstantInfo = new PushConstantInfo(List.of(pushConstantRange));
-//
+
         VertexInputInfo colorPassVertexInfo = new VertexInputInfo(List.of(
                 new FieldInfoInput("position", CGType.Vec3),
                 new FieldInfoInput("normal", CGType.Vec3)
@@ -197,7 +197,6 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         fillPushConstant(this.pcLeftClaw, transform2);
 
         Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
-//
         RenderPipeline colorPassPipeline = engine.createPipeline(new RenderPipelineCreateInfo(
                 colorPassVertexInfo,
                 List.of(colorPassDescriptorSetLayout),
@@ -275,7 +274,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                 }),
                 MemorySegment.ofArray(new int[]{
                         0, 1, 2,
-                        0, 2, 3
+                        2, 3, 0
                 })
         ));
         UniformBuffer testObjectViewProjBuffer = engine.createUniform(new UniformBufferCreateInfo(

@@ -2,6 +2,7 @@ package chr.wgx.render.gles2;
 
 import chr.wgx.render.RenderException;
 import chr.wgx.render.data.DescriptorSetLayout;
+import chr.wgx.render.gles2.data.AttributeBinding;
 import chr.wgx.render.gles2.data.GLES2RenderPipeline;
 import chr.wgx.render.gles2.data.UniformLocation;
 import chr.wgx.render.info.*;
@@ -29,6 +30,21 @@ public final class ASPECT_PipelineCreate {
 
         int program = GLES2Util.compileShaderProgram(gles2, shaderProgram.vertexShader, shaderProgram.fragmentShader);
         try (Arena arena = Arena.ofConfined()) {
+            // TODO make use of this attributeBindings, instead of restricting the ways writing GLSL
+            List<AttributeBinding> attributeBindings = new ArrayList<>();
+            for (FieldInfo attributeInfo : createInfo.vertexInputInfo.attributes) {
+                String actualAttributeName = makeAttributeName(attributeInfo.name);
+                int location = gles2.glGetAttribLocation(
+                        program,
+                        ByteBuffer.allocateString(arena, actualAttributeName)
+                );
+                if (location == -1) {
+                    throw new RenderException("未找到属性绑定点: " + attributeInfo.name + "(" + actualAttributeName + ")");
+                }
+
+                attributeBindings.add(new AttributeBinding(attributeInfo.name, location));
+            }
+
             List<UniformLocation> uniformLocations = new ArrayList<>();
             for (DescriptorSetLayout layout : createInfo.descriptorSetLayouts) {
                 for (DescriptorLayoutBindingInfo bindingInfo : layout.createInfo.bindings) {
@@ -81,6 +97,18 @@ public final class ASPECT_PipelineCreate {
             engine.pipelines.add(ret);
             return ret;
         }
+    }
+
+    private static String makeAttributeName(String name) {
+        if (name.startsWith("a") && name.length() >= 2 && isCapital(name.charAt(1))) {
+            return name;
+        } else {
+            return "a" + name.substring(0, 1).toUpperCase() + name.substring(1);
+        }
+    }
+
+    private static boolean isCapital(char ch) {
+        return ch >= 'A' && ch <= 'Z';
     }
 
     private final GLES2RenderEngine engine;

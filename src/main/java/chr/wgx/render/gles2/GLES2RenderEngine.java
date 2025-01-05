@@ -120,8 +120,6 @@ public final class GLES2RenderEngine extends RenderEngine {
         );
 
         renderFrameAspect = new ASPECT_RenderFrame(this);
-
-        glfw.glfwSwapInterval(0);
     }
 
     public final Arena prefabArena = Arena.ofAuto();
