@@ -19,5 +19,5 @@ void main() {
     position1 = uVP_proj * uVP_view * pco_model * vec4(aPosition, 1.0);
     position1.y = -position1.y;
 
-    gl_Position = 0.000001 * position1 + vec4(0.02 * aPosition + 0.5, 1.0);
+    gl_Position = position1;
 }

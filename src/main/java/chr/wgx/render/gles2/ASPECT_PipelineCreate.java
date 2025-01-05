@@ -12,13 +12,14 @@ import tech.icey.xjbutil.container.Option;
 import java.lang.foreign.Arena;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public final class ASPECT_PipelineCreate {
     ASPECT_PipelineCreate(GLES2RenderEngine engine) {
         this.engine = engine;
     }
 
-    GLES2RenderPipeline createPipelineImpl(RenderPipelineCreateInfo createInfo) throws RenderException{
+    GLES2RenderPipeline createPipelineImpl(RenderPipelineCreateInfo createInfo) throws RenderException {
         GLES2 gles2 = engine.gles2;
 
         if (!(createInfo.gles2ShaderProgram instanceof Option.Some<ShaderProgram.GLES2> someShaderProgram)) {
@@ -38,7 +39,7 @@ public final class ASPECT_PipelineCreate {
                                     ByteBuffer.allocateString(arena, textureBindingInfo.bindingName)
                             );
                             if (location == -1) {
-                                throw new RenderException("未找到纹理绑定点: " + textureBindingInfo.bindingName);
+                                logger.warning("未找到纹理绑定点: " + textureBindingInfo.bindingName + ", 这可能是因为纹理未被着色器使用。着色器程序仍然可以运行，但纹理将不会被更新");
                             }
 
                             uniformLocations.add(new UniformLocation(textureBindingInfo.bindingName, location));
@@ -51,7 +52,7 @@ public final class ASPECT_PipelineCreate {
                                         ByteBuffer.allocateString(arena, uniformFullName)
                                 );
                                 if (location == -1) {
-                                    throw new RenderException("未找到统一缓冲区绑定点: " + uniformFullName);
+                                    logger.warning("未找到统一缓冲区绑定点: " + uniformFullName + ", 这可能是因为统一缓冲区未被着色器使用。着色器程序仍然可以运行，但统一缓冲区将不会被更新");
                                 }
 
                                 uniformLocations.add(new UniformLocation(uniformFullName, location));
@@ -69,7 +70,7 @@ public final class ASPECT_PipelineCreate {
                             ByteBuffer.allocateString(arena, uniformFullName)
                     );
                     if (location == -1) {
-                        throw new RenderException("未找到推送常量绑定点: " + uniformFullName);
+                        logger.warning("未找到推送常量绑定点: " + uniformFullName + ", 这可能是因为推送常量未被着色器使用。着色器程序仍然可以运行，但推送常量将不会被更新");
                     }
 
                     uniformLocations.add(new UniformLocation(uniformFullName, location));
@@ -83,4 +84,5 @@ public final class ASPECT_PipelineCreate {
     }
 
     private final GLES2RenderEngine engine;
+    private static final Logger logger = Logger.getLogger(ASPECT_PipelineCreate.class.getName());
 }

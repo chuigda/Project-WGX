@@ -19,6 +19,7 @@ import chr.wgx.render.info.RenderPassAttachmentInfo;
 import org.intellij.lang.annotations.Language;
 import tech.icey.gles2.GLES2;
 import tech.icey.gles2.GLES2Constants;
+import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.buffer.FloatBuffer;
 import tech.icey.panama.buffer.IntBuffer;
 import tech.icey.xjbutil.container.Option;
@@ -29,7 +30,7 @@ import java.lang.foreign.ValueLayout;
 import java.util.HashSet;
 
 public final class ASPECT_RenderFrame {
-    ASPECT_RenderFrame(GLES2RenderEngine engine) throws RenderException{
+    ASPECT_RenderFrame(GLES2RenderEngine engine) throws RenderException {
         this.engine = engine;
         GLES2 gles2 = engine.gles2;
 
@@ -80,7 +81,7 @@ public final class ASPECT_RenderFrame {
         int defaultFramebuffer = pDefaultFramebuffer.read();
 
         for (GLES2RenderPass renderPass : engine.renderPasses) {
-            gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, renderPass.framebufferObject);
+             gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, renderPass.framebufferObject);
 
             Attachment firstAttachment = renderPass.colorAttachments.getFirst();
             int actualWidth = firstAttachment.createInfo.width == -1
@@ -128,11 +129,14 @@ public final class ASPECT_RenderFrame {
                                 case Texture texture -> {
                                     GLES2Texture gles2Texture = (GLES2Texture) texture;
                                     UniformLocation uniformLocation = pipelineBind.pipeline.uniformLocations.get(offset0);
+                                    offset0++;
+                                    if (uniformLocation.location < 0) {
+                                        continue;
+                                    }
                                     gles2.glActiveTexture(GLES2Constants.GL_TEXTURE0 + textureUnitCount0);
                                     gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, gles2Texture.textureObject);
                                     gles2.glUniform1i(uniformLocation.location, textureUnitCount0);
 
-                                    offset0++;
                                     textureUnitCount0++;
                                 }
                                 case UniformBuffer uniformBuffer -> {
@@ -140,6 +144,10 @@ public final class ASPECT_RenderFrame {
                                     synchronized (gles2UniformBuffer.cpuBuffer) {
                                         for (FieldInfo field : gles2UniformBuffer.createInfo.bindingInfo.fields) {
                                             UniformLocation uniformLocation = pipelineBind.pipeline.uniformLocations.get(offset0);
+                                            offset0++;
+                                            if (uniformLocation.location < 0) {
+                                                continue;
+                                            }
                                             uploadUniformData(
                                                     gles2,
                                                     uniformLocation,
@@ -147,7 +155,6 @@ public final class ASPECT_RenderFrame {
                                                     field.byteOffset,
                                                     gles2UniformBuffer.cpuBuffer
                                             );
-                                            offset0++;
                                         }
                                     }
                                 }
@@ -164,11 +171,14 @@ public final class ASPECT_RenderFrame {
                                     case Texture texture -> {
                                         GLES2Texture gles2Texture = (GLES2Texture) texture;
                                         UniformLocation uniformLocation = pipelineBind.pipeline.uniformLocations.get(offset1);
+                                        offset1++;
+                                        if (uniformLocation.location < 0) {
+                                            continue;
+                                        }
                                         gles2.glActiveTexture(GLES2Constants.GL_TEXTURE0 + textureUnitCount1);
                                         gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, gles2Texture.textureObject);
                                         gles2.glUniform1i(uniformLocation.location, textureUnitCount1);
 
-                                        offset1++;
                                         textureUnitCount1++;
                                     }
                                     case UniformBuffer uniformBuffer -> {
@@ -176,6 +186,10 @@ public final class ASPECT_RenderFrame {
                                         synchronized (gles2UniformBuffer.cpuBuffer) {
                                             for (FieldInfo field : gles2UniformBuffer.createInfo.bindingInfo.fields) {
                                                 UniformLocation uniformLocation = pipelineBind.pipeline.uniformLocations.get(offset1);
+                                                if (uniformLocation.location < 0) {
+                                                    continue;
+                                                }
+                                                offset1++;
                                                 uploadUniformData(
                                                         gles2,
                                                         uniformLocation,
@@ -183,7 +197,6 @@ public final class ASPECT_RenderFrame {
                                                         field.byteOffset,
                                                         gles2UniformBuffer.cpuBuffer
                                                 );
-                                                offset1++;
                                             }
                                         }
                                     }
@@ -195,6 +208,10 @@ public final class ASPECT_RenderFrame {
                             GLES2PushConstant pushConstant = some.value;
                             for (PushConstantRange range : pushConstant.createInfo.pushConstantRanges) {
                                 UniformLocation uniformLocation = pipelineBind.pipeline.uniformLocations.get(offset1);
+                                offset1++;
+                                if (uniformLocation.location < 0) {
+                                    continue;
+                                }
                                 uploadUniformData(
                                         gles2,
                                         uniformLocation,
@@ -202,7 +219,6 @@ public final class ASPECT_RenderFrame {
                                         range.offset,
                                         pushConstant.cpuBuffer
                                 );
-                                offset1++;
                             }
                         }
 
@@ -265,7 +281,9 @@ public final class ASPECT_RenderFrame {
             CGType type,
             long byteOffset,
             MemorySegment cpuBuffer
-    ) {
+    ) throws RenderException {
+        assert cpuBuffer.isNative();
+
         switch (type) {
             case Float -> {
                 float value = cpuBuffer.get(ValueLayout.JAVA_FLOAT, byteOffset);
@@ -308,6 +326,11 @@ public final class ASPECT_RenderFrame {
                     (byte) 0,
                     new FloatBuffer(cpuBuffer.asSlice(byteOffset))
             );
+        }
+
+        @enumtype(GLES2Constants.class) int status = gles2.glGetError();
+        if (status != GLES2Constants.GL_NO_ERROR) {
+            throw new RenderException("OpenGL 错误: " + status);
         }
     }
 

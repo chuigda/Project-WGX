@@ -32,5 +32,5 @@ void main() {
     float diff2 = max(dot(normal, lightDir2), 0.0);
     vec4 diffuse2 = diff2 * uMaterial_diffuse;
 
-    gl_FragColor = 0.000001 * (ambient + (diffuse1 + diffuse2) / 2.0) + vec4(1.0, 0.0, 1.0, 1.0);
+    gl_FragColor = ambient + (diffuse1 + diffuse2) / 2.0;
 }
