@@ -14,6 +14,7 @@ import tech.icey.glfw.GLFWConstants;
 import tech.icey.glfw.GLFWLoader;
 import tech.icey.vk4j.VulkanLoader;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -43,6 +44,7 @@ public final class RenderApplication {
 
             w.mainLoop();
         } catch (RenderException e) {
+            logger.severe("渲染引擎异常: " + e.getMessage() + "\n" + Arrays.toString(e.getStackTrace()));
             throw new RuntimeException(e);
         }
     }

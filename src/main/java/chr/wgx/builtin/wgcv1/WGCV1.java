@@ -119,7 +119,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
 
         PushConstantRange pushConstantRange = new PushConstantRange("model", ShaderStage.VERTEX, CGType.Mat4, 0);
         PushConstantInfo pushConstantInfo = new PushConstantInfo(List.of(pushConstantRange));
-
+//
         VertexInputInfo colorPassVertexInfo = new VertexInputInfo(List.of(
                 new FieldInfoInput("position", CGType.Vec3),
                 new FieldInfoInput("normal", CGType.Vec3)
@@ -197,7 +197,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         fillPushConstant(this.pcLeftClaw, transform2);
 
         Pair<Attachment, Attachment> defaultAttachments = engine.getDefaultAttachments();
-
+//
         RenderPipeline colorPassPipeline = engine.createPipeline(new RenderPipelineCreateInfo(
                 colorPassVertexInfo,
                 List.of(colorPassDescriptorSetLayout),
@@ -211,7 +211,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                         ResourceUtil.readTextFile("/resources/shader/wgc0310v1/gles2/phong.frag")
                 )),
                 1,
-                false
+                true
         ));
 
         RenderPass colorPass = engine.createRenderPass(new RenderPassCreateInfo(
@@ -221,11 +221,11 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                         defaultAttachments.first(),
                         ClearBehavior.CLEAR_ONCE,
                         new Color(0.0f, 0.2f, 0.2f, 1.0f)
+                ),
+                new RenderPassAttachmentInfo(
+                        defaultAttachments.second(),
+                        ClearBehavior.CLEAR_ONCE
                 )
-//                new RenderPassAttachmentInfo(
-//                        defaultAttachments.second(),
-//                        ClearBehavior.CLEAR_ONCE
-//                )
         ));
 
         RenderPipelineBind bind = colorPass.createPipelineBind(2000, colorPassPipeline);
@@ -268,10 +268,10 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
                 MemorySegment.ofArray(new float[]{
                         // a rect, with normal pointing out
                         // vec3 position, vec3 normal
-                        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                        1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                        1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                        -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+                        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+                        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+                        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+                        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f
                 }),
                 MemorySegment.ofArray(new int[]{
                         0, 1, 2,
