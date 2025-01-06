@@ -14,6 +14,7 @@ import tech.icey.glfw.GLFWConstants;
 import tech.icey.glfw.GLFWLoader;
 import tech.icey.vk4j.VulkanLoader;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -72,8 +73,14 @@ public final class RenderApplication {
             System.loadLibrary("glfw");
 
             if (isVulkan) {
-                logger.fine("从资源 /lib/libvma.so 中加载 vma");
-                SharedObjectLoader.loadFromResources("/resources/lib/libvma.so", ".so");
+                if (!System.getProperty("os.arch").equals("amd64")) {
+                    String absolutePath = Paths.get("libvma.so").toAbsolutePath().toString();
+                    logger.fine("从本地文件系统加载 vma: " + absolutePath);
+                    System.load(absolutePath);
+                } else {
+                    logger.fine("从资源 /lib/libvma.so 中加载 vma");
+                    SharedObjectLoader.loadFromResources("/resources/lib/libvma.so", ".so");
+                }
             }
         }
     }
