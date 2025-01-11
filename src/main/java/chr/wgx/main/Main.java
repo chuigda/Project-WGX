@@ -3,6 +3,7 @@ package chr.wgx.main;
 import chr.wgx.config.Config;
 import chr.wgx.ui.ControlWindow;
 import chr.wgx.ui.LicenseWindow;
+import chr.wgx.ui.ProgressDialog;
 import chr.wgx.util.JULUtil;
 import chr.wgx.util.ResourceUtil;
 import com.formdev.flatlaf.FlatIntelliJLaf;
@@ -24,8 +25,14 @@ public final class Main {
         ControlWindow controlWindow = new ControlWindow();
         controlWindow.setVisible(true);
 
+        ProgressDialog progressDlg = new ProgressDialog(controlWindow, "启动 Project-WGX");
+        progressDlg.setProgress("正在启动应用程序");
+        progressDlg.setVisible(true);
+
+        progressDlg.setProgress(0, "读取配置文件");
         Config config = Config.config();
         controlWindow.setSize(config.controlWindowWidth, config.controlWindowHeight);
+        progressDlg.setProgress(5, "初始化日志功能");
 
         JULUtil.setLogLevel(switch (config.logLevel.toLowerCase().trim()) {
             case "fine", "debug" -> Level.FINE;
@@ -41,7 +48,7 @@ public final class Main {
         logger.info(String.format("配置文件内容:\n%s", config.toPrettyJSON()));
 
         try {
-            RenderApplication.applicationStart(controlWindow);
+            RenderApplication.applicationStart(controlWindow, progressDlg);
         } catch (Throwable e) {
             StringBuilder sb = new StringBuilder();
             sb.append("应用程序遇到致命错误:\n");
@@ -51,6 +58,7 @@ public final class Main {
             for (StackTraceElement ste : e.getStackTrace()) {
                 sb.append("\n\tat ").append(ste);
             }
+            progressDlg.dispose();
             logger.severe(sb.toString());
         }
     }

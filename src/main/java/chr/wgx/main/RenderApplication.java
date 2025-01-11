@@ -8,6 +8,7 @@ import chr.wgx.render.RenderWindow;
 import chr.wgx.render.gles2.GLES2RenderEngine;
 import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.ui.ControlWindow;
+import chr.wgx.ui.ProgressDialog;
 import chr.wgx.util.SharedObjectLoader;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
@@ -20,11 +21,13 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 public final class RenderApplication {
-    public static void applicationStart(ControlWindow controlWindow) {
+    public static void applicationStart(ControlWindow controlWindow, ProgressDialog progressDlg) {
         logger.info("应用程序已启动");
+        progressDlg.setProgress(10, "加载本地库");
         loadNativeLibraries();
         logger.info("本地库已加载完成");
 
+        progressDlg.setProgress(20, "创建渲染引擎");
         GLFW glfw = GLFWLoader.loadGLFW();
         if (glfw.glfwInit() != GLFWConstants.GLFW_TRUE) {
             throw new RuntimeException("GLFW 初始化失败");
@@ -41,7 +44,8 @@ public final class RenderApplication {
                 config.windowWidth,
                 config.windowHeight
         )) {
-            new Thread(() -> Reactor.reactorMain(w.renderEngine, controlWindow)).start();
+            progressDlg.setProgress(30, "初始化插件系统");
+            new Thread(() -> Reactor.reactorMain(w.renderEngine, controlWindow, progressDlg)).start();
 
             w.mainLoop();
         } catch (RenderException e) {

@@ -7,8 +7,11 @@ import chr.wgx.reactor.plugin.IPluginBehavior;
 import chr.wgx.reactor.plugin.IPluginFactory;
 import chr.wgx.render.RenderEngine;
 import chr.wgx.ui.ControlWindow;
+import chr.wgx.ui.ProgressDialog;
+import chr.wgx.ui.SwingUtil;
 import tech.icey.xjbutil.container.Pair;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SortedSet;
@@ -51,7 +54,11 @@ public final class Reactor {
     private final AtomicReference<Pair<Integer, Integer>> framebufferSize;
     private final AtomicBoolean framebufferSizeChanged;
 
-    public static void reactorMain(RenderEngine renderEngine, ControlWindow controlWindow) {
+    public static void reactorMain(
+            RenderEngine renderEngine,
+            ControlWindow controlWindow,
+            ProgressDialog progressDlg
+    ) {
         Reactor reactor = new Reactor(renderEngine);
 
         // TODO make this configurable, or maybe construct this list somewhere else
@@ -59,21 +66,38 @@ public final class Reactor {
                 new WGCV1Factory(),
                 new DrillPlugin.Factory()
         );
+
+        int perPluginProgress = (100 - 35) / pluginFactoryList.size();
         SortedSet<IPluginBehavior> pluginBehaviors = new TreeSet<>();
 
+        int currentProgress = 35;
         for (IPluginFactory factory : pluginFactoryList) {
+            progressDlg.setProgress(currentProgress, "初始化插件 " + factory.name());
             try {
                 IPlugin plugin = factory.create(reactor);
                 logger.info("插件 " + factory.name() + " (" + plugin.className() + ") 初始化成功");
 
                 for (IPluginBehavior behavior : plugin.behaviors()) {
+                    progressDlg.setProgress("注册插件行为 " + behavior.name());
                     pluginBehaviors.add(behavior);
                     logger.info("插件 " + factory.name() + " 注册行为 " + behavior.name());
                 }
             } catch (Throwable e) {
                 logger.severe("无法初始化插件 " + factory.name() + ": " + e.getMessage());
             }
+
+            currentProgress += perPluginProgress;
         }
+
+        progressDlg.setProgress(100, "插件系统初始化完成");
+        SwingUtilities.invokeLater(() -> {
+            try {
+                Thread.sleep(1000);
+                progressDlg.dispose();
+            } catch (InterruptedException _) {
+                // do nothing
+            }
+        });
 
         //noinspection InfiniteLoopStatement
         while (true) {
