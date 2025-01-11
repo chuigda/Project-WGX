@@ -59,14 +59,14 @@ public final class Reactor {
         // TODO make this configurable, or maybe construct this list somewhere else
         List<IPluginFactory> pluginFactoryList = List.of(
                 new WGCCommonFactory(),
-                new WGCV1Factory(),
-                new DrillPlugin.Factory()
+                new WGCV1Factory()
+                // , new DrillPlugin.Factory()
         );
 
         int perPluginProgress = (100 - 35) / pluginFactoryList.size();
         SortedSet<IPluginBehavior> pluginBehaviors = new TreeSet<>();
         List<MenuInfo> menuInfos = new ArrayList<>();
-        List<IWidget> widgets = new ArrayList<>();
+        List<Pair<DockTarget, IWidget>> widgets = new ArrayList<>();
 
         int currentProgress = 35;
         for (IPluginFactory factory : pluginFactoryList) {
@@ -95,7 +95,7 @@ public final class Reactor {
                 if (plugin instanceof IWidgetProvider widgetProvider) {
                     for (Pair<DockTarget, IWidget> pair : widgetProvider.provide()) {
                         progressDlg.setProgress("注册小部件 " + pair.second().displayName());
-                        widgets.add(pair.second());
+                        widgets.add(pair);
                         logger.info(
                                 "插件 " + factory.name() + " 注册小部件 " + pair.second().displayName()
                                         + " (" + pair.second().getClass().getCanonicalName() + ")"
@@ -136,7 +136,13 @@ public final class Reactor {
                 try {
                     behavior.tick(reactor);
                 } catch (Throwable e) {
-                    logger.severe("行为 " + behavior.name() + " 执行时发生异常: " + e.getMessage());
+                    logger.severe(
+                            "行为 " + behavior.name()
+                                    + "("
+                                    + behavior.getClass().getCanonicalName()
+                                    + ") 执行时发生异常: "
+                                    + e.getMessage()
+                    );
                 }
             }
 

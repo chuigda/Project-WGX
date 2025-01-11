@@ -1,14 +1,21 @@
 package chr.wgx.ui;
 
+import chr.wgx.reactor.IDockingPort;
 import chr.wgx.reactor.IWidget;
+import chr.wgx.reactor.plugin.DockTarget;
+import chr.wgx.reactor.plugin.MenuDockTarget;
 import chr.wgx.reactor.plugin.MenuInfo;
+import chr.wgx.reactor.plugin.WidgetDockTarget;
 import chr.wgx.util.JULUtil;
 import org.jetbrains.annotations.Nullable;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
+import tech.icey.xjbutil.container.Tuple3;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.*;
 import java.util.List;
 import java.util.logging.Handler;
@@ -188,8 +195,9 @@ public final class ControlWindow extends JFrame {
         });
     }
 
-    public void addWidgets(List<MenuInfo> menuInfos, List<IWidget> widgets) {
+    public void addWidgets(List<MenuInfo> menuInfos, List<Pair<DockTarget, IWidget>> widgets) {
         SwingUtilities.invokeLater(() -> {
+            // 初始化菜单
             this.menuBar.removeAll();
             this.menuBar.add(systemMenu);
 
@@ -228,6 +236,66 @@ public final class ControlWindow extends JFrame {
             }
 
             this.menuBar.add(helpMenu);
+
+            // 初始化控件
+            HashMap<String, IDockingPort> dockingPorts = new HashMap<>();
+            for (Pair<DockTarget, IWidget> pair : widgets) {
+                if (pair.second() instanceof IDockingPort port) {
+                    dockingPorts.put(port.getPortName(), port);
+                }
+            }
+
+            for (Pair<DockTarget, IWidget> pair : widgets) {
+                DockTarget target = pair.first();
+                IWidget widget = pair.second();
+
+                switch (target) {
+                    case WidgetDockTarget dockWidget -> {
+                        IDockingPort port = dockingPorts.get(dockWidget.targetName);
+                        if (port == null) {
+                            logger.warning("插件 " + widget.displayName() + " 指定的停靠区域 " + dockWidget.targetName + " 不存在");
+                            continue;
+                        }
+
+                        port.addElement(widget.displayName(), dockWidget.location, widget.getContentPanel());
+                    }
+                    case MenuDockTarget dockMenu -> {
+                        Pair<MenuInfo, JMenu> menuPair = subMenus.get(dockMenu.targetName);
+                        if (menuPair == null) {
+                            logger.warning("插件 " + widget.displayName() + " 指定的菜单 " + dockMenu.targetName + " 不存在");
+                            continue;
+                        }
+
+                        JMenuItem menuItem = new JMenuItem(widget.displayName());
+                        JFrame frame = new JFrame(widget.displayName());
+                        frame.setContentPane(widget.getContentPanel());
+                        frame.pack();
+                        frame.setSize(frame.getPreferredSize());
+                        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+                        frame.addWindowListener(new WindowAdapter() {
+                            @Override
+                            public void windowClosing(WindowEvent windowEvent) {
+                                widget.onUndock();
+                            }
+
+                            @Override
+                            public void windowOpened(WindowEvent windowEvent) {
+                                widget.onDock();
+                            }
+                        });
+                        menuItem.addActionListener(_ -> {
+                            frame.setContentPane(widget.getContentPanel());
+                            frame.pack();
+                            frame.setVisible(true);
+                        });
+
+                        menuPair.second().add(menuItem);
+                    }
+                    default -> {
+                        logger.warning("插件 " + widget.displayName() + " 指定的停靠区域类型 " + target.getClass().getName() + " 无效");
+                    }
+                }
+            }
         });
     }
 

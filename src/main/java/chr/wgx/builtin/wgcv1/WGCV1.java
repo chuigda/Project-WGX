@@ -1,6 +1,8 @@
 package chr.wgx.builtin.wgcv1;
 
+import chr.wgx.builtin.core.data.CameraConfig;
 import chr.wgx.reactor.IWidget;
+import chr.wgx.reactor.Radioactive;
 import chr.wgx.reactor.Reactor;
 import chr.wgx.reactor.plugin.DockTarget;
 import chr.wgx.reactor.plugin.IPlugin;
@@ -17,6 +19,7 @@ import chr.wgx.render.task.RenderTask;
 import chr.wgx.render.task.RenderTaskGroup;
 import chr.wgx.util.ResourceUtil;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.container.Pair;
 
@@ -53,7 +56,7 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         this.viewProjBuffer = engine.createUniform(
                 new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, viewProjBindingInfo)
         );
-        fillViewProj(viewProjBuffer, reactor.framebufferWidth, reactor.framebufferHeight);
+        fillViewProj(viewProjBuffer, reactor.framebufferWidth, reactor.framebufferHeight, 45.0f, new Vector3f(0.0f, 1.0f, 1.0f), new Vector3f(0.0f, 0.0f, 0.0f));
         reactor.stablePool.put("WGCV1_ViewProj", viewProjBuffer);
 
         UniformBuffer plasticMaterial = engine.createUniform(
@@ -263,59 +266,59 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         RenderTask leftShoulderWheel = blackPlasticGroup.addRenderTask(wheelSmall, pcLeftWheel);
         RenderTask leftSmallWheel = blackPlasticGroup.addRenderTask(wheelSmall, pcLeftSmallArm);
 
-        RenderObject testObject = engine.createObject(new ObjectCreateInfo(
-                colorPassVertexInfo,
-                MemorySegment.ofArray(new float[]{
-                        // a rect, with normal pointing out
-                        // vec3 position, vec3 normal
-                        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-                        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-                        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-                        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f
-                }),
-                MemorySegment.ofArray(new int[]{
-                        0, 1, 2,
-                        2, 3, 0
-                })
-        ));
-        UniformBuffer testObjectViewProjBuffer = engine.createUniform(new UniformBufferCreateInfo(
-                UniformUpdateFrequency.MANUAL,
-                viewProjBindingInfo
-        ));
-        UniformBuffer testMaterial = engine.createUniform(new UniformBufferCreateInfo(
-                UniformUpdateFrequency.MANUAL,
-                materialBindingInfo
-        ));
-        DescriptorSet testObjectSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
-                colorPassDescriptorSetLayout,
-                List.of(testObjectViewProjBuffer, testMaterial)
-        ));
-        PushConstant pcTestObject = engine.createPushConstant(pushConstantInfo, 1).getFirst();
-
-        testObjectViewProjBuffer.updateBufferContent(MemorySegment.ofArray(new float[]{
-                1.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, 1.0f,
-
-                1.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, 1.0f,
-        }));
-        testMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
-                1.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 0.0f, 1.0f
-        }));
-        pcTestObject.updateBufferContent(MemorySegment.ofArray(new float[] {
-                1.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, 1.0f
-        }));
-
-        RenderTaskGroup testObjectGroup = bind.createRenderTaskGroup(List.of(testObjectSet));
-        RenderTask testObjectTask = testObjectGroup.addRenderTask(testObject, pcTestObject);
+//        RenderObject testObject = engine.createObject(new ObjectCreateInfo(
+//                colorPassVertexInfo,
+//                MemorySegment.ofArray(new float[]{
+//                        // a rect, with normal pointing out
+//                        // vec3 position, vec3 normal
+//                        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+//                        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+//                        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+//                        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f
+//                }),
+//                MemorySegment.ofArray(new int[]{
+//                        0, 1, 2,
+//                        2, 3, 0
+//                })
+//        ));
+//        UniformBuffer testObjectViewProjBuffer = engine.createUniform(new UniformBufferCreateInfo(
+//                UniformUpdateFrequency.MANUAL,
+//                viewProjBindingInfo
+//        ));
+//        UniformBuffer testMaterial = engine.createUniform(new UniformBufferCreateInfo(
+//                UniformUpdateFrequency.MANUAL,
+//                materialBindingInfo
+//        ));
+//        DescriptorSet testObjectSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
+//                colorPassDescriptorSetLayout,
+//                List.of(testObjectViewProjBuffer, testMaterial)
+//        ));
+//        PushConstant pcTestObject = engine.createPushConstant(pushConstantInfo, 1).getFirst();
+//
+//        testObjectViewProjBuffer.updateBufferContent(MemorySegment.ofArray(new float[]{
+//                1.0f, 0.0f, 0.0f, 0.0f,
+//                0.0f, 1.0f, 0.0f, 0.0f,
+//                0.0f, 0.0f, 1.0f, 0.0f,
+//                0.0f, 0.0f, 0.0f, 1.0f,
+//
+//                1.0f, 0.0f, 0.0f, 0.0f,
+//                0.0f, 1.0f, 0.0f, 0.0f,
+//                0.0f, 0.0f, 1.0f, 0.0f,
+//                0.0f, 0.0f, 0.0f, 1.0f,
+//        }));
+//        testMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
+//                1.0f, 0.0f, 1.0f, 1.0f,
+//                0.0f, 0.0f, 0.0f, 1.0f
+//        }));
+//        pcTestObject.updateBufferContent(MemorySegment.ofArray(new float[] {
+//                1.0f, 0.0f, 0.0f, 0.0f,
+//                0.0f, 1.0f, 0.0f, 0.0f,
+//                0.0f, 0.0f, 1.0f, 0.0f,
+//                0.0f, 0.0f, 0.0f, 1.0f
+//        }));
+//
+//        RenderTaskGroup testObjectGroup = bind.createRenderTaskGroup(List.of(testObjectSet));
+//        RenderTask testObjectTask = testObjectGroup.addRenderTask(testObject, pcTestObject);
     }
 
     @Override
@@ -334,13 +337,26 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
 
                     @Override
                     public int priority() {
-                        return 0;
+                        return 10000;
                     }
 
                     @Override
                     public void tick(Reactor reactor) {
-                        if (reactor.framebufferResized) {
-                            fillViewProj(viewProjBuffer, reactor.framebufferWidth, reactor.framebufferHeight);
+                        CameraConfig cameraConfig = (CameraConfig) reactor.stablePool.get("WGC_CameraConfig");
+
+                        if (reactor.framebufferResized
+                                || cameraConfig.fov.changed
+                                || cameraConfig.cameraPosition.changed
+                                || cameraConfig.lookAtPosition.changed
+                        ) {
+                            fillViewProj(
+                                    viewProjBuffer,
+                                    reactor.framebufferWidth,
+                                    reactor.framebufferHeight,
+                                    cameraConfig.fov.value,
+                                    cameraConfig.cameraPosition.value,
+                                    cameraConfig.lookAtPosition.value
+                            );
                         }
                     }
                 }
@@ -378,15 +394,19 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         ));
     }
 
-    private static void fillViewProj(UniformBuffer viewProjBuffer, int width, int height) {
+    private static void fillViewProj(UniformBuffer viewProjBuffer, int width, int height, float fov, Vector3f cameraPos, Vector3f lookAtPos) {
         float[] viewProjData = new float[32];
         Matrix4f view = new Matrix4f();
         view.scale(1.0f, -1.0f, 1.0f);
-        view.lookAt(20.0f, 20.0f, 120.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+        view.lookAt(
+                cameraPos.x * 100, cameraPos.y * 100, cameraPos.z * 100,
+                lookAtPos.x * 100, lookAtPos.y * 100, lookAtPos.z * 100,
+                0.0f, 1.0f, 0.0f
+        );
         view.get(viewProjData, 0);
         Matrix4f projection = new Matrix4f();
         projection.perspective(
-                (float) Math.toRadians(45.0f),
+                (float) Math.toRadians(fov),
                 width / (float) height,
                 0.1f,
                 1000.0f,
