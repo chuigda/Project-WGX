@@ -15,11 +15,6 @@ public final class WGXFactory implements IPluginFactory {
     }
 
     @Override
-    public int initPriority() {
-        return -1000;
-    }
-
-    @Override
     public WGX create(Reactor reactor) throws Exception {
         return new WGX();
     }

@@ -15,11 +15,6 @@ public final class WGCV1Factory implements IPluginFactory {
     }
 
     @Override
-    public int initPriority() {
-        return -1000;
-    }
-
-    @Override
     public WGCV1 create(Reactor reactor) throws Exception {
         return new WGCV1(reactor);
     }

@@ -6,6 +6,5 @@ public interface IPluginFactory {
     String name();
     String description();
 
-    int initPriority();
     IPlugin create(Reactor reactor) throws Exception;
 }

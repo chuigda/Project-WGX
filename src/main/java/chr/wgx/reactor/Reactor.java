@@ -1,5 +1,6 @@
 package chr.wgx.reactor;
 
+import chr.wgx.builtin.core.WGCCommonFactory;
 import chr.wgx.builtin.wgcv1.WGCV1Factory;
 import chr.wgx.drill.DrillPlugin;
 import chr.wgx.reactor.plugin.IPlugin;
@@ -63,6 +64,7 @@ public final class Reactor {
 
         // TODO make this configurable, or maybe construct this list somewhere else
         List<IPluginFactory> pluginFactoryList = List.of(
+                new WGCCommonFactory(),
                 new WGCV1Factory(),
                 new DrillPlugin.Factory()
         );
@@ -80,7 +82,10 @@ public final class Reactor {
                 for (IPluginBehavior behavior : plugin.behaviors()) {
                     progressDlg.setProgress("注册插件行为 " + behavior.name());
                     pluginBehaviors.add(behavior);
-                    logger.info("插件 " + factory.name() + " 注册行为 " + behavior.name());
+                    logger.info(
+                            "插件 " + factory.name() + " 注册行为 " + behavior.name()
+                                    + " (" + behavior.getClass().getCanonicalName() + ")"
+                    );
                 }
             } catch (Throwable e) {
                 logger.severe("无法初始化插件 " + factory.name() + ": " + e.getMessage());

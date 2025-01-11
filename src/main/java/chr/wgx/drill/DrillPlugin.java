@@ -27,11 +27,6 @@ public final class DrillPlugin implements IPlugin {
         }
 
         @Override
-        public int initPriority() {
-            return 1000;
-        }
-
-        @Override
         public IPlugin create(Reactor reactor) throws Exception {
             NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
             ScriptEngine engine = factory.getScriptEngine("--language=es6");

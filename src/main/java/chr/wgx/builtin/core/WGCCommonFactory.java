@@ -16,12 +16,7 @@ public final class WGCCommonFactory implements IPluginFactory {
     }
 
     @Override
-    public int initPriority() {
-        return -1000;
-    }
-
-    @Override
-    public IPlugin create(Reactor reactor) throws Exception {
-        return new WGCCommon();
+    public IPlugin create(Reactor reactor) {
+        return new WGCCommon(reactor);
     }
 }
