@@ -140,11 +140,11 @@ public final class VulkanRenderEngine extends RenderEngine {
             cx.waitDeviceIdle();
 
             if (recompile) {
-                logger.info("正在开始重新编译渲染通道");
+                logger.info("正在开始重新编译渲染流程");
                 long startTime = System.nanoTime();
                 renderPassCompilationAspect.recompileRenderPasses();
                 long endTime = System.nanoTime();
-                logger.info("已重新编译渲染通道, 共耗时 %d 微秒".formatted((endTime - startTime) / 1_000));
+                logger.info("已重新编译渲染流程, 共耗时 %d 微秒".formatted((endTime - startTime) / 1_000));
             }
 
             if (updateUniform) {
