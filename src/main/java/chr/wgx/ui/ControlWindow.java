@@ -1,10 +1,16 @@
 package chr.wgx.ui;
 
+import chr.wgx.reactor.IWidget;
+import chr.wgx.reactor.plugin.MenuInfo;
 import chr.wgx.util.JULUtil;
+import org.jetbrains.annotations.Nullable;
+import tech.icey.xjbutil.container.Option;
+import tech.icey.xjbutil.container.Pair;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Objects;
+import java.util.*;
+import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -179,6 +185,49 @@ public final class ControlWindow extends JFrame {
 
             this.textArea.append(logText);
             this.textArea.setCaretPosition(this.textArea.getDocument().getLength());
+        });
+    }
+
+    public void addWidgets(List<MenuInfo> menuInfos, List<IWidget> widgets) {
+        SwingUtilities.invokeLater(() -> {
+            this.menuBar.removeAll();
+            this.menuBar.add(systemMenu);
+
+            HashMap<String, Pair<MenuInfo, JMenu>> subMenus = new HashMap<>();
+
+            for (MenuInfo menuInfo : menuInfos) {
+                JMenu subMenu = new JMenu(menuInfo.displayName);
+                subMenus.put(menuInfo.name, new Pair<>(menuInfo, subMenu));
+            }
+
+            List<Pair<MenuInfo, JMenu>> topLevelMenus = new ArrayList<>();
+            for (Pair<MenuInfo, JMenu> pair : subMenus.values()) {
+                MenuInfo menuInfo = pair.first();
+                if (!(menuInfo.parent instanceof Option.Some<String> some)) {
+                    topLevelMenus.add(pair);
+                    continue;
+                }
+
+                String parent = some.value;
+                JMenu subMenu = pair.second();
+
+                @Nullable Pair<MenuInfo, JMenu> parentPair = subMenus.get(parent);
+                if (parentPair == null) {
+                    logger.warning("菜单 " + menuInfo.displayName + " (" + menuInfo.name + ") 指定的父菜单 " + parent + " 不存在");
+                    continue;
+                }
+
+                parentPair.second().add(subMenu);
+            }
+
+            topLevelMenus.sort(Comparator.comparingInt(a -> a.first().sortingOrder));
+
+            for (Pair<MenuInfo, JMenu> pair : topLevelMenus) {
+                JMenu subMenu = pair.second();
+                this.menuBar.add(subMenu);
+            }
+
+            this.menuBar.add(helpMenu);
         });
     }
 

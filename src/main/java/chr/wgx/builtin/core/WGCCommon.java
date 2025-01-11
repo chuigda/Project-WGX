@@ -6,15 +6,13 @@ import chr.wgx.builtin.core.data.CameraConfig;
 import chr.wgx.builtin.core.data.CoreData;
 import chr.wgx.reactor.IWidget;
 import chr.wgx.reactor.Reactor;
-import chr.wgx.reactor.plugin.IPlugin;
-import chr.wgx.reactor.plugin.IPluginBehavior;
-import chr.wgx.reactor.plugin.IWidgetProvider;
+import chr.wgx.reactor.plugin.*;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.container.Ref;
 
 import java.util.List;
 
-public class WGCCommon implements IPlugin, IWidgetProvider {
+public class WGCCommon implements IPlugin, IWidgetProvider, IMenuProvider {
     WGCCommon(Reactor reactor) {
         CoreData coreData = new CoreData();
         Ref<Boolean> coreDataProgramUpdated = new Ref<>(false);
@@ -46,6 +44,11 @@ public class WGCCommon implements IPlugin, IWidgetProvider {
     @Override
     public List<Pair<DockTarget, IWidget>> provide() {
         return List.of();
+    }
+
+    @Override
+    public List<MenuInfo> provideMenu() {
+        return List.of(new MenuInfo("WGC_Menu_Control", "控制", 0));
     }
 
     private final StateInitializer stateInitializer;

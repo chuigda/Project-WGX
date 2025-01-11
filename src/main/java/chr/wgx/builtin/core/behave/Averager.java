@@ -46,12 +46,7 @@ public class Averager implements IPluginBehavior {
         }
 
         popIfExceeding();
-    }
 
-    private void popIfExceeding() {
-        if (frameDataList.size() >= frameCount.value) {
-            frameDataList.pop();
-        }
         frameDataList.add(coreDataRef.clone());
 
         coreDataRef.waist.rotate = 0.0f;
@@ -147,6 +142,12 @@ public class Averager implements IPluginBehavior {
         }
 
         coreDataProgramUpdatedRef.value = true;
+    }
+
+    private void popIfExceeding() {
+        if (frameDataList.size() >= frameCount.value) {
+            frameDataList.pop();
+        }
     }
 
     private final CoreData coreDataRef;

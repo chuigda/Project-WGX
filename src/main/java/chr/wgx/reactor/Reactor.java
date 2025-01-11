@@ -3,20 +3,14 @@ package chr.wgx.reactor;
 import chr.wgx.builtin.core.WGCCommonFactory;
 import chr.wgx.builtin.wgcv1.WGCV1Factory;
 import chr.wgx.drill.DrillPlugin;
-import chr.wgx.reactor.plugin.IPlugin;
-import chr.wgx.reactor.plugin.IPluginBehavior;
-import chr.wgx.reactor.plugin.IPluginFactory;
+import chr.wgx.reactor.plugin.*;
 import chr.wgx.render.RenderEngine;
 import chr.wgx.ui.ControlWindow;
 import chr.wgx.ui.ProgressDialog;
-import chr.wgx.ui.SwingUtil;
 import tech.icey.xjbutil.container.Pair;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -71,6 +65,8 @@ public final class Reactor {
 
         int perPluginProgress = (100 - 35) / pluginFactoryList.size();
         SortedSet<IPluginBehavior> pluginBehaviors = new TreeSet<>();
+        List<MenuInfo> menuInfos = new ArrayList<>();
+        List<IWidget> widgets = new ArrayList<>();
 
         int currentProgress = 35;
         for (IPluginFactory factory : pluginFactoryList) {
@@ -87,12 +83,33 @@ public final class Reactor {
                                     + " (" + behavior.getClass().getCanonicalName() + ")"
                     );
                 }
+
+                if (plugin instanceof IMenuProvider menuProvider) {
+                    for (MenuInfo menuInfo : menuProvider.provideMenu()) {
+                        progressDlg.setProgress("注册菜单项 " + menuInfo.name);
+                        menuInfos.add(menuInfo);
+                        logger.info("插件 " + factory.name() + " 注册菜单项 " + menuInfo.name);
+                    }
+                }
+
+                if (plugin instanceof IWidgetProvider widgetProvider) {
+                    for (Pair<DockTarget, IWidget> pair : widgetProvider.provide()) {
+                        progressDlg.setProgress("注册小部件 " + pair.second().displayName());
+                        widgets.add(pair.second());
+                        logger.info(
+                                "插件 " + factory.name() + " 注册小部件 " + pair.second().displayName()
+                                        + " (" + pair.second().getClass().getCanonicalName() + ")"
+                        );
+                    }
+                }
             } catch (Throwable e) {
                 logger.severe("无法初始化插件 " + factory.name() + ": " + e.getMessage());
             }
 
             currentProgress += perPluginProgress;
         }
+
+        controlWindow.addWidgets(menuInfos, widgets);
 
         progressDlg.setProgress(100, "插件系统初始化完成");
         SwingUtilities.invokeLater(() -> {

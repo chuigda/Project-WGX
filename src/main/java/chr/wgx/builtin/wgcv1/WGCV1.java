@@ -2,6 +2,7 @@ package chr.wgx.builtin.wgcv1;
 
 import chr.wgx.reactor.IWidget;
 import chr.wgx.reactor.Reactor;
+import chr.wgx.reactor.plugin.DockTarget;
 import chr.wgx.reactor.plugin.IPlugin;
 import chr.wgx.reactor.plugin.IPluginBehavior;
 import chr.wgx.reactor.plugin.IWidgetProvider;
