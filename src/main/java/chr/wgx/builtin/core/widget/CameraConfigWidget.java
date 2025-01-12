@@ -97,7 +97,7 @@ public final class CameraConfigWidget extends JPanel implements IWidget {
     public final XYZEditor lookAtPosEditor;
 
     public float fov = 45.0f;
-    public Vector3f cameraPos = new Vector3f();
-    public Vector3f lookAtPos = new Vector3f();
+    public Vector3f cameraPos = new Vector3f(0.0f, 1.0f, 1.0f);
+    public Vector3f lookAtPos = new Vector3f(0.0f, 0.0f, 0.0f);
     public boolean updated = false;
 }

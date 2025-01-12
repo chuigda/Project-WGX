@@ -111,6 +111,21 @@ public final class Reactor {
 
         controlWindow.addWidgets(menuInfos, widgets);
 
+        logger.info(() -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("已注册的插件行为: ");
+            for (IPluginBehavior behavior : pluginBehaviors) {
+                sb.append("\n\t- [")
+                        .append(behavior.priority())
+                        .append("] ")
+                        .append(behavior.name())
+                        .append(" (")
+                        .append(behavior.getClass().getCanonicalName())
+                        .append(")");
+            }
+            return sb.toString();
+        });
+
         progressDlg.setProgress(100, "插件系统初始化完成");
         SwingUtilities.invokeLater(() -> {
             try {

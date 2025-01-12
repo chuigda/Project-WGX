@@ -56,7 +56,14 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         this.viewProjBuffer = engine.createUniform(
                 new UniformBufferCreateInfo(UniformUpdateFrequency.MANUAL, viewProjBindingInfo)
         );
-        fillViewProj(viewProjBuffer, reactor.framebufferWidth, reactor.framebufferHeight, 45.0f, new Vector3f(0.0f, 1.0f, 1.0f), new Vector3f(0.0f, 0.0f, 0.0f));
+        fillViewProj(
+                viewProjBuffer,
+                reactor.framebufferWidth,
+                reactor.framebufferHeight,
+                45.0f,
+                new Vector3f(0.0f, 1.0f, 1.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f)
+        );
         reactor.stablePool.put("WGCV1_ViewProj", viewProjBuffer);
 
         UniformBuffer plasticMaterial = engine.createUniform(

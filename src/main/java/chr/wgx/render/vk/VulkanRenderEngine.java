@@ -148,13 +148,13 @@ public final class VulkanRenderEngine extends RenderEngine {
             }
 
             if (updateUniform) {
-                logger.info("正在更新标记为手动更新的 uniform 缓冲区");
+                logger.fine("正在更新标记为手动更新的 uniform 缓冲区");
                 long startTime = System.nanoTime();
                 for (VulkanUniformBuffer uniform : manuallyUpdatedUniforms) {
                     uniform.updateGPU();
                 }
                 long endTime = System.nanoTime();
-                logger.info("已更新标记为手动更新的 uniform 缓冲区, 共耗时 %d 微秒".formatted((endTime - startTime) / 1_000));
+                logger.fine("已更新标记为手动更新的 uniform 缓冲区, 共耗时 %d 微秒".formatted((endTime - startTime) / 1_000));
             }
 
             recompile = renderPassNeedCompilation.getAndSet(false);
