@@ -7,6 +7,7 @@ import chr.wgx.builtin.core.data.CameraConfig;
 import chr.wgx.builtin.core.data.CoreData;
 import chr.wgx.builtin.core.widget.CameraConfigWidget;
 import chr.wgx.reactor.IWidget;
+import chr.wgx.reactor.Radioactive;
 import chr.wgx.reactor.Reactor;
 import chr.wgx.reactor.plugin.*;
 import tech.icey.xjbutil.container.Pair;
@@ -19,7 +20,7 @@ public class WGCCommon implements IPlugin, IWidgetProvider, IMenuProvider {
         CoreData coreData = new CoreData();
         Ref<Boolean> coreDataProgramUpdated = new Ref<>(false);
 
-        CameraConfig cameraConfig = new CameraConfig(reactor);
+        Radioactive<CameraConfig> cameraConfig = new Radioactive<>(new CameraConfig());
         Ref<Boolean> cameraConfigProgramUpdated = new Ref<>(false);
 
         Ref<Boolean> averagerEnabled = new Ref<>(true);
@@ -28,11 +29,8 @@ public class WGCCommon implements IPlugin, IWidgetProvider, IMenuProvider {
         reactor.volatilePool.put("WGC_CoreData", coreData);
         reactor.volatilePool.put("WGC_CoreData_ProgramUpdated", coreDataProgramUpdated);
 
-        reactor.stablePool.put("WGC_CameraConfig", cameraConfig);
-        reactor.stablePool.put("WGC_CameraConfig_ProgramUpdated", cameraConfigProgramUpdated);
-        reactor.radioactivePool.put("WGC_CameraConfig_FOV", cameraConfig.fov);
-        reactor.radioactivePool.put("WGC_CameraConfig_CameraPosition", cameraConfig.cameraPosition);
-        reactor.radioactivePool.put("WGC_CameraConfig_LookAtPosition", cameraConfig.lookAtPosition);
+        reactor.radioactivePool.put("WGC_CameraConfig", cameraConfig);
+        reactor.volatilePool.put("WGC_CameraConfig_ProgramUpdated", cameraConfigProgramUpdated);
 
         reactor.volatilePool.put("WGC_Averager_Enabled", averagerEnabled);
         reactor.volatilePool.put("WGC_Averager_FrameCount", averagerFrameCount);

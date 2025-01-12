@@ -272,60 +272,6 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
         }
         RenderTask leftShoulderWheel = blackPlasticGroup.addRenderTask(wheelSmall, pcLeftWheel);
         RenderTask leftSmallWheel = blackPlasticGroup.addRenderTask(wheelSmall, pcLeftSmallArm);
-
-//        RenderObject testObject = engine.createObject(new ObjectCreateInfo(
-//                colorPassVertexInfo,
-//                MemorySegment.ofArray(new float[]{
-//                        // a rect, with normal pointing out
-//                        // vec3 position, vec3 normal
-//                        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-//                        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-//                        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-//                        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f
-//                }),
-//                MemorySegment.ofArray(new int[]{
-//                        0, 1, 2,
-//                        2, 3, 0
-//                })
-//        ));
-//        UniformBuffer testObjectViewProjBuffer = engine.createUniform(new UniformBufferCreateInfo(
-//                UniformUpdateFrequency.MANUAL,
-//                viewProjBindingInfo
-//        ));
-//        UniformBuffer testMaterial = engine.createUniform(new UniformBufferCreateInfo(
-//                UniformUpdateFrequency.MANUAL,
-//                materialBindingInfo
-//        ));
-//        DescriptorSet testObjectSet = engine.createDescriptorSet(new DescriptorSetCreateInfo(
-//                colorPassDescriptorSetLayout,
-//                List.of(testObjectViewProjBuffer, testMaterial)
-//        ));
-//        PushConstant pcTestObject = engine.createPushConstant(pushConstantInfo, 1).getFirst();
-//
-//        testObjectViewProjBuffer.updateBufferContent(MemorySegment.ofArray(new float[]{
-//                1.0f, 0.0f, 0.0f, 0.0f,
-//                0.0f, 1.0f, 0.0f, 0.0f,
-//                0.0f, 0.0f, 1.0f, 0.0f,
-//                0.0f, 0.0f, 0.0f, 1.0f,
-//
-//                1.0f, 0.0f, 0.0f, 0.0f,
-//                0.0f, 1.0f, 0.0f, 0.0f,
-//                0.0f, 0.0f, 1.0f, 0.0f,
-//                0.0f, 0.0f, 0.0f, 1.0f,
-//        }));
-//        testMaterial.updateBufferContent(MemorySegment.ofArray(new float[]{
-//                1.0f, 0.0f, 1.0f, 1.0f,
-//                0.0f, 0.0f, 0.0f, 1.0f
-//        }));
-//        pcTestObject.updateBufferContent(MemorySegment.ofArray(new float[] {
-//                1.0f, 0.0f, 0.0f, 0.0f,
-//                0.0f, 1.0f, 0.0f, 0.0f,
-//                0.0f, 0.0f, 1.0f, 0.0f,
-//                0.0f, 0.0f, 0.0f, 1.0f
-//        }));
-//
-//        RenderTaskGroup testObjectGroup = bind.createRenderTaskGroup(List.of(testObjectSet));
-//        RenderTask testObjectTask = testObjectGroup.addRenderTask(testObject, pcTestObject);
     }
 
     @Override
@@ -349,20 +295,17 @@ public final class WGCV1 implements IPlugin, IWidgetProvider {
 
                     @Override
                     public void tick(Reactor reactor) {
-                        CameraConfig cameraConfig = (CameraConfig) reactor.stablePool.get("WGC_CameraConfig");
+                        @SuppressWarnings("unchecked")
+                        Radioactive<CameraConfig> cameraConfig = (Radioactive<CameraConfig>) reactor.radioactivePool.get("WGC_CameraConfig");
 
-                        if (reactor.framebufferResized
-                                || cameraConfig.fov.changed
-                                || cameraConfig.cameraPosition.changed
-                                || cameraConfig.lookAtPosition.changed
-                        ) {
+                        if (reactor.framebufferResized || cameraConfig.changed) {
                             fillViewProj(
                                     viewProjBuffer,
                                     reactor.framebufferWidth,
                                     reactor.framebufferHeight,
-                                    cameraConfig.fov.value,
-                                    cameraConfig.cameraPosition.value,
-                                    cameraConfig.lookAtPosition.value
+                                    cameraConfig.value.fov,
+                                    cameraConfig.value.cameraPosition,
+                                    cameraConfig.value.lookAtPosition
                             );
                         }
                     }

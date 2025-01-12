@@ -2,6 +2,7 @@ package chr.wgx.builtin.core.behave;
 
 import chr.wgx.builtin.core.data.CameraConfig;
 import chr.wgx.builtin.core.widget.CameraConfigWidget;
+import chr.wgx.reactor.Radioactive;
 import chr.wgx.reactor.Reactor;
 import chr.wgx.reactor.plugin.IPluginBehavior;
 import org.joml.Vector3f;
@@ -11,7 +12,7 @@ import javax.swing.*;
 
 public final class WidgetDataUpdater implements IPluginBehavior {
     public WidgetDataUpdater(
-            CameraConfig cameraConfigRef,
+            Radioactive<CameraConfig> cameraConfigRef,
             Ref<Boolean> cameraConfigProgramUpdated,
             CameraConfigWidget cameraConfigWidget
     ) {
@@ -38,9 +39,9 @@ public final class WidgetDataUpdater implements IPluginBehavior {
     @Override
     public void tick(Reactor reactor) {
         if (cameraConfigProgramUpdated.value) {
-            float fov = cameraConfigRef.fov.value;
-            Vector3f cameraPosition = new Vector3f(cameraConfigRef.cameraPosition.value);
-            Vector3f lookAtPosition = new Vector3f(cameraConfigRef.lookAtPosition.value);
+            float fov = cameraConfigRef.value.fov;
+            Vector3f cameraPosition = new Vector3f(cameraConfigRef.value.cameraPosition);
+            Vector3f lookAtPosition = new Vector3f(cameraConfigRef.value.lookAtPosition);
 
             SwingUtilities.invokeLater(() -> {
                 cameraConfigWidget.isProgramUpdated.setSelected(true);
@@ -56,9 +57,10 @@ public final class WidgetDataUpdater implements IPluginBehavior {
         } else {
             synchronized (cameraConfigWidget) {
                 if (cameraConfigWidget.updated) {
-                    cameraConfigRef.fov.set(cameraConfigWidget.fov);
-                    cameraConfigRef.cameraPosition.set(new Vector3f(cameraConfigWidget.cameraPos));
-                    cameraConfigRef.lookAtPosition.set(new Vector3f(cameraConfigWidget.lookAtPos));
+                    cameraConfigRef.value.fov = cameraConfigWidget.fov;
+                    cameraConfigRef.value.cameraPosition = cameraConfigWidget.cameraPosition;
+                    cameraConfigRef.value.lookAtPosition = cameraConfigWidget.lookAtPosition;
+                    cameraConfigRef.changed = true;
 
                     cameraConfigWidget.updated = false;
                 }
@@ -66,7 +68,7 @@ public final class WidgetDataUpdater implements IPluginBehavior {
         }
     }
 
-    private final CameraConfig cameraConfigRef;
+    private final Radioactive<CameraConfig> cameraConfigRef;
     private final Ref<Boolean> cameraConfigProgramUpdated;
     private final CameraConfigWidget cameraConfigWidget;
 }

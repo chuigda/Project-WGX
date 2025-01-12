@@ -253,7 +253,7 @@ public final class ControlWindow extends JFrame {
                     case WidgetDockTarget dockWidget -> {
                         IDockingPort port = dockingPorts.get(dockWidget.targetName);
                         if (port == null) {
-                            logger.warning("插件 " + widget.displayName() + " 指定的停靠区域 " + dockWidget.targetName + " 不存在");
+                            logger.warning("组件 " + widget.displayName() + " 指定的停靠区域 " + dockWidget.targetName + " 不存在");
                             continue;
                         }
 
@@ -262,7 +262,7 @@ public final class ControlWindow extends JFrame {
                     case MenuDockTarget dockMenu -> {
                         Pair<MenuInfo, JMenu> menuPair = subMenus.get(dockMenu.targetName);
                         if (menuPair == null) {
-                            logger.warning("插件 " + widget.displayName() + " 指定的菜单 " + dockMenu.targetName + " 不存在");
+                            logger.warning("组件 " + widget.displayName() + " 指定的菜单 " + dockMenu.targetName + " 不存在");
                             continue;
                         }
 
@@ -288,12 +288,14 @@ public final class ControlWindow extends JFrame {
                             frame.pack();
                             frame.setVisible(true);
                         });
-
                         menuPair.second().add(menuItem);
                     }
-                    default -> {
-                        logger.warning("插件 " + widget.displayName() + " 指定的停靠区域类型 " + target.getClass().getName() + " 无效");
-                    }
+                    default -> logger.warning(
+                            "组件 " + widget.displayName()
+                                    + " 指定的停靠区域类型 "
+                                    + target.getClass().getName()
+                                    + " 无效"
+                    );
                 }
             }
         });
