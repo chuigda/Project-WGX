@@ -1,19 +1,25 @@
 package chr.wgx.drill;
 
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
+import chr.wgx.builtin.osf.OSFPacket;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
 public final class Drill {
     public static void main(String[] args) {
-        byte[] arr = new byte[16];
-        MemorySegment ms = MemorySegment.ofArray(arr);
+        try(var socket = new DatagramSocket(11573)) {
+            DatagramPacket packet = new DatagramPacket(new byte[1785], 1785);
+            while (true) {
+                socket.receive(packet);
+                System.out.println(new String(packet.getData(), 0, packet.getLength()));
 
-        double d = ms.get(ValueLayout.JAVA_DOUBLE_UNALIGNED, 0);
-        int i = ms.get(ValueLayout.JAVA_INT_UNALIGNED, 8);
-        float f = ms.get(ValueLayout.JAVA_FLOAT_UNALIGNED, 12);
-
-        assert d == 0.0;
-        assert i == 0;
-        assert f == 0.0f;
+                OSFPacket decoded = new OSFPacket(packet.getData());
+                System.out.println(decoded);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 }
