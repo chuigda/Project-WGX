@@ -1,7 +1,10 @@
 package chr.wgx.builtin.osf;
 
+import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
 public class OSF {
     // 8
@@ -176,8 +179,14 @@ public class OSF {
         start = start + 4;
         this.mouthWide = intBitCastToFloat(byteArrayToInt(input_stream, start));
     }
-    public static void main(String[] args) {
-        byte[] buf = new byte[1781];
-        var OSF = new OSF(buf, 0);
+    public static void main(String[] args) throws IOException {
+        var socket = new DatagramSocket(8888);
+        while(true) {
+            byte[] buf = new byte[1781];
+            var packet = new DatagramPacket(buf, buf.length);
+            socket.receive(packet);
+            byte[] ret = packet.getData();
+            var OSF = new OSF(ret, 0);
+        }
     }
 }
