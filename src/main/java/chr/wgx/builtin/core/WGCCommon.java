@@ -2,7 +2,7 @@ package chr.wgx.builtin.core;
 
 import chr.wgx.builtin.core.behave.Averager;
 import chr.wgx.builtin.core.behave.StateInitializer;
-import chr.wgx.builtin.core.behave.WidgetDataUpdater;
+import chr.wgx.builtin.core.behave.CameraConfigUpdater;
 import chr.wgx.builtin.core.data.CameraConfig;
 import chr.wgx.builtin.core.data.CoreData;
 import chr.wgx.builtin.core.widget.CameraConfigWidget;
@@ -39,12 +39,12 @@ public class WGCCommon implements IPlugin, IWidgetProvider, IMenuProvider {
 
         stateInitializer = new StateInitializer(coreDataProgramUpdated, cameraConfigProgramUpdated);
         averager = new Averager(coreData, coreDataProgramUpdated, averagerEnabled, averagerFrameCount);
-        widgetDataUpdater = new WidgetDataUpdater(cameraConfig, cameraConfigProgramUpdated, cameraConfigWidget);
+        cameraConfigUpdater = new CameraConfigUpdater(cameraConfig, cameraConfigProgramUpdated, cameraConfigWidget);
     }
 
     @Override
     public List<IPluginBehavior> behaviors() {
-        return List.of(stateInitializer, averager, widgetDataUpdater);
+        return List.of(stateInitializer, averager, cameraConfigUpdater);
     }
 
     @Override
@@ -61,5 +61,5 @@ public class WGCCommon implements IPlugin, IWidgetProvider, IMenuProvider {
 
     private final StateInitializer stateInitializer;
     private final Averager averager;
-    private final WidgetDataUpdater widgetDataUpdater;
+    private final CameraConfigUpdater cameraConfigUpdater;
 }

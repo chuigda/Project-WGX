@@ -1,5 +1,6 @@
 package chr.wgx.builtin.core.behave;
 
+import chr.wgx.builtin.BehaviorPriorities;
 import chr.wgx.builtin.core.WGCCommon;
 import chr.wgx.reactor.Reactor;
 import chr.wgx.reactor.plugin.IPluginBehavior;
@@ -23,7 +24,7 @@ public final class StateInitializer implements IPluginBehavior {
 
     @Override
     public int priority() {
-        return Integer.MIN_VALUE;
+        return BehaviorPriorities.CORE_STATE_INITIALIZER;
     }
 
     @Override

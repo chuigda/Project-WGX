@@ -1,5 +1,6 @@
 package chr.wgx.builtin.core.behave;
 
+import chr.wgx.builtin.BehaviorPriorities;
 import chr.wgx.builtin.core.data.CameraConfig;
 import chr.wgx.builtin.core.widget.CameraConfigWidget;
 import chr.wgx.reactor.Radioactive;
@@ -10,8 +11,8 @@ import tech.icey.xjbutil.container.Ref;
 
 import javax.swing.*;
 
-public final class WidgetDataUpdater implements IPluginBehavior {
-    public WidgetDataUpdater(
+public final class CameraConfigUpdater implements IPluginBehavior {
+    public CameraConfigUpdater(
             Radioactive<CameraConfig> cameraConfigRef,
             Ref<Boolean> cameraConfigProgramUpdated,
             CameraConfigWidget cameraConfigWidget
@@ -33,7 +34,7 @@ public final class WidgetDataUpdater implements IPluginBehavior {
 
     @Override
     public int priority() {
-        return 7000;
+        return BehaviorPriorities.CORE_DATA_CAMERA_CONFIG_UPDATER;
     }
 
     @Override

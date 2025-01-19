@@ -1,5 +1,6 @@
 package chr.wgx.builtin.core.behave;
 
+import chr.wgx.builtin.BehaviorPriorities;
 import chr.wgx.builtin.core.data.ArmStatus;
 import chr.wgx.builtin.core.data.CoreData;
 import chr.wgx.builtin.core.data.LegStatus;
@@ -36,12 +37,16 @@ public class Averager implements IPluginBehavior {
 
     @Override
     public int priority() {
-        return 5000;
+        return BehaviorPriorities.CORE_AVERAGER;
     }
 
     @Override
     public void tick(Reactor reactor) {
         if (!enabled.value) {
+            return;
+        }
+
+        if (!coreDataProgramUpdatedRef.value) {
             return;
         }
 
@@ -140,8 +145,6 @@ public class Averager implements IPluginBehavior {
             armStatus.wristLeftRight /= frameCountFloat;
             armStatus.wristBend /= frameCountFloat;
         }
-
-        coreDataProgramUpdatedRef.value = true;
     }
 
     private void popIfExceeding() {
