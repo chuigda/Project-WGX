@@ -7,10 +7,10 @@ import java.lang.foreign.MemorySegment;
 
 import static java.lang.foreign.ValueLayout.*;
 
-/// OSF UDP protocol packet, documented here:
-/// - [OSF facetracker.py](https://github.com/emilianavt/OpenSeeFace/blob/40119c17971c019b892b047b457c8182190acb8c/facetracker.py)
-/// - [OSF demo OpenSee.cs](https://github.com/emilianavt/OpenSeeFace/blob/40119c17971c019b892b047b457c8182190acb8c/Unity/OpenSee.cs#L19)
-/// - [Project-WG](https://github.com/chuigda/Project-WG/blob/b6b2901e4a0e1bb2e9db1fcd838fdea00f36f3eb/src/ui_next/track/OSFTrackControl.cc#L79)
+/// OpenSeeFace 的 UDP 协议数据包。参见以下链接：
+/// - [OSF 实现 facetracker.py](https://github.com/emilianavt/OpenSeeFace/blob/40119c17971c019b892b047b457c8182190acb8c/facetracker.py)
+/// - [OSF 样例程序 OpenSee.cs](https://github.com/emilianavt/OpenSeeFace/blob/40119c17971c019b892b047b457c8182190acb8c/Unity/OpenSee.cs#L19)
+/// - [Project-WG 中的注释](https://github.com/chuigda/Project-WG/blob/b6b2901e4a0e1bb2e9db1fcd838fdea00f36f3eb/src/ui_next/track/OSFTrackControl.cc#L79)
 public final class OSFPacket {
     public final double now;
 
@@ -35,13 +35,13 @@ public final class OSFPacket {
     public final float eyeLeft;
     public final float eyeRight;
 
-    public final float eyeSteepnessLeft;
-    public final float eyeUpDownLeft;
-    public final float eyeQuirkLeft;
+    public final float eyebrowSteepnessLeft;
+    public final float eyebrowUpDownLeft;
+    public final float eyebrowQuirkLeft;
 
-    public final float eyeSteepnessRight;
-    public final float eyeUpDownRight;
-    public final float eyeQuirkRight;
+    public final float eyebrowSteepnessRight;
+    public final float eyebrowUpDownRight;
+    public final float eyebrowQuirkRight;
 
     public final float mouthCornerUpdownLeft;
     public final float mouthCornerInOutLeft;
@@ -127,18 +127,18 @@ public final class OSFPacket {
         this.eyeRight = s.get(JAVA_FLOAT_UNALIGNED, offset);
         offset += Float.BYTES;
 
-        this.eyeSteepnessLeft = s.get(JAVA_FLOAT_UNALIGNED, offset);
+        this.eyebrowSteepnessLeft = s.get(JAVA_FLOAT_UNALIGNED, offset);
         offset += Float.BYTES;
-        this.eyeUpDownLeft = s.get(JAVA_FLOAT_UNALIGNED, offset);
+        this.eyebrowUpDownLeft = s.get(JAVA_FLOAT_UNALIGNED, offset);
         offset += Float.BYTES;
-        this.eyeQuirkLeft = s.get(JAVA_FLOAT_UNALIGNED, offset);
+        this.eyebrowQuirkLeft = s.get(JAVA_FLOAT_UNALIGNED, offset);
         offset += Float.BYTES;
 
-        this.eyeSteepnessRight = s.get(JAVA_FLOAT_UNALIGNED, offset);
+        this.eyebrowSteepnessRight = s.get(JAVA_FLOAT_UNALIGNED, offset);
         offset += Float.BYTES;
-        this.eyeUpDownRight = s.get(JAVA_FLOAT_UNALIGNED, offset);
+        this.eyebrowUpDownRight = s.get(JAVA_FLOAT_UNALIGNED, offset);
         offset += Float.BYTES;
-        this.eyeQuirkRight = s.get(JAVA_FLOAT_UNALIGNED, offset);
+        this.eyebrowQuirkRight = s.get(JAVA_FLOAT_UNALIGNED, offset);
         offset += Float.BYTES;
 
         this.mouthCornerUpdownLeft = s.get(JAVA_FLOAT_UNALIGNED, offset);
