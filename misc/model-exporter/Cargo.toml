@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-easy-gltf = { version="1.1.3", features = ["names", "vertex-color"]}
+easy-gltf = { git="https://github.com/chuigda/easy-gltf", branch="preserve_transform", features = ["names", "vertex-color"]}
 cgmath = "0.18.0"

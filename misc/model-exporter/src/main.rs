@@ -98,13 +98,10 @@ fn main() {
             if export_mode == "obj" {
                 let mut file = std::fs::File::create(output_file).unwrap();
                 for vertex in &vertices {
-                    let color = id_color_map.get(&vertex.id).unwrap();
-
                     writeln!(
                         file,
-                        "v {} {} {} {} {} {}",
-                        vertex.position[0], vertex.position[1], vertex.position[2],
-                        color.x as f32 / 65535.0, color.y as f32 / 65535.0, color.z as f32 / 65535.0
+                        "v {} {} {}",
+                        vertex.position[0], vertex.position[1], vertex.position[2]
                     ).unwrap();
                     writeln!(
                         file,

@@ -86,9 +86,8 @@ dependencies = [
 
 [[package]]
 name = "easy-gltf"
-version = "1.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6cc16292992ce0d4874c93dbe7ef3b0a47a72234e797c1eeb10d73a1b9d7b73"
+version = "2.0.0"
+source = "git+https://github.com/chuigda/easy-gltf?branch=preserve_transform#a8973b318bc0ab465507de5fdd33cf30bf848355"
 dependencies = [
  "base64 0.22.1",
  "cgmath",
