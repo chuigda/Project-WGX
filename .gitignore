@@ -46,3 +46,7 @@ libgltf_reader.so
 
 ### Test data ###
 test.glb
+
+
+### Blender backup files ###
+*.blend1
