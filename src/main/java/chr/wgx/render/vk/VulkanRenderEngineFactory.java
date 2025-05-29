@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import club.doki7.glfw.GLFW;
 import club.doki7.glfw.GLFWConstants;
 import club.doki7.glfw.handle.GLFWwindow;
-import club.doki7.ffm.buffer.ByteBuffer;
+import club.doki7.ffm.ptr.BytePtr;
 
 import java.lang.foreign.Arena;
 
@@ -16,14 +16,14 @@ public final class VulkanRenderEngineFactory implements IRenderEngineFactory {
 
     @Override
     public RenderWindow createRenderWindow(GLFW glfw, String title, int width, int height) throws RenderException {
-        if (glfw.glfwVulkanSupported() != GLFWConstants.GLFW_TRUE) {
+        if (glfw.vulkanSupported() != GLFWConstants.TRUE) {
             throw new RenderException("GLFW 报告不支持 Vulkan");
         }
 
-        glfw.glfwWindowHint(GLFWConstants.GLFW_CLIENT_API, GLFWConstants.GLFW_NO_API);
+        glfw.windowHint(GLFWConstants.CLIENT_API, GLFWConstants.NO_API);
         try (Arena arena = Arena.ofConfined()) {
-            ByteBuffer titleBuffer = ByteBuffer.allocateString(arena, title);
-            @Nullable GLFWwindow rawWindow = glfw.glfwCreateWindow(width, height, titleBuffer, null, null);
+            BytePtr titleBuffer = BytePtr.allocateString(arena, title);
+            @Nullable GLFWwindow rawWindow = glfw.createWindow(width, height, titleBuffer, null, null);
             if (rawWindow == null) {
                 throw new RenderException("无法创建 GLFW 窗口");
             }

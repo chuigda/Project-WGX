@@ -52,7 +52,7 @@ public final class RenderOp implements CompiledRenderPassOp {
 
                 cx.dCmd.cmdBindDescriptorSets(
                         cmdBuf,
-                        VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        VkPipelineBindPoint.GRAPHICS,
                         bindPoint.pipeline.pipelineLayout,
                         0,
                         sharedDescriptorCount,
@@ -67,7 +67,7 @@ public final class RenderOp implements CompiledRenderPassOp {
                     continue;
                 }
 
-                VkDescriptorSet.Buffer pDescriptorSetsVk;
+                VkDescriptorSet.Ptr pDescriptorSetsVk;
                 if (renderTask.descriptorSetsVk.length == 1) {
                     pDescriptorSetsVk = renderTask.descriptorSetsVk[0];
                 } else {
@@ -77,7 +77,7 @@ public final class RenderOp implements CompiledRenderPassOp {
                 if (!renderTask.descriptorSets.isEmpty()) {
                     cx.dCmd.cmdBindDescriptorSets(
                             cmdBuf,
-                            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            VkPipelineBindPoint.GRAPHICS,
                             bindPoint.pipeline.pipelineLayout,
                             sharedDescriptorCount,
                             renderTask.descriptorSets.size(),
@@ -104,19 +104,19 @@ public final class RenderOp implements CompiledRenderPassOp {
                 }
 
                 if (!dynamicRenderTask.descriptorSets.isEmpty()) {
-                    VkDescriptorSet.Buffer pDescriptorSetsVk = dynamicRenderTask.descriptorSetsVk;
+                    VkDescriptorSet.Ptr pDescriptorSetsVk = dynamicRenderTask.descriptorSetsVk;
                     for (int i = 0; i < dynamicRenderTask.descriptorSets.size(); i++) {
                         VulkanDescriptorSet descriptorSet = dynamicRenderTask.descriptorSets.get(i).get();
-                        if (descriptorSet.descriptorSets.length == 1) {
-                            pDescriptorSetsVk.write(i, descriptorSet.descriptorSets[0]);
+                        if (descriptorSet.descriptorSets.size() == 1) {
+                            pDescriptorSetsVk.write(i, descriptorSet.descriptorSets.read());
                         } else {
-                            pDescriptorSetsVk.write(i, descriptorSet.descriptorSets[frameIndex]);
+                            pDescriptorSetsVk.write(i, descriptorSet.descriptorSets.read(frameIndex));
                         }
                     }
 
                     cx.dCmd.cmdBindDescriptorSets(
                             cmdBuf,
-                            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            VkPipelineBindPoint.GRAPHICS,
                             bindPoint.pipeline.pipelineLayout,
                             renderTaskGroup.sharedDescriptorSets.size(),
                             dynamicRenderTask.descriptorSets.size(),

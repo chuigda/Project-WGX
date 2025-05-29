@@ -7,7 +7,7 @@ import chr.wgx.render.info.RenderPassCreateInfo;
 import club.doki7.gles2.GLES2;
 import club.doki7.gles2.GLES2Constants;
 import club.doki7.ffm.annotation.EnumType;
-import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.ptr.IntPtr;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
@@ -28,17 +28,17 @@ public final class ASPECT_RenderPassCreate {
                 .map(attachment -> (GLES2TextureAttachment) attachment.attachment);
 
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pFramebufferObject = IntBuffer.allocate(arena);
-            gles2.glGenFramebuffers(1, pFramebufferObject);
+            IntPtr pFramebufferObject = IntPtr.allocate(arena);
+            gles2.genFramebuffers(1, pFramebufferObject);
             int framebufferObject = pFramebufferObject.read();
 
-            gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, framebufferObject);
-            @EnumType(GLES2Constants.class) int currentAttachment = GLES2Constants.GL_COLOR_ATTACHMENT0;
+            gles2.bindFramebuffer(GLES2Constants.FRAMEBUFFER, framebufferObject);
+            @EnumType(GLES2Constants.class) int currentAttachment = GLES2Constants.COLOR_ATTACHMENT0;
             for (GLES2TextureAttachment attachment : colorTextureAttachments) {
-                gles2.glFramebufferTexture2D(
-                        GLES2Constants.GL_FRAMEBUFFER,
+                gles2.framebufferTexture2D(
+                        GLES2Constants.FRAMEBUFFER,
                         currentAttachment,
-                        GLES2Constants.GL_TEXTURE_2D,
+                        GLES2Constants.TEXTURE_2D,
                         attachment.textureObject,
                         0
                 );
@@ -46,20 +46,20 @@ public final class ASPECT_RenderPassCreate {
             }
 
             if (depthTextureAttachment instanceof Option.Some<GLES2TextureAttachment> some) {
-                gles2.glFramebufferTexture2D(
-                        GLES2Constants.GL_FRAMEBUFFER,
-                        GLES2Constants.GL_DEPTH_ATTACHMENT,
-                        GLES2Constants.GL_TEXTURE_2D,
+                gles2.framebufferTexture2D(
+                        GLES2Constants.FRAMEBUFFER,
+                        GLES2Constants.DEPTH_ATTACHMENT,
+                        GLES2Constants.TEXTURE_2D,
                         some.value.textureObject,
                         0
                 );
             }
 
-            int status = gles2.glCheckFramebufferStatus(GLES2Constants.GL_FRAMEBUFFER);
-            if (status != GLES2Constants.GL_FRAMEBUFFER_COMPLETE) {
+            int status = gles2.checkFramebufferStatus(GLES2Constants.FRAMEBUFFER);
+            if (status != GLES2Constants.FRAMEBUFFER_COMPLETE) {
                 throw new RenderException("未能创建完整的帧缓冲对象");
             }
-            gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, 0);
+            gles2.bindFramebuffer(GLES2Constants.FRAMEBUFFER, 0);
 
             GLES2RenderPass ret =  new GLES2RenderPass(
                     info,

@@ -1,7 +1,7 @@
 package chr.wgx.util;
 
 import club.doki7.glfw.datatype.GLFWimage;
-import club.doki7.ffm.buffer.ByteBuffer;
+import club.doki7.ffm.ptr.BytePtr;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -25,7 +25,7 @@ public final class ImageUtil {
         return ImageIO.read(new File(path));
     }
 
-    public static void writeImageToBuffer(BufferedImage image, ByteBuffer buffer) {
+    public static void writeImageToBuffer(BufferedImage image, BytePtr buffer) {
         int width = image.getWidth();
         int height = image.getHeight();
 
@@ -51,7 +51,7 @@ public final class ImageUtil {
         int width = image.getWidth();
         int height = image.getHeight();
 
-        ByteBuffer buffer = ByteBuffer.allocate(arena, (long) width * height * 4);
+        BytePtr buffer = BytePtr.allocate(arena, (long) width * height * 4);
         writeImageToBuffer(image, buffer);
 
         GLFWimage glfwImage = GLFWimage.allocate(arena);

@@ -6,7 +6,7 @@ import chr.wgx.render.gles2.data.GLES2RenderObject;
 import chr.wgx.render.info.ObjectCreateInfo;
 import club.doki7.gles2.GLES2;
 import club.doki7.gles2.GLES2Constants;
-import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.ptr.IntPtr;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -23,8 +23,8 @@ public final class ASPECT_ObjectCreate {
 
         List<RenderObject> ret = new ArrayList<>();
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pVBO = IntBuffer.allocate(arena, (long) infoList.size() * 2);
-            gles2.glGenBuffers(infoList.size() * 2, pVBO);
+            IntPtr pVBO = IntPtr.allocate(arena, (long) infoList.size() * 2);
+            gles2.genBuffers(infoList.size() * 2, pVBO);
 
             for (int i = 0; i < infoList.size(); i++) {
                 ObjectCreateInfo info = infoList.get(i);
@@ -48,24 +48,24 @@ public final class ASPECT_ObjectCreate {
                     pIndices.copyFrom(info.pIndices);
                 }
 
-                gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, vertexVBO);
-                gles2.glBufferData(
-                        GLES2Constants.GL_ARRAY_BUFFER,
+                gles2.bindBuffer(GLES2Constants.ARRAY_BUFFER, vertexVBO);
+                gles2.bufferData(
+                        GLES2Constants.ARRAY_BUFFER,
                         pVertices.byteSize(),
                         pVertices,
-                        GLES2Constants.GL_STATIC_DRAW
+                        GLES2Constants.STATIC_DRAW
                 );
 
-                gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, indexVBO);
-                gles2.glBufferData(
-                        GLES2Constants.GL_ELEMENT_ARRAY_BUFFER,
+                gles2.bindBuffer(GLES2Constants.ELEMENT_ARRAY_BUFFER, indexVBO);
+                gles2.bufferData(
+                        GLES2Constants.ELEMENT_ARRAY_BUFFER,
                         pIndices.byteSize(),
                         pIndices,
-                        GLES2Constants.GL_STATIC_DRAW
+                        GLES2Constants.STATIC_DRAW
                 );
 
-                int status = gles2.glGetError();
-                if (status != GLES2Constants.GL_NO_ERROR) {
+                int status = gles2.getError();
+                if (status != GLES2Constants.NO_ERROR) {
                     throw new RenderException("创建顶点缓冲对象并上传数据失败: " + status);
                 }
 

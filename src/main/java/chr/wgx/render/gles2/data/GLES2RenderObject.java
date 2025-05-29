@@ -4,7 +4,7 @@ import chr.wgx.render.data.RenderObject;
 import chr.wgx.render.gles2.IGLES2Disposable;
 import chr.wgx.render.info.VertexInputInfo;
 import club.doki7.gles2.GLES2;
-import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.ptr.IntPtr;
 
 import java.lang.foreign.Arena;
 
@@ -31,10 +31,10 @@ public final class GLES2RenderObject extends RenderObject implements IGLES2Dispo
     @Override
     public void dispose(GLES2 gles2) {
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pBuffer = IntBuffer.allocate(arena);
+            IntPtr pBuffer = IntPtr.allocate(arena);
             pBuffer.write(vertexVBO);
 
-            gles2.glDeleteBuffers(1, pBuffer);
+            gles2.deleteBuffers(1, pBuffer);
         }
     }
 }

@@ -153,24 +153,24 @@ public final class ASPECT_DescriptorSetCreate {
                     continue;
                 }
 
-                VkWriteDescriptorSet[] write = VkWriteDescriptorSet.allocate(arena, descriptorSet.descriptorSets.length);
-                for (int i = 0; i < descriptorSet.descriptorSets.length; i++) {
-                    VkWriteDescriptorSet writeDescriptor = write[i];
-                    writeDescriptor.dstSet(descriptorSet.descriptorSets[i]);
+                VkWriteDescriptorSet.Ptr write = VkWriteDescriptorSet.allocate(arena, descriptorSet.descriptorSets.size());
+                for (int i = 0; i < descriptorSet.descriptorSets.size(); i++) {
+                    VkWriteDescriptorSet writeDescriptor = write.at(i);
+                    writeDescriptor.dstSet(descriptorSet.descriptorSets.read(i));
                     writeDescriptor.dstBinding(usage.binding);
                     writeDescriptor.dstArrayElement(0);
                     writeDescriptor.descriptorCount(1);
-                    writeDescriptor.descriptorType(VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                    writeDescriptor.descriptorType(VkDescriptorType.COMBINED_IMAGE_SAMPLER);
 
                     VkDescriptorImageInfo imageInfo = VkDescriptorImageInfo.allocate(arena);
-                    imageInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    imageInfo.imageLayout(VkImageLayout.SHADER_READ_ONLY_OPTIMAL);
                     imageInfo.imageView(combinedImageSampler.image.value.imageView);
                     imageInfo.sampler(combinedImageSampler.sampler.sampler);
 
                     writeDescriptor.pImageInfo(imageInfo);
                 }
 
-                cx.dCmd.vkUpdateDescriptorSets(cx.device, descriptorSet.descriptorSets.length, write[0], 0, null);
+                cx.dCmd.updateDescriptorSets(cx.device, (int) descriptorSet.descriptorSets.size(), write, 0, null);
             }
         }
     }

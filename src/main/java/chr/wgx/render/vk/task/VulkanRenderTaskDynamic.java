@@ -6,7 +6,7 @@ import chr.wgx.render.task.RenderTaskDynamic;
 import chr.wgx.render.vk.data.VulkanDescriptorSet;
 import chr.wgx.render.vk.data.VulkanPushConstant;
 import chr.wgx.render.vk.data.VulkanRenderObject;
-import club.doki7.ffm.buffer.LongBuffer;
+import club.doki7.ffm.ptr.LongPtr;
 import club.doki7.vulkan.handle.VkBuffer;
 import club.doki7.vulkan.handle.VkDescriptorSet;
 import tech.icey.xjbutil.container.Option;
@@ -20,9 +20,9 @@ public final class VulkanRenderTaskDynamic extends RenderTaskDynamic {
     public final List<AtomicReference<VulkanDescriptorSet>> descriptorSets;
     public final Option<VulkanPushConstant> pushConstant;
 
-    public final VkDescriptorSet.Buffer descriptorSetsVk;
-    public final VkBuffer.Buffer pBuffer;
-    public final LongBuffer pOffsets;
+    public final VkDescriptorSet.Ptr descriptorSetsVk;
+    public final VkBuffer.Ptr pBuffer;
+    public final LongPtr pOffsets;
 
     VulkanRenderTaskDynamic(
             VulkanRenderObject renderObject,
@@ -37,16 +37,16 @@ public final class VulkanRenderTaskDynamic extends RenderTaskDynamic {
         this.pushConstant = pushConstant.map(pc -> (VulkanPushConstant) pc);
 
         int descriptorSetsPerFrame = descriptorSets.stream()
-                .map(descriptorSet -> descriptorSet.descriptorSets.length)
+                .map(descriptorSet -> (int) descriptorSet.descriptorSets.size())
                 .max(Integer::compareTo)
                 .orElse(1);
 
         // 因为描述符集合是动态变化的，因此不需要预制描述符集合
         // 现在这个只是用于避免在录制指令缓冲时分配内存
-        this.descriptorSetsVk = VkDescriptorSet.Buffer.allocate(prefabArena, descriptorSets.size());
+        this.descriptorSetsVk = VkDescriptorSet.Ptr.allocate(prefabArena, descriptorSets.size());
 
-        this.pBuffer = VkBuffer.Buffer.allocate(prefabArena);
-        this.pOffsets = LongBuffer.allocate(prefabArena);
+        this.pBuffer = VkBuffer.Ptr.allocate(prefabArena);
+        this.pOffsets = LongPtr.allocate(prefabArena);
 
         pBuffer.write(renderObject.vertexBuffer.buffer);
     }

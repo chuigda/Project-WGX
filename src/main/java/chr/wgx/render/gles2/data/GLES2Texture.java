@@ -4,7 +4,7 @@ import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.gles2.IGLES2Disposable;
 import club.doki7.gles2.GLES2;
-import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.ptr.IntPtr;
 
 import java.lang.foreign.Arena;
 
@@ -21,10 +21,10 @@ public final class GLES2Texture extends Texture implements IGLES2Disposable {
     @Override
     public void dispose(GLES2 gles2) {
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pTexture = IntBuffer.allocate(arena);
+            IntPtr pTexture = IntPtr.allocate(arena);
             pTexture.write(textureObject);
 
-            gles2.glDeleteTextures(1, pTexture);
+            gles2.deleteTextures(1, pTexture);
         }
     }
 }

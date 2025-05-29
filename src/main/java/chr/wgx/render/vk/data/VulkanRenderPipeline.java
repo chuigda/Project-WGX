@@ -19,7 +19,7 @@ public class VulkanRenderPipeline extends RenderPipeline implements IVkDisposabl
 
     @Override
     public void dispose(VulkanRenderEngineContext cx) {
-        cx.dCmd.vkDestroyPipeline(cx.device, pipeline, null);
-        cx.dCmd.vkDestroyPipelineLayout(cx.device, pipelineLayout, null);
+        cx.dCmd.destroyPipeline(cx.device, pipeline, null);
+        cx.dCmd.destroyPipelineLayout(cx.device, pipelineLayout, null);
     }
 }

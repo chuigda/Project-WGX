@@ -20,7 +20,7 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
     private final VulkanRenderPass renderPass;
 
     private final VkRenderingInfo renderingInfo;
-    private final VkRenderingAttachmentInfo[] colorAttachmentInfos;
+    private final VkRenderingAttachmentInfo.Ptr colorAttachmentInfos;
     private final Option<VkRenderingAttachmentInfo> depthAttachmentInfo;
 
     private final VkExtent2D renderAreaExtent;
@@ -53,48 +53,48 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
                 renderPass.info.colorAttachmentInfos.size()
         );
         for (int i = 0; i < renderPass.info.colorAttachmentInfos.size(); i++) {
-            VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos[i];
+            VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos.at(i);
             RenderPassAttachmentInfo renderPassAttachmentInfo = renderPass.info.colorAttachmentInfos.get(i);
 
-            colorAttachmentInfo.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+            colorAttachmentInfo.imageLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
 
             if (colorAttachmentNeedClear.get(i)) {
-                colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
+                colorAttachmentInfo.loadOp(VkAttachmentLoadOp.CLEAR);
                 renderPassAttachmentInfo.clearColor.writeTo(colorAttachmentInfo.clearValue().color());
             } else {
-                colorAttachmentInfo.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
+                colorAttachmentInfo.loadOp(VkAttachmentLoadOp.LOAD);
             }
 
             colorAttachmentInfo.storeOp(
                     colorAttachmentUsedInFuture.get(i)
-                            ? VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE
-                            : VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE
+                            ? VkAttachmentStoreOp.STORE
+                            : VkAttachmentStoreOp.DONT_CARE
             );
         }
 
         depthAttachmentInfo = renderPass.info.depthAttachmentInfo.map(renderPassAttachmentInfo -> {
             VkRenderingAttachmentInfo info = VkRenderingAttachmentInfo.allocate(cx.prefabArena);
 
-            info.imageLayout(VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            info.imageLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
             if (depthAttachmentNeedClear) {
-                info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_CLEAR);
+                info.loadOp(VkAttachmentLoadOp.CLEAR);
                 info.clearValue().depthStencil().depth(1.0f);
             } else {
-                info.loadOp(VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD);
+                info.loadOp(VkAttachmentLoadOp.LOAD);
             }
 
             info.storeOp(
                     depthAttachmentUsedInFuture
-                            ? VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_STORE
-                            : VkAttachmentStoreOp.VK_ATTACHMENT_STORE_OP_DONT_CARE
+                            ? VkAttachmentStoreOp.STORE
+                            : VkAttachmentStoreOp.DONT_CARE
             );
             return info;
         });
 
         renderingInfo.layerCount(1);
-        renderingInfo.colorAttachmentCount(colorAttachmentInfos.length);
-        renderingInfo.pColorAttachments(colorAttachmentInfos[0]);
+        renderingInfo.colorAttachmentCount((int) colorAttachmentInfos.size());
+        renderingInfo.pColorAttachments(colorAttachmentInfos);
         if (depthAttachmentInfo instanceof Option.Some<VkRenderingAttachmentInfo> some) {
             renderingInfo.pDepthAttachment(some.value);
         }
@@ -125,9 +125,9 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
         renderAreaExtent.width(renderAreaWidth);
         renderAreaExtent.height(renderAreaHeight);
 
-        for (int i = 0; i < colorAttachmentInfos.length; i++) {
+        for (int i = 0; i < colorAttachmentInfos.size(); i++) {
             VulkanAttachment colorAttachment = renderPass.colorAttachments.get(i);
-            VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos[i];
+            VkRenderingAttachmentInfo colorAttachmentInfo = colorAttachmentInfos.at(i);
 
             switch (colorAttachment) {
                 case VulkanSwapchainAttachment swapchainAttachment -> colorAttachmentInfo.imageView(

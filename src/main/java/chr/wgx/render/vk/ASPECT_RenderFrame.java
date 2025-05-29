@@ -18,6 +18,8 @@ import club.doki7.vulkan.handle.VkFence;
 import club.doki7.vulkan.handle.VkSemaphore;
 import club.doki7.vulkan.handle.VkSwapchainKHR;
 
+import java.util.Objects;
+
 @SuppressWarnings("FieldCanBeLocal")
 public final class ASPECT_RenderFrame {
     ASPECT_RenderFrame(VulkanRenderEngine engine) {
@@ -35,11 +37,11 @@ public final class ASPECT_RenderFrame {
                 cx.renderFinishedSemaphores.length
         );
         this.pWaitStages = IntPtr.allocate(cx.prefabArena);
-        this.commandBufferBeginInfos = VkCommandBufferBeginInfo.allocate(cx.prefabArena, cx.commandBuffers.length);
-        this.pCommandBuffers = VkCommandBuffer.Ptr.allocate(cx.prefabArena, cx.commandBuffers.length);
-        this.submitInfos = VkSubmitInfo.allocate(cx.prefabArena, cx.commandBuffers.length);
+        this.commandBufferBeginInfos = VkCommandBufferBeginInfo.allocate(cx.prefabArena, cx.commandBuffers.size());
+        this.pCommandBuffers = VkCommandBuffer.Ptr.allocate(cx.prefabArena, cx.commandBuffers.size());
+        this.submitInfos = VkSubmitInfo.allocate(cx.prefabArena, cx.commandBuffers.size());
         this.pSwapchain = VkSwapchainKHR.Ptr.allocate(cx.prefabArena);
-        this.presentInfos = VkPresentInfoKHR.allocate(cx.prefabArena, cx.commandBuffers.length);
+        this.presentInfos = VkPresentInfoKHR.allocate(cx.prefabArena, cx.commandBuffers.size());
 
         for (int i = 0; i < cx.inFlightFences.length; i++) {
             pInFlightFences.write(i, cx.inFlightFences[i]);
@@ -55,9 +57,9 @@ public final class ASPECT_RenderFrame {
 
         pWaitStages.write(VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT);
 
-        for (int i = 0; i < cx.commandBuffers.length; i++) {
+        for (int i = 0; i < cx.commandBuffers.size(); i++) {
             commandBufferBeginInfos.at(i).flags(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT);
-            pCommandBuffers.write(i, cx.commandBuffers[i]);
+            pCommandBuffers.write(i, cx.commandBuffers.read(i));
 
             VkSubmitInfo submitInfo = submitInfos.at(i);
             submitInfo.waitSemaphoreCount(1);
@@ -112,7 +114,7 @@ public final class ASPECT_RenderFrame {
         int imageIndex = pImageIndex.read();
         engine.swapchainColorAttachment.swapchainImage = swapchain.swapchainImages[imageIndex];
 
-        VkCommandBuffer cmdBuf = cx.commandBuffers[currentFrameIndex];
+        VkCommandBuffer cmdBuf = Objects.requireNonNull(cx.commandBuffers.read(currentFrameIndex));
 
         cx.dCmd.resetCommandBuffer(cmdBuf, 0);
         result = cx.dCmd.beginCommandBuffer(cmdBuf, commandBufferBeginInfos.at(currentFrameIndex));

@@ -292,13 +292,13 @@ public final class VulkanRenderEngine extends RenderEngine {
     ) throws RenderException {
         swapchainColorAttachment.swapchainImage = swapchainImage;
 
-        cx.dCmd.vkResetCommandBuffer(commandBuffer, 0);
+        cx.dCmd.resetCommandBuffer(commandBuffer, 0);
 
         try (Arena arena = Arena.ofConfined()) {
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.allocate(arena);
-            beginInfo.flags(VkCommandBufferUsageFlags.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-            @EnumType(VkResult.class) int result = cx.dCmd.vkBeginCommandBuffer(commandBuffer, beginInfo);
-            if (result != VkResult.VK_SUCCESS) {
+            beginInfo.flags(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT);
+            @EnumType(VkResult.class) int result = cx.dCmd.beginCommandBuffer(commandBuffer, beginInfo);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));
             }
 
@@ -306,8 +306,8 @@ public final class VulkanRenderEngine extends RenderEngine {
                 op.recordToCommandBuffer(cx, swapchain, commandBuffer, currentFrameIndex);
             }
 
-            result = cx.dCmd.vkEndCommandBuffer(commandBuffer);
-            if (result != VkResult.VK_SUCCESS) {
+            result = cx.dCmd.endCommandBuffer(commandBuffer);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法结束指令缓冲记录, 错误代码: " + VkResult.explain(result));
             }
         }

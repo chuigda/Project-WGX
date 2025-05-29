@@ -41,12 +41,12 @@ public final class ASPECT_RenderPassCompilation {
             for (VulkanAttachment inputAttachment : renderPass.inputAttachments) {
                 @EnumType(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
                         inputAttachment,
-                        VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
+                        VkImageLayout.UNDEFINED
                 );
-                if (currentLayout != VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+                if (currentLayout != VkImageLayout.SHADER_READ_ONLY_OPTIMAL) {
                     transformedAttachments.add(inputAttachment);
                     oldLayout.add(currentLayout);
-                    newLayout.add(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    newLayout.add(VkImageLayout.SHADER_READ_ONLY_OPTIMAL);
                 }
             }
 
@@ -56,20 +56,20 @@ public final class ASPECT_RenderPassCompilation {
 
                 @EnumType(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
                         attachment,
-                        VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
+                        VkImageLayout.UNDEFINED
                 );
 
-                if (currentLayout != VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+                if (currentLayout != VkImageLayout.COLOR_ATTACHMENT_OPTIMAL
                     && colorAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS) {
                     // 如果确定需要清除附件，则起始布局不重要
-                    currentLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED;
+                    currentLayout = VkImageLayout.UNDEFINED;
                 }
 
                 transformedAttachments.add(attachment);
                 oldLayout.add(currentLayout);
-                newLayout.add(VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                newLayout.add(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
 
-                currentLayouts.put(attachment, VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                currentLayouts.put(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
             }
 
             if (!transformedAttachments.isEmpty()) {
@@ -136,9 +136,9 @@ public final class ASPECT_RenderPassCompilation {
                 List.of(engine.swapchainColorAttachment),
                 List.of(currentLayouts.getOrDefault(
                         engine.swapchainColorAttachment,
-                        VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
+                        VkImageLayout.UNDEFINED
                 )),
-                List.of(VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+                List.of(VkImageLayout.PRESENT_SRC_KHR)
         ));
 
         engine.compiledRenderPassOps = compiled;

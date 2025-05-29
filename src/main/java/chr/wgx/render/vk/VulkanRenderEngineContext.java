@@ -26,9 +26,10 @@ import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
 public final class VulkanRenderEngineContext {
-    public final Arena prefabArena = Arena.ofAuto();
     /// 同一时刻，最多只允许在渲染线程外额外提交 {@code 4} 个指令缓冲
     public final Semaphore graphicsQueueSubmitPermission = new Semaphore(4);
+
+    public final Arena prefabArena;
 
     public final VkStaticCommands sCmd;
     public final VkEntryCommands eCmd;
@@ -56,13 +57,14 @@ public final class VulkanRenderEngineContext {
     public final VkFence[] inFlightFences;
 
     public final VkCommandPool commandPool;
-    public final VkCommandBuffer[] commandBuffers;
+    public final VkCommandBuffer.Ptr commandBuffers;
     public final VkCommandPool graphicsOnceCommandPool;
     public final Option<VkCommandPool> transferCommandPool;
 
     public boolean disposed = false;
 
     VulkanRenderEngineContext(
+            Arena prefabArena,
             VkStaticCommands sCmd,
             VkEntryCommands eCmd,
             VkInstanceCommands iCmd,
@@ -90,9 +92,11 @@ public final class VulkanRenderEngineContext {
 
             VkCommandPool commandPool,
             VkCommandPool graphicsOnceCommandPool,
-            VkCommandBuffer[] commandBuffers,
+            VkCommandBuffer.Ptr commandBuffers,
             Option<VkCommandPool> transferCommandPool
     ) {
+        this.prefabArena = prefabArena;
+
         this.sCmd = sCmd;
         this.eCmd = eCmd;
         this.iCmd = iCmd;
@@ -231,7 +235,7 @@ public final class VulkanRenderEngineContext {
                 if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法为操作分配指令缓冲, 错误代码: " + VkResult.explain(result));
                 }
-                commandBuffer = pCommandBuffer.read();
+                commandBuffer = Objects.requireNonNull(pCommandBuffer.read());
 
                 VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.allocate(arena);
                 beginInfo.flags(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT);

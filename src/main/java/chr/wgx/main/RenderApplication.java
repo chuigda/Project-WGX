@@ -13,7 +13,7 @@ import chr.wgx.util.SharedObjectLoader;
 import club.doki7.glfw.GLFW;
 import club.doki7.glfw.GLFWConstants;
 import club.doki7.glfw.GLFWLoader;
-import club.doki7.vulkan.VulkanLoader;
+import club.doki7.vulkan.command.VulkanLoader;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -29,7 +29,7 @@ public final class RenderApplication {
 
         progressDlg.setProgress(20, "创建渲染引擎");
         GLFW glfw = GLFWLoader.loadGLFW();
-        if (glfw.glfwInit() != GLFWConstants.GLFW_TRUE) {
+        if (glfw.init() != GLFWConstants.TRUE) {
             throw new RuntimeException("GLFW 初始化失败");
         }
 

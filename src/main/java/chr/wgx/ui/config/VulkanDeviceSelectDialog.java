@@ -1,7 +1,7 @@
 package chr.wgx.ui.config;
 
 import chr.wgx.ui.SwingUtil;
-import club.doki7.ffm.annotation.unsigned;
+import club.doki7.ffm.annotation.Unsigned;
 import club.doki7.vulkan.enumtype.VkPhysicalDeviceType;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action1;
@@ -79,10 +79,10 @@ public final class VulkanDeviceSelectDialog extends JDialog {
                         "设备 ID: " + deviceInfo.deviceId + "\n" +
                         "设备名称: " + deviceInfo.deviceName + "\n" +
                         "设备类型: " + switch (deviceInfo.deviceType) {
-                            case VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU -> "集成 GPU";
-                            case VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU -> "独立 GPU";
-                            case VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU -> "虚拟 GPU";
-                            case VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_CPU -> "CPU";
+                            case VkPhysicalDeviceType.INTEGRATED_GPU -> "集成 GPU";
+                            case VkPhysicalDeviceType.DISCRETE_GPU -> "独立 GPU";
+                            case VkPhysicalDeviceType.VIRTUAL_GPU -> "虚拟 GPU";
+                            case VkPhysicalDeviceType.CPU -> "CPU";
                             default -> "未知";
                         } + "\n" +
                         "Vulkan API 版本: " + deviceInfo.apiVersion.major() + "." + deviceInfo.apiVersion.minor() + "." + deviceInfo.apiVersion.patch() + "\n" +

@@ -20,8 +20,8 @@ import org.intellij.lang.annotations.Language;
 import club.doki7.gles2.GLES2;
 import club.doki7.gles2.GLES2Constants;
 import club.doki7.ffm.annotation.EnumType;
-import club.doki7.ffm.buffer.FloatBuffer;
-import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.ptr.FloatPtr;
+import club.doki7.ffm.ptr.IntPtr;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
@@ -41,47 +41,47 @@ public final class ASPECT_RenderFrame {
         );
 
         try (Arena arena = Arena.ofConfined()) {
-            FloatBuffer vertexBufferSegment = FloatBuffer.allocate(arena, HIDDEN_OBJECT_VERTICES);
-            IntBuffer indexBufferSegment = IntBuffer.allocate(arena, HIDDEN_OBJECT_INDICES);
+            FloatPtr vertexBufferSegment = FloatPtr.allocate(arena, HIDDEN_OBJECT_VERTICES);
+            IntPtr indexBufferSegment = IntPtr.allocate(arena, HIDDEN_OBJECT_INDICES);
 
-            IntBuffer pVBO = IntBuffer.allocate(arena, 2);
-            gles2.glGenBuffers(2, pVBO);
+            IntPtr pVBO = IntPtr.allocate(arena, 2);
+            gles2.genBuffers(2, pVBO);
 
             hiddenObjectVBO = pVBO.read();
             hiddenObjectIBO = pVBO.read(1);
 
-            gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, hiddenObjectVBO);
-            gles2.glBufferData(
-                    GLES2Constants.GL_ARRAY_BUFFER,
+            gles2.bindBuffer(GLES2Constants.ARRAY_BUFFER, hiddenObjectVBO);
+            gles2.bufferData(
+                    GLES2Constants.ARRAY_BUFFER,
                     vertexBufferSegment.segment().byteSize(),
                     vertexBufferSegment.segment(),
-                    GLES2Constants.GL_STATIC_DRAW
+                    GLES2Constants.STATIC_DRAW
             );
 
-            gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, hiddenObjectIBO);
-            gles2.glBufferData(
-                    GLES2Constants.GL_ELEMENT_ARRAY_BUFFER,
+            gles2.bindBuffer(GLES2Constants.ELEMENT_ARRAY_BUFFER, hiddenObjectIBO);
+            gles2.bufferData(
+                    GLES2Constants.ELEMENT_ARRAY_BUFFER,
                     indexBufferSegment.segment().byteSize(),
                     indexBufferSegment.segment(),
-                    GLES2Constants.GL_STATIC_DRAW
+                    GLES2Constants.STATIC_DRAW
             );
         }
 
-        pDefaultFramebuffer = IntBuffer.allocate(engine.prefabArena);
+        pDefaultFramebuffer = IntPtr.allocate(engine.prefabArena);
     }
 
     void renderFrameImpl() throws RenderException {
         HashSet<Attachment> clearedAttachments = new HashSet<>();
 
         GLES2 gles2 = engine.gles2;
-        gles2.glDisable(GLES2Constants.GL_CULL_FACE);
-        gles2.glDisable(GLES2Constants.GL_BLEND);
+        gles2.disable(GLES2Constants.CULL_FACE);
+        gles2.disable(GLES2Constants.BLEND);
 
-        gles2.glGetIntegerv(GLES2Constants.GL_FRAMEBUFFER_BINDING, pDefaultFramebuffer);
+        gles2.getIntegerv(GLES2Constants.FRAMEBUFFER_BINDING, pDefaultFramebuffer);
         int defaultFramebuffer = pDefaultFramebuffer.read();
 
         for (GLES2RenderPass renderPass : engine.renderPasses) {
-             gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, renderPass.framebufferObject);
+             gles2.bindFramebuffer(GLES2Constants.FRAMEBUFFER, renderPass.framebufferObject);
 
             Attachment firstAttachment = renderPass.colorAttachments.getFirst();
             int actualWidth = firstAttachment.createInfo.width == -1
@@ -90,15 +90,15 @@ public final class ASPECT_RenderFrame {
             int actualHeight = firstAttachment.createInfo.height == -1
                     ? engine.framebufferHeight
                     : firstAttachment.createInfo.height;
-            gles2.glViewport(0, 0, actualWidth, actualHeight);
+            gles2.viewport(0, 0, actualWidth, actualHeight);
 
             // TODO find a way to support multiple clear colors
             RenderPassAttachmentInfo renderPassAttachmentInfo = renderPass.info.colorAttachmentInfos.getFirst();
             if (renderPassAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
                 || !clearedAttachments.contains(firstAttachment)) {
                 Color clearColor = renderPassAttachmentInfo.clearColor;
-                gles2.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-                gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
+                gles2.clearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+                gles2.clear(GLES2Constants.COLOR_BUFFER);
                 clearedAttachments.add(firstAttachment);
             }
             if (renderPass.info.depthAttachmentInfo instanceof Option.Some<RenderPassAttachmentInfo> some) {
@@ -107,17 +107,17 @@ public final class ASPECT_RenderFrame {
 
                 if (depthAttachmentInfo.clearBehavior == ClearBehavior.CLEAR_ALWAYS
                     || !clearedAttachments.contains(depthAttachment)) {
-                    gles2.glClear(GLES2Constants.GL_DEPTH_BUFFER_BIT);
+                    gles2.clear(GLES2Constants.DEPTH_BUFFER);
                     clearedAttachments.add(depthAttachment);
                 }
             }
 
             for (GLES2RenderPipelineBind pipelineBind : renderPass.bindList) {
-                gles2.glUseProgram(pipelineBind.pipeline.shaderProgram);
+                gles2.useProgram(pipelineBind.pipeline.shaderProgram);
                 if (pipelineBind.pipeline.createInfo.depthTest) {
-                    gles2.glEnable(GLES2Constants.GL_DEPTH_TEST);
+                    gles2.enable(GLES2Constants.DEPTH_TEST);
                 } else {
-                    gles2.glDisable(GLES2Constants.GL_DEPTH_TEST);
+                    gles2.disable(GLES2Constants.DEPTH_TEST);
                 }
 
                 for (GLES2RenderTaskGroup renderTaskGroup : pipelineBind.renderTaskGroups) {
@@ -133,9 +133,9 @@ public final class ASPECT_RenderFrame {
                                     if (uniformLocation.location < 0) {
                                         continue;
                                     }
-                                    gles2.glActiveTexture(GLES2Constants.GL_TEXTURE0 + textureUnitCount0);
-                                    gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, gles2Texture.textureObject);
-                                    gles2.glUniform1i(uniformLocation.location, textureUnitCount0);
+                                    gles2.activeTexture(GLES2Constants.TEXTURE0 + textureUnitCount0);
+                                    gles2.bindTexture(GLES2Constants.TEXTURE_2D, gles2Texture.textureObject);
+                                    gles2.uniform1i(uniformLocation.location, textureUnitCount0);
 
                                     textureUnitCount0++;
                                 }
@@ -175,9 +175,9 @@ public final class ASPECT_RenderFrame {
                                         if (uniformLocation.location < 0) {
                                             continue;
                                         }
-                                        gles2.glActiveTexture(GLES2Constants.GL_TEXTURE0 + textureUnitCount1);
-                                        gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, gles2Texture.textureObject);
-                                        gles2.glUniform1i(uniformLocation.location, textureUnitCount1);
+                                        gles2.activeTexture(GLES2Constants.TEXTURE0 + textureUnitCount1);
+                                        gles2.bindTexture(GLES2Constants.TEXTURE_2D, gles2Texture.textureObject);
+                                        gles2.uniform1i(uniformLocation.location, textureUnitCount1);
 
                                         textureUnitCount1++;
                                     }
@@ -222,28 +222,28 @@ public final class ASPECT_RenderFrame {
                             }
                         }
 
-                        gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, renderTask.renderObject.indexVBO);
-                        gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, renderTask.renderObject.vertexVBO);
+                        gles2.bindBuffer(GLES2Constants.ELEMENT_ARRAY_BUFFER, renderTask.renderObject.indexVBO);
+                        gles2.bindBuffer(GLES2Constants.ARRAY_BUFFER, renderTask.renderObject.vertexVBO);
 
                         for (FieldInfo vertexInput : pipelineBind.pipeline.createInfo.vertexInputInfo.attributes) {
                             int location = vertexInput.location;
                             int byteOffset = vertexInput.byteOffset;
 
-                            gles2.glEnableVertexAttribArray(location);
-                            gles2.glVertexAttribPointer(
+                            gles2.enableVertexAttribArray(location);
+                            gles2.vertexAttribPointer(
                                     location,
                                     vertexInput.type.componentCount,
-                                    vertexInput.type == CGType.Int ? GLES2Constants.GL_INT : GLES2Constants.GL_FLOAT,
+                                    vertexInput.type == CGType.Int ? GLES2Constants.INT : GLES2Constants.FLOAT,
                                     (byte) 0,
                                     pipelineBind.pipeline.createInfo.vertexInputInfo.stride,
                                     MemorySegment.ofAddress(byteOffset)
                             );
                         }
 
-                        gles2.glDrawElements(
-                                GLES2Constants.GL_TRIANGLES,
+                        gles2.drawElements(
+                                GLES2Constants.TRIANGLES,
                                 renderTask.renderObject.indexCount,
-                                GLES2Constants.GL_UNSIGNED_INT,
+                                GLES2Constants.UNSIGNED_INT,
                                 MemorySegment.NULL
                         );
                     }
@@ -251,26 +251,26 @@ public final class ASPECT_RenderFrame {
             }
         }
 
-        gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, defaultFramebuffer);
-        gles2.glViewport(0, 0, engine.framebufferWidth, engine.framebufferHeight);
-        gles2.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        gles2.glClear(GLES2Constants.GL_COLOR_BUFFER_BIT);
-        gles2.glDisable(GLES2Constants.GL_DEPTH_TEST);
-        gles2.glDisable(GLES2Constants.GL_BLEND);
-        gles2.glUseProgram(hiddenShaderProgram);
-        gles2.glBindBuffer(GLES2Constants.GL_ARRAY_BUFFER, hiddenObjectVBO);
-        gles2.glBindBuffer(GLES2Constants.GL_ELEMENT_ARRAY_BUFFER, hiddenObjectIBO);
-        gles2.glEnableVertexAttribArray(0);
-        gles2.glVertexAttribPointer(0, 2, GLES2Constants.GL_FLOAT, (byte) 0, 16, MemorySegment.NULL);
-        gles2.glEnableVertexAttribArray(1);
-        gles2.glVertexAttribPointer(1, 2, GLES2Constants.GL_FLOAT, (byte) 0, 16, MemorySegment.ofAddress(2 * Float.BYTES));
-        gles2.glActiveTexture(GLES2Constants.GL_TEXTURE0);
-        gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, engine.defaultColorAttachmentTexture.textureObject);
-        gles2.glUniform1i(0, 0);
-        gles2.glDrawElements(GLES2Constants.GL_TRIANGLES, 6, GLES2Constants.GL_UNSIGNED_INT, MemorySegment.NULL);
+        gles2.bindFramebuffer(GLES2Constants.FRAMEBUFFER, defaultFramebuffer);
+        gles2.viewport(0, 0, engine.framebufferWidth, engine.framebufferHeight);
+        gles2.clearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        gles2.clear(GLES2Constants.COLOR_BUFFER);
+        gles2.disable(GLES2Constants.DEPTH_TEST);
+        gles2.disable(GLES2Constants.BLEND);
+        gles2.useProgram(hiddenShaderProgram);
+        gles2.bindBuffer(GLES2Constants.ARRAY_BUFFER, hiddenObjectVBO);
+        gles2.bindBuffer(GLES2Constants.ELEMENT_ARRAY_BUFFER, hiddenObjectIBO);
+        gles2.enableVertexAttribArray(0);
+        gles2.vertexAttribPointer(0, 2, GLES2Constants.FLOAT, (byte) 0, 16, MemorySegment.NULL);
+        gles2.enableVertexAttribArray(1);
+        gles2.vertexAttribPointer(1, 2, GLES2Constants.FLOAT, (byte) 0, 16, MemorySegment.ofAddress(2 * Float.BYTES));
+        gles2.activeTexture(GLES2Constants.TEXTURE0);
+        gles2.bindTexture(GLES2Constants.TEXTURE_2D, engine.defaultColorAttachmentTexture.textureObject);
+        gles2.uniform1i(0, 0);
+        gles2.drawElements(GLES2Constants.TRIANGLES, 6, GLES2Constants.UNSIGNED_INT, MemorySegment.NULL);
 
-        int status = gles2.glGetError();
-        if (status != GLES2Constants.GL_NO_ERROR) {
+        int status = gles2.getError();
+        if (status != GLES2Constants.NO_ERROR) {
             throw new RenderException("OpenGL 错误: " + status);
         }
     }
@@ -287,49 +287,49 @@ public final class ASPECT_RenderFrame {
         switch (type) {
             case Float -> {
                 float value = cpuBuffer.get(ValueLayout.JAVA_FLOAT, byteOffset);
-                gles2.glUniform1f(uniformLocation.location, value);
+                gles2.uniform1f(uniformLocation.location, value);
             }
             case Int -> {
                 int value = cpuBuffer.get(ValueLayout.JAVA_INT, byteOffset);
-                gles2.glUniform1i(uniformLocation.location, value);
+                gles2.uniform1i(uniformLocation.location, value);
             }
-            case Vec2 -> gles2.glUniform2fv(
+            case Vec2 -> gles2.uniform2fv(
                     uniformLocation.location,
                     1,
-                    new FloatBuffer(cpuBuffer.asSlice(byteOffset))
+                    new FloatPtr(cpuBuffer.asSlice(byteOffset))
             );
-            case Vec3 -> gles2.glUniform3fv(
+            case Vec3 -> gles2.uniform3fv(
                     uniformLocation.location,
                     1,
-                    new FloatBuffer(cpuBuffer.asSlice(byteOffset))
+                    new FloatPtr(cpuBuffer.asSlice(byteOffset))
             );
-            case Vec4 -> gles2.glUniform4fv(
+            case Vec4 -> gles2.uniform4fv(
                     uniformLocation.location,
                     1,
-                    new FloatBuffer(cpuBuffer.asSlice(byteOffset))
+                    new FloatPtr(cpuBuffer.asSlice(byteOffset))
             );
-            case Mat2 -> gles2.glUniformMatrix2fv(
+            case Mat2 -> gles2.uniformMatrix2fv(
                     uniformLocation.location,
                     1,
                     (byte) 0,
-                    new FloatBuffer(cpuBuffer.asSlice(byteOffset))
+                    new FloatPtr(cpuBuffer.asSlice(byteOffset))
             );
-            case Mat3 -> gles2.glUniformMatrix3fv(
+            case Mat3 -> gles2.uniformMatrix3fv(
                     uniformLocation.location,
                     1,
                     (byte) 0,
-                    new FloatBuffer(cpuBuffer.asSlice(byteOffset))
+                    new FloatPtr(cpuBuffer.asSlice(byteOffset))
             );
-            case Mat4 -> gles2.glUniformMatrix4fv(
+            case Mat4 -> gles2.uniformMatrix4fv(
                     uniformLocation.location,
                     1,
                     (byte) 0,
-                    new FloatBuffer(cpuBuffer.asSlice(byteOffset))
+                    new FloatPtr(cpuBuffer.asSlice(byteOffset))
             );
         }
 
-        @EnumType(GLES2Constants.class) int status = gles2.glGetError();
-        if (status != GLES2Constants.GL_NO_ERROR) {
+        @EnumType(GLES2Constants.class) int status = gles2.getError();
+        if (status != GLES2Constants.NO_ERROR) {
             throw new RenderException("OpenGL 错误: " + status);
         }
     }
@@ -339,7 +339,7 @@ public final class ASPECT_RenderFrame {
     private final int hiddenShaderProgram;
     private final int hiddenObjectVBO;
     private final int hiddenObjectIBO;
-    private final IntBuffer pDefaultFramebuffer;
+    private final IntPtr pDefaultFramebuffer;
 
     private static final float[] HIDDEN_OBJECT_VERTICES = new float[] {
             // vec2 position, vec2 texCoord

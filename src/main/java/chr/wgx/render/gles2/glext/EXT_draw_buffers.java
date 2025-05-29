@@ -1,7 +1,7 @@
 package chr.wgx.render.gles2.glext;
 
 import club.doki7.ffm.RawFunctionLoader;
-import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.ptr.IntPtr;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
@@ -34,7 +34,7 @@ public class EXT_draw_buffers {
     public static final int GL_DEPTH_ATTACHMENT_EXT = 0x8D00;
     public static final int GL_STENCIL_ATTACHMENT_EXT = 0x8D20;
 
-    public void glDrawBuffersEXT(long n, IntBuffer bufs) {
+    public void glDrawBuffersEXT(long n, IntPtr bufs) {
         try (Arena arena = Arena.ofConfined()) {
             HANDLE$glDrawBuffersEXT.invokeExact(MemorySegment.ofAddress(n), bufs.segment());
         } catch (Throwable throwable) {

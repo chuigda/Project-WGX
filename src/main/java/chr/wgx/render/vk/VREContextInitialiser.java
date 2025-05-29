@@ -7,18 +7,18 @@ import club.doki7.glfw.GLFW;
 import club.doki7.glfw.handle.GLFWwindow;
 import club.doki7.ffm.Loader;
 import club.doki7.ffm.annotation.EnumType;
-import club.doki7.ffm.buffer.ByteBuffer;
-import club.doki7.ffm.buffer.FloatBuffer;
-import club.doki7.ffm.buffer.IntBuffer;
-import club.doki7.ffm.buffer.PointerBuffer;
-import club.doki7.vulkan.Constants;
+import club.doki7.ffm.ptr.BytePtr;
+import club.doki7.ffm.ptr.FloatPtr;
+import club.doki7.ffm.ptr.IntPtr;
+import club.doki7.ffm.ptr.PointerPtr;
+import club.doki7.vulkan.VkConstants;
 import club.doki7.vulkan.Version;
-import club.doki7.vulkan.VulkanLoader;
 import club.doki7.vulkan.bitmask.*;
-import club.doki7.vulkan.command.DeviceCommands;
-import club.doki7.vulkan.command.EntryCommands;
-import club.doki7.vulkan.command.InstanceCommands;
-import club.doki7.vulkan.command.StaticCommands;
+import club.doki7.vulkan.command.VkDeviceCommands;
+import club.doki7.vulkan.command.VkEntryCommands;
+import club.doki7.vulkan.command.VkInstanceCommands;
+import club.doki7.vulkan.command.VkStaticCommands;
+import club.doki7.vulkan.command.VulkanLoader;
 import club.doki7.vulkan.datatype.*;
 import club.doki7.vulkan.enumtype.VkCommandBufferLevel;
 import club.doki7.vulkan.enumtype.VkPhysicalDeviceType;
@@ -33,17 +33,20 @@ import club.doki7.vma.handle.VmaAllocator;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 @SuppressWarnings("NotNullFieldNotInitialized")
 final class VREContextInitialiser {
+    private final Arena prefabArena = Arena.ofAuto();
+
     private GLFW glfw;
     private GLFWwindow window;
-    private StaticCommands sCmd;
-    private EntryCommands eCmd;
+    private VkStaticCommands sCmd;
+    private VkEntryCommands eCmd;
     private boolean enableValidationLayers;
     private VkInstance instance;
-    private InstanceCommands iCmd;
+    private VkInstanceCommands iCmd;
     private Option<VkDebugUtilsMessengerEXT> debugMessenger;
     private VkSurfaceKHR surface;
     private VkPhysicalDevice physicalDevice;
@@ -51,7 +54,7 @@ final class VREContextInitialiser {
     private int presentQueueFamilyIndex;
     private Option<Integer> dedicatedTransferQueueFamilyIndex;
     private VkDevice device;
-    private DeviceCommands dCmd;
+    private VkDeviceCommands dCmd;
     private VkQueue graphicsQueue;
     private VkQueue presentQueue;
     private Option<VkQueue> dedicatedTransferQueue;
@@ -61,7 +64,7 @@ final class VREContextInitialiser {
     private VkSemaphore[] renderFinishedSemaphores;
     private VkFence[] inFlightFences;
     private VkCommandPool commandPool;
-    private VkCommandBuffer[] commandBuffers;
+    private VkCommandBuffer.Ptr commandBuffers;
     private VkCommandPool graphicsOnceCommandPool;
     private Option<VkCommandPool> transferCommandPool;
 
@@ -70,7 +73,7 @@ final class VREContextInitialiser {
         this.window = window;
 
         sCmd = VulkanLoader.loadStaticCommands();
-        eCmd = VulkanLoader.loadEntryCommands();
+        eCmd = VulkanLoader.loadEntryCommands(sCmd);
 
         createInstance();
         setupDebugMessenger();
@@ -84,6 +87,8 @@ final class VREContextInitialiser {
         createCommandBuffers();
 
         return new VulkanRenderEngineContext(
+                prefabArena,
+
                 sCmd,
                 eCmd,
                 iCmd,
@@ -124,24 +129,24 @@ final class VREContextInitialiser {
         try (Arena arena = Arena.ofConfined()) {
             VkApplicationInfo appInfo = VkApplicationInfo.allocate(arena);
             appInfo.pApplicationName(APP_NAME_BUF);
-            appInfo.applicationVersion(Version.vkMakeAPIVersion(0, 1, 0, 0));
+            appInfo.applicationVersion(new Version(0, 1, 0, 0).encode());
             appInfo.pEngineName(ENGINE_NAME_BUF);
-            appInfo.engineVersion(Version.vkMakeAPIVersion(0, 1, 0, 0));
-            appInfo.apiVersion(Version.VK_API_VERSION_1_3);
+            appInfo.engineVersion(new Version(0, 1, 0, 0).encode());
+            appInfo.apiVersion(Version.VK_API_VERSION_1_3.encode());
 
-            IntBuffer pGLFWExtensionCount = IntBuffer.allocate(arena);
-            PointerBuffer glfwExtensions = glfw.glfwGetRequiredInstanceExtensions(pGLFWExtensionCount);
+            IntPtr pGLFWExtensionCount = IntPtr.allocate(arena);
+            PointerPtr glfwExtensions = glfw.getRequiredInstanceExtensions(pGLFWExtensionCount);
             if (glfwExtensions == null) {
                 throw new RenderException("无法获取 GLFW 所需的 Vulkan 实例扩展");
             }
             int glfwExtensionCount = pGLFWExtensionCount.read();
             glfwExtensions = glfwExtensions.reinterpret(glfwExtensionCount);
 
-            PointerBuffer extensions;
+            PointerPtr extensions;
             if (!enableValidationLayers) {
                 extensions = glfwExtensions;
             } else {
-                extensions = PointerBuffer.allocate(arena, glfwExtensionCount + 1);
+                extensions = PointerPtr.allocate(arena, glfwExtensionCount + 1);
                 for (int i = 0; i < glfwExtensionCount; i++) {
                     extensions.write(i, glfwExtensions.read(i));
                 }
@@ -154,7 +159,7 @@ final class VREContextInitialiser {
             instanceCreateInfo.ppEnabledExtensionNames(extensions);
 
             if (enableValidationLayers) {
-                PointerBuffer ppEnabledLayerNames = PointerBuffer.allocate(arena);
+                PointerPtr ppEnabledLayerNames = PointerPtr.allocate(arena);
                 ppEnabledLayerNames.write(VALIDATION_LAYER_NAME_BUF);
                 instanceCreateInfo.enabledLayerCount(1);
                 instanceCreateInfo.ppEnabledLayerNames(ppEnabledLayerNames);
@@ -165,14 +170,14 @@ final class VREContextInitialiser {
                 instanceCreateInfo.pNext(debugCreateInfo);
             }
 
-            VkInstance.Buffer pInstance = VkInstance.Buffer.allocate(arena);
+            VkInstance.Ptr pInstance = VkInstance.Ptr.allocate(arena);
             @EnumType(VkResult.class) int result =
-                    eCmd.vkCreateInstance(instanceCreateInfo, null, pInstance);
-            if (result != VkResult.VK_SUCCESS) {
+                    eCmd.createInstance(instanceCreateInfo, null, pInstance);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建 Vulkan 实例, 错误代码: " + VkResult.explain(result));
             }
 
-            instance = pInstance.read();
+            instance = Objects.requireNonNull(pInstance.read());
             iCmd = VulkanLoader.loadInstanceCommands(instance, sCmd);
         }
     }
@@ -187,31 +192,31 @@ final class VREContextInitialiser {
             VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.allocate(arena);
             populateDebugMessengerCreateInfo(debugCreateInfo);
 
-            VkDebugUtilsMessengerEXT.Buffer pDebugMessenger = VkDebugUtilsMessengerEXT.Buffer.allocate(arena);
-            @EnumType(VkResult.class) int result = iCmd.vkCreateDebugUtilsMessengerEXT(
+            VkDebugUtilsMessengerEXT.Ptr pDebugMessenger = VkDebugUtilsMessengerEXT.Ptr.allocate(arena);
+            @EnumType(VkResult.class) int result = iCmd.createDebugUtilsMessengerEXT(
                     instance,
                     debugCreateInfo,
                     null,
                     pDebugMessenger
             );
-            if (result != VkResult.VK_SUCCESS) {
+            if (result != VkResult.SUCCESS) {
                 logger.severe("无法创建 Vulkan 调试信使, 错误代码: " + VkResult.explain(result));
                 logger.warning("程序将会继续运行, 但校验层调试信息可能无法输出");
                 debugMessenger = Option.none();
             } else {
-                debugMessenger = Option.some(pDebugMessenger.read());
+                debugMessenger = Option.some(Objects.requireNonNull(pDebugMessenger.read()));
             }
         }
     }
 
     private void createSurface() throws RenderException {
         try (Arena arena = Arena.ofConfined()) {
-            VkSurfaceKHR.Buffer pSurface = VkSurfaceKHR.Buffer.allocate(arena);
-            @EnumType(VkResult.class) int result = glfw.glfwCreateWindowSurface(instance, window, null, pSurface);
-            if (result != VkResult.VK_SUCCESS) {
+            VkSurfaceKHR.Ptr pSurface = VkSurfaceKHR.Ptr.allocate(arena);
+            @EnumType(VkResult.class) int result = glfw.createWindowSurface(instance, window, null, pSurface);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建 Vulkan 窗口表面, 错误代码: " + VkResult.explain(result));
             }
-            surface = pSurface.read();
+            surface = Objects.requireNonNull(pSurface.read());
         }
     }
 
@@ -219,9 +224,9 @@ final class VREContextInitialiser {
         int physicalDeviceID = Config.config().vulkanConfig.physicalDeviceID;
         try (Arena arena = Arena.ofConfined()) {
             logger.info("正在选取 Vulkan 物理设备");
-            IntBuffer pDeviceCount = IntBuffer.allocate(arena);
-            @EnumType(VkResult.class) int result = iCmd.vkEnumeratePhysicalDevices(instance, pDeviceCount, null);
-            if (result != VkResult.VK_SUCCESS) {
+            IntPtr pDeviceCount = IntPtr.allocate(arena);
+            @EnumType(VkResult.class) int result = iCmd.enumeratePhysicalDevices(instance, pDeviceCount, null);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 物理设备列表, 错误代码: " + VkResult.explain(result));
             }
 
@@ -230,20 +235,18 @@ final class VREContextInitialiser {
                 throw new RenderException("未找到任何 Vulkan 物理设备");
             }
 
-            VkPhysicalDevice.Buffer pDevices = VkPhysicalDevice.Buffer.allocate(arena, deviceCount);
-            result = iCmd.vkEnumeratePhysicalDevices(instance, pDeviceCount, pDevices);
-            if (result != VkResult.VK_SUCCESS) {
+            VkPhysicalDevice.Ptr pDevices = VkPhysicalDevice.Ptr.allocate(arena, deviceCount);
+            result = iCmd.enumeratePhysicalDevices(instance, pDeviceCount, pDevices);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 物理设备列表, 错误代码: " + VkResult.explain(result));
             }
-            VkPhysicalDevice[] devices = pDevices.readAll();
 
-            VkPhysicalDeviceProperties[] deviceProperties = VkPhysicalDeviceProperties.allocate(arena, deviceCount);
+            VkPhysicalDeviceProperties.Ptr deviceProperties = VkPhysicalDeviceProperties.allocate(arena, deviceCount);
             for (int i = 0; i < deviceCount; i++) {
-                VkPhysicalDevice device = devices[i];
-                iCmd.vkGetPhysicalDeviceProperties(device, deviceProperties[i]);
-
-                VkPhysicalDeviceProperties deviceProperty = deviceProperties[i];
-                Version.Decoded decodedVersion = Version.decode(deviceProperty.apiVersion());
+                VkPhysicalDevice device = Objects.requireNonNull(pDevices.read(i));
+                VkPhysicalDeviceProperties deviceProperty = deviceProperties.at(i);
+                iCmd.getPhysicalDeviceProperties(device, deviceProperty);
+                Version decodedVersion = Version.decode(deviceProperty.apiVersion());
                 logger.info(String.format(
                         "发现 Vulkan 物理设备, ID: %s, 名称: %s, 类型: %s, API 版本: %d.%d.%d",
                         Integer.toUnsignedString(deviceProperty.deviceID()),
@@ -256,9 +259,9 @@ final class VREContextInitialiser {
             }
 
             for (int i = 0; i < deviceCount; i++) {
-                VkPhysicalDeviceProperties deviceProperty = deviceProperties[i];
+                VkPhysicalDeviceProperties deviceProperty = deviceProperties.at(i);
                 if (physicalDeviceID == 0 || deviceProperty.deviceID() == physicalDeviceID) {
-                    physicalDevice = pDevices.read(i);
+                    physicalDevice = Objects.requireNonNull(pDevices.read(i));
 
                     if (physicalDeviceID == 0) {
                         logger.info("自动选定 Vulkan 物理设备: " + deviceProperty.deviceName().readString());
@@ -273,6 +276,7 @@ final class VREContextInitialiser {
                 }
             }
 
+            //noinspection ConstantValue
             if (physicalDevice == null) {
                 throw new RenderException("未找到指定的 Vulkan 物理设备");
             }
@@ -286,23 +290,23 @@ final class VREContextInitialiser {
         dedicatedTransferQueueFamilyIndex = Option.none();
 
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pQueueFamilyPropertyCount = IntBuffer.allocate(arena);
-            iCmd.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyPropertyCount, null);
+            IntPtr pQueueFamilyPropertyCount = IntPtr.allocate(arena);
+            iCmd.getPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyPropertyCount, null);
             int queueFamilyPropertyCount = pQueueFamilyPropertyCount.read();
-            VkQueueFamilyProperties[] queueFamilyProperties =
+            VkQueueFamilyProperties.Ptr queueFamilyProperties =
                     VkQueueFamilyProperties.allocate(arena, queueFamilyPropertyCount);
-            iCmd.vkGetPhysicalDeviceQueueFamilyProperties(
+            iCmd.getPhysicalDeviceQueueFamilyProperties(
                     physicalDevice,
                     pQueueFamilyPropertyCount,
-                    queueFamilyProperties[0]
+                    queueFamilyProperties
             );
 
             for (int i = 0; i < queueFamilyPropertyCount; i++) {
-                VkQueueFamilyProperties queueFamilyProperty = queueFamilyProperties[i];
+                VkQueueFamilyProperties queueFamilyProperty = queueFamilyProperties.at(i);
                 @EnumType(VkQueueFlags.class) int queueFlags = queueFamilyProperty.queueFlags();
                 logger.fine("正在检查队列 " + i + ", 支持操作: " + VkQueueFlags.explain(queueFlags));
 
-                if ((queueFlags & VkQueueFlags.VK_QUEUE_GRAPHICS_BIT) != 0 && graphicsFamilyIndexOpt.isNone()) {
+                if ((queueFlags & VkQueueFlags.GRAPHICS) != 0 && graphicsFamilyIndexOpt.isNone()) {
                     logger.info(
                             "找到支持图形渲染的队列族: " + i +
                                     ", 队列数量: " + queueFamilyProperty.queueCount() +
@@ -311,10 +315,10 @@ final class VREContextInitialiser {
                     graphicsFamilyIndexOpt = Option.some(i);
                 }
 
-                IntBuffer pSupportsPresent = IntBuffer.allocate(arena);
-                iCmd.vkGetPhysicalDeviceSurfaceSupportKHR(
+                IntPtr pSupportsPresent = IntPtr.allocate(arena);
+                iCmd.getPhysicalDeviceSurfaceSupportKHR(
                         physicalDevice,
-                        i,
+                        1,
                         surface,
                         pSupportsPresent
                 );
@@ -329,11 +333,11 @@ final class VREContextInitialiser {
                 }
 
                 @EnumType(VkQueueFlags.class) int prohibitedFlags =
-                        VkQueueFlags.VK_QUEUE_GRAPHICS_BIT | VkQueueFlags.VK_QUEUE_COMPUTE_BIT;
-                if ((queueFlags & VkQueueFlags.VK_QUEUE_TRANSFER_BIT) != 0 &&
-                        supportsPresent != VkConstants.TRUE &&
-                        (queueFlags & prohibitedFlags) == 0 &&
-                        dedicatedTransferQueueFamilyIndex.isNone()) {
+                        VkQueueFlags.GRAPHICS | VkQueueFlags.COMPUTE;
+                if ((queueFlags & VkQueueFlags.TRANSFER) != 0
+                        && supportsPresent != VkConstants.TRUE
+                        && (queueFlags & prohibitedFlags) == 0
+                        && dedicatedTransferQueueFamilyIndex.isNone()) {
                     logger.info(
                             "找到专用传输队列族: " + i +
                                     ", 队列数量: " + queueFamilyProperty.queueCount() +
@@ -367,29 +371,32 @@ final class VREContextInitialiser {
                 deviceFeatures.samplerAnisotropy(VkConstants.TRUE);
             }
 
-            FloatBuffer pQueuePriorities = FloatBuffer.allocate(arena);
+            FloatPtr pQueuePriorities = FloatPtr.allocate(arena);
             pQueuePriorities.write(1.0f);
 
             int queueCreateInfoCount = graphicsQueueFamilyIndex != presentQueueFamilyIndex ? 2 : 1;
             if (dedicatedTransferQueueFamilyIndex.isSome()) {
                 queueCreateInfoCount++;
             }
-            VkDeviceQueueCreateInfo[] queueCreateInfos = VkDeviceQueueCreateInfo.allocate(arena, queueCreateInfoCount);
-            queueCreateInfos[0].queueCount(1);
-            queueCreateInfos[0].queueFamilyIndex(graphicsQueueFamilyIndex);
-            queueCreateInfos[0].pQueuePriorities(pQueuePriorities);
+            VkDeviceQueueCreateInfo.Ptr queueCreateInfos = VkDeviceQueueCreateInfo.allocate(arena, queueCreateInfoCount);
+            VkDeviceQueueCreateInfo graphicsQueueInfo = queueCreateInfos.at(0);
+            graphicsQueueInfo.queueCount(1);
+            graphicsQueueInfo.queueFamilyIndex(graphicsQueueFamilyIndex);
+            graphicsQueueInfo.pQueuePriorities(pQueuePriorities);
             if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
-                queueCreateInfos[1].queueCount(1);
-                queueCreateInfos[1].queueFamilyIndex(presentQueueFamilyIndex);
-                queueCreateInfos[1].pQueuePriorities(pQueuePriorities);
+                VkDeviceQueueCreateInfo presentQueueInfo = queueCreateInfos.at(1);
+                presentQueueInfo.queueCount(1);
+                presentQueueInfo.queueFamilyIndex(presentQueueFamilyIndex);
+                presentQueueInfo.pQueuePriorities(pQueuePriorities);
             }
             if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> someIndex) {
-                queueCreateInfos[queueCreateInfoCount - 1].queueCount(1);
-                queueCreateInfos[queueCreateInfoCount - 1].queueFamilyIndex(someIndex.value);
-                queueCreateInfos[queueCreateInfoCount - 1].pQueuePriorities(pQueuePriorities);
+                VkDeviceQueueCreateInfo transferQueueInfo = queueCreateInfos.at(queueCreateInfoCount - 1);
+                transferQueueInfo.queueCount(1);
+                transferQueueInfo.queueFamilyIndex(someIndex.value);
+                transferQueueInfo.pQueuePriorities(pQueuePriorities);
             }
 
-            PointerBuffer ppDeviceExtensions = PointerBuffer.allocate(arena);
+            PointerPtr ppDeviceExtensions = PointerPtr.allocate(arena);
             ppDeviceExtensions.write(VK_SWAPCHAIN_EXTENSION_BUF);
 
             VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures =
@@ -399,34 +406,34 @@ final class VREContextInitialiser {
             VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.allocate(arena);
             deviceCreateInfo.pEnabledFeatures(deviceFeatures);
             deviceCreateInfo.queueCreateInfoCount(queueCreateInfoCount);
-            deviceCreateInfo.pQueueCreateInfos(queueCreateInfos[0]);
+            deviceCreateInfo.pQueueCreateInfos(queueCreateInfos);
             deviceCreateInfo.enabledExtensionCount(1);
             deviceCreateInfo.ppEnabledExtensionNames(ppDeviceExtensions);
             if (enableValidationLayers) {
-                PointerBuffer ppEnabledLayerNames = PointerBuffer.allocate(arena);
+                PointerPtr ppEnabledLayerNames = PointerPtr.allocate(arena);
                 ppEnabledLayerNames.write(VALIDATION_LAYER_NAME_BUF);
                 deviceCreateInfo.enabledLayerCount(1);
                 deviceCreateInfo.ppEnabledLayerNames(ppEnabledLayerNames);
             }
             deviceCreateInfo.pNext(dynamicRenderingFeatures);
 
-            VkDevice.Buffer pDevice = VkDevice.Buffer.allocate(arena);
+            VkDevice.Ptr pDevice = VkDevice.Ptr.allocate(arena);
             @EnumType(VkResult.class) int result =
-                    iCmd.vkCreateDevice(physicalDevice, deviceCreateInfo, null, pDevice);
-            if (result != VkResult.VK_SUCCESS) {
+                    iCmd.createDevice(physicalDevice, deviceCreateInfo, null, pDevice);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建 Vulkan 逻辑设备, 错误代码: " + VkResult.explain(result));
             }
-            device = pDevice.read();
-            dCmd = VulkanLoader.loadDeviceCommands(instance, device, sCmd);
+            device = Objects.requireNonNull(pDevice.read());
+            dCmd = VulkanLoader.loadDeviceCommands(device, sCmd);
 
-            VkQueue.Buffer pQueue = VkQueue.Buffer.allocate(arena);
-            dCmd.vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, pQueue);
-            graphicsQueue = pQueue.read();
-            dCmd.vkGetDeviceQueue(device, presentQueueFamilyIndex, 0, pQueue);
-            presentQueue = pQueue.read();
+            VkQueue.Ptr pQueue = VkQueue.Ptr.allocate(arena);
+            dCmd.getDeviceQueue(device, graphicsQueueFamilyIndex, 0, pQueue);
+            graphicsQueue = Objects.requireNonNull(pQueue.read());
+            dCmd.getDeviceQueue(device, presentQueueFamilyIndex, 0, pQueue);
+            presentQueue = Objects.requireNonNull(pQueue.read());
             if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> someIndex) {
-                dCmd.vkGetDeviceQueue(device, someIndex.value, 0, pQueue);
-                dedicatedTransferQueue = Option.some(pQueue.read());
+                dCmd.getDeviceQueue(device, someIndex.value, 0, pQueue);
+                dedicatedTransferQueue = Option.some(Objects.requireNonNull(pQueue.read()));
             } else {
                 dedicatedTransferQueue = Option.none();
             }
@@ -434,7 +441,7 @@ final class VREContextInitialiser {
     }
 
     private void createVMA() throws RenderException {
-        vma = new VMA(Loader::loadFunction);
+        vma = new VMA(Loader::loadFunctionOrNull);
         VMAJavaTraceUtil.enableJavaTraceForVMA();
 
         try (Arena arena = Arena.ofConfined()) {
@@ -446,14 +453,14 @@ final class VREContextInitialiser {
             vmaCreateInfo.physicalDevice(physicalDevice);
             vmaCreateInfo.device(device);
             vmaCreateInfo.pVulkanFunctions(vmaVulkanFunctions);
-            vmaCreateInfo.vulkanApiVersion(Version.VK_API_VERSION_1_3);
+            vmaCreateInfo.vulkanApiVersion(Version.VK_API_VERSION_1_3.encode());
 
-            VmaAllocator.Buffer pVmaAllocator = VmaAllocator.Buffer.allocate(arena);
-            @EnumType(VkResult.class) int result = vma.vmaCreateAllocator(vmaCreateInfo, pVmaAllocator);
-            if (result != VkResult.VK_SUCCESS) {
+            VmaAllocator.Ptr pVmaAllocator = VmaAllocator.Ptr.allocate(arena);
+            @EnumType(VkResult.class) int result = vma.createAllocator(vmaCreateInfo, pVmaAllocator);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建 Vulkan 内存分配器, 错误代码: " + VkResult.explain(result));
             }
-            vmaAllocator = pVmaAllocator.read();
+            vmaAllocator = Objects.requireNonNull(pVmaAllocator.read());
         }
     }
 
@@ -461,36 +468,36 @@ final class VREContextInitialiser {
         try (Arena arena = Arena.ofConfined()) {
             VkSemaphoreCreateInfo semaphoreCreateInfo = VkSemaphoreCreateInfo.allocate(arena);
             VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
-            fenceCreateInfo.flags(VkFenceCreateFlags.VK_FENCE_CREATE_SIGNALED_BIT);
+            fenceCreateInfo.flags(VkFenceCreateFlags.SIGNALED);
 
             imageAvailableSemaphores = new VkSemaphore[Config.config().vulkanConfig.maxFramesInFlight];
             renderFinishedSemaphores = new VkSemaphore[Config.config().vulkanConfig.maxFramesInFlight];
             inFlightFences = new VkFence[Config.config().vulkanConfig.maxFramesInFlight];
 
-            VkSemaphore.Buffer pImageAvailableSemaphore = VkSemaphore.Buffer.allocate(arena);
-            VkSemaphore.Buffer pRenderFinishedSemaphore = VkSemaphore.Buffer.allocate(arena);
-            VkFence.Buffer pInFlightFence = VkFence.Buffer.allocate(arena);
+            VkSemaphore.Ptr pImageAvailableSemaphore = VkSemaphore.Ptr.allocate(arena);
+            VkSemaphore.Ptr pRenderFinishedSemaphore = VkSemaphore.Ptr.allocate(arena);
+            VkFence.Ptr pInFlightFence = VkFence.Ptr.allocate(arena);
 
             @EnumType(VkResult.class) int result;
             for (int i = 0; i < Config.config().vulkanConfig.maxFramesInFlight; i++) {
-                result = dCmd.vkCreateSemaphore(device, semaphoreCreateInfo, null, pImageAvailableSemaphore);
-                if (result != VkResult.VK_SUCCESS) {
+                result = dCmd.createSemaphore(device, semaphoreCreateInfo, null, pImageAvailableSemaphore);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法创建 Vulkan 信号量, 错误代码: " + VkResult.explain(result));
                 }
 
-                result = dCmd.vkCreateSemaphore(device, semaphoreCreateInfo, null, pRenderFinishedSemaphore);
-                if (result != VkResult.VK_SUCCESS) {
+                result = dCmd.createSemaphore(device, semaphoreCreateInfo, null, pRenderFinishedSemaphore);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法创建 Vulkan 信号量, 错误代码: " + VkResult.explain(result));
                 }
 
-                result = dCmd.vkCreateFence(device, fenceCreateInfo, null, pInFlightFence);
-                if (result != VkResult.VK_SUCCESS) {
+                result = dCmd.createFence(device, fenceCreateInfo, null, pInFlightFence);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法创建 Vulkan 栅栏, 错误代码: " + VkResult.explain(result));
                 }
 
-                renderFinishedSemaphores[i] = pRenderFinishedSemaphore.read();
-                imageAvailableSemaphores[i] = pImageAvailableSemaphore.read();
-                inFlightFences[i] = pInFlightFence.read();
+                renderFinishedSemaphores[i] = Objects.requireNonNull(pRenderFinishedSemaphore.read());
+                imageAvailableSemaphores[i] = Objects.requireNonNull(pImageAvailableSemaphore.read());
+                inFlightFences[i] = Objects.requireNonNull(pInFlightFence.read());
             }
         }
     }
@@ -500,36 +507,36 @@ final class VREContextInitialiser {
             VkCommandPoolCreateInfo commandPoolCreateInfo = VkCommandPoolCreateInfo.allocate(arena);
             commandPoolCreateInfo.queueFamilyIndex(graphicsQueueFamilyIndex);
             commandPoolCreateInfo.flags(
-                    VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
-                    VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+                    VkCommandPoolCreateFlags.TRANSIENT |
+                    VkCommandPoolCreateFlags.RESET_COMMAND_BUFFER
             );
 
-            VkCommandPool.Buffer pCommandPool = VkCommandPool.Buffer.allocate(arena);
+            VkCommandPool.Ptr pCommandPool = VkCommandPool.Ptr.allocate(arena);
             @EnumType(VkResult.class) int result =
-                    dCmd.vkCreateCommandPool(device, commandPoolCreateInfo, null, pCommandPool);
-            if (result != VkResult.VK_SUCCESS) {
+                    dCmd.createCommandPool(device, commandPoolCreateInfo, null, pCommandPool);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建 Vulkan 命令池, 错误代码: " + VkResult.explain(result));
             }
-            commandPool = pCommandPool.read();
+            commandPool = Objects.requireNonNull(pCommandPool.read());
 
-            commandPoolCreateInfo.flags(VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
-            result = dCmd.vkCreateCommandPool(device, commandPoolCreateInfo, null, pCommandPool);
-            if (result != VkResult.VK_SUCCESS) {
+            commandPoolCreateInfo.flags(VkCommandPoolCreateFlags.TRANSIENT);
+            result = dCmd.createCommandPool(device, commandPoolCreateInfo, null, pCommandPool);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建 Vulkan 一次性命令池, 错误代码: " + VkResult.explain(result));
             }
-            graphicsOnceCommandPool = pCommandPool.read();
+            graphicsOnceCommandPool = Objects.requireNonNull(pCommandPool.read());
 
             if (dedicatedTransferQueueFamilyIndex instanceof Option.Some<Integer> someIndex) {
                 VkCommandPoolCreateInfo transferCommandPoolCreateInfo = VkCommandPoolCreateInfo.allocate(arena);
                 transferCommandPoolCreateInfo.queueFamilyIndex(someIndex.value);
-                transferCommandPoolCreateInfo.flags(VkCommandPoolCreateFlags.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+                transferCommandPoolCreateInfo.flags(VkCommandPoolCreateFlags.TRANSIENT);
 
-                VkCommandPool.Buffer pTransferCommandPool = VkCommandPool.Buffer.allocate(arena);
-                result = dCmd.vkCreateCommandPool(device, transferCommandPoolCreateInfo, null, pTransferCommandPool);
-                if (result != VkResult.VK_SUCCESS) {
+                VkCommandPool.Ptr pTransferCommandPool = VkCommandPool.Ptr.allocate(arena);
+                result = dCmd.createCommandPool(device, transferCommandPoolCreateInfo, null, pTransferCommandPool);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法创建 Vulkan 传输命令池, 错误代码: " + VkResult.explain(result));
                 }
-                transferCommandPool = Option.some(pTransferCommandPool.read());
+                transferCommandPool = Option.some(Objects.requireNonNull(pTransferCommandPool.read()));
             } else {
                 transferCommandPool = Option.none();
             }
@@ -542,28 +549,26 @@ final class VREContextInitialiser {
 
             VkCommandBufferAllocateInfo commandBufferAllocateInfo = VkCommandBufferAllocateInfo.allocate(arena);
             commandBufferAllocateInfo.commandPool(commandPool);
-            commandBufferAllocateInfo.level(VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+            commandBufferAllocateInfo.level(VkCommandBufferLevel.PRIMARY);
             commandBufferAllocateInfo.commandBufferCount(frameCount);
 
-            VkCommandBuffer.Buffer pCommandBuffers = VkCommandBuffer.Buffer.allocate(arena, frameCount);
-            @EnumType(VkResult.class) int result = dCmd.vkAllocateCommandBuffers(
+            commandBuffers = VkCommandBuffer.Ptr.allocate(prefabArena, frameCount);
+            @EnumType(VkResult.class) int result = dCmd.allocateCommandBuffers(
                     device,
                     commandBufferAllocateInfo,
-                    pCommandBuffers
+                    commandBuffers
             );
-            if (result != VkResult.VK_SUCCESS) {
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法分配 Vulkan 命令缓冲区, 错误代码: " + VkResult.explain(result));
             }
-
-            commandBuffers = pCommandBuffers.readAll();
         }
     }
 
     private boolean checkValidationLayerSupport() {
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pLayerCount = IntBuffer.allocate(arena);
-            @EnumType(VkResult.class) int result = eCmd.vkEnumerateInstanceLayerProperties(pLayerCount, null);
-            if (result != VkResult.VK_SUCCESS) {
+            IntPtr pLayerCount = IntPtr.allocate(arena);
+            @EnumType(VkResult.class) int result = eCmd.enumerateInstanceLayerProperties(pLayerCount, null);
+            if (result != VkResult.SUCCESS) {
                 logger.warning("无法获取 Vulkan 实例层属性, 错误代码: " + VkResult.explain(result));
                 return false;
             }
@@ -573,9 +578,9 @@ final class VREContextInitialiser {
                 return false;
             }
 
-            VkLayerProperties[] availableLayerProperties = VkLayerProperties.allocate(arena, layerCount);
-            result = eCmd.vkEnumerateInstanceLayerProperties(pLayerCount, availableLayerProperties[0]);
-            if (result != VkResult.VK_SUCCESS) {
+            VkLayerProperties.Ptr availableLayerProperties = VkLayerProperties.allocate(arena, layerCount);
+            result = eCmd.enumerateInstanceLayerProperties(pLayerCount, availableLayerProperties);
+            if (result != VkResult.SUCCESS) {
                 logger.warning("无法获取 Vulkan 实例层属性, 错误代码: " + VkResult.explain(result));
                 return false;
             }
@@ -592,31 +597,31 @@ final class VREContextInitialiser {
 
     private static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo) {
         debugCreateInfo.messageSeverity(
-                VkDebugUtilsMessageSeverityFlagsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                        VkDebugUtilsMessageSeverityFlagsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-                        VkDebugUtilsMessageSeverityFlagsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                        VkDebugUtilsMessageSeverityFlagsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+                VkDebugUtilsMessageSeverityFlagsEXT.VERBOSE |
+                        VkDebugUtilsMessageSeverityFlagsEXT.INFO |
+                        VkDebugUtilsMessageSeverityFlagsEXT.WARNING |
+                        VkDebugUtilsMessageSeverityFlagsEXT.ERROR
         );
         debugCreateInfo.messageType(
-                VkDebugUtilsMessageTypeFlagsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                        VkDebugUtilsMessageTypeFlagsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                        VkDebugUtilsMessageTypeFlagsEXT.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+                VkDebugUtilsMessageTypeFlagsEXT.GENERAL |
+                        VkDebugUtilsMessageTypeFlagsEXT.VALIDATION |
+                        VkDebugUtilsMessageTypeFlagsEXT.PERFORMANCE
         );
         debugCreateInfo.pfnUserCallback(DebugMessengerUtil.DEBUG_CALLBACK_PTR);
     }
 
-    private static final ByteBuffer APP_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "Project-WGX");
-    private static final ByteBuffer ENGINE_NAME_BUF = ByteBuffer.allocateString(
+    private static final BytePtr APP_NAME_BUF = BytePtr.allocateString(Arena.global(), "Project-WGX");
+    private static final BytePtr ENGINE_NAME_BUF = BytePtr.allocateString(
             Arena.global(),
             "NG-DRCI-J : Neue Genesis Data-oriented Rendering and Computing Infrastructure for Java"
     );
-    private static final ByteBuffer VALIDATION_LAYER_EXTENSION_BUF =
-            ByteBuffer.allocateString(Arena.global(), Constants.VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    private static final BytePtr VALIDATION_LAYER_EXTENSION_BUF =
+            BytePtr.allocateString(Arena.global(), VkConstants.EXT_DEBUG_UTILS_EXTENSION_NAME);
     private static final String VALIDATION_LAYER_NAME = "VK_LAYER_KHRONOS_validation";
-    private static final ByteBuffer VALIDATION_LAYER_NAME_BUF =
-            ByteBuffer.allocateString(Arena.global(), VALIDATION_LAYER_NAME);
-    private static final ByteBuffer VK_SWAPCHAIN_EXTENSION_BUF =
-            ByteBuffer.allocateString(Arena.global(), Constants.VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    private static final BytePtr VALIDATION_LAYER_NAME_BUF =
+            BytePtr.allocateString(Arena.global(), VALIDATION_LAYER_NAME);
+    private static final BytePtr VK_SWAPCHAIN_EXTENSION_BUF =
+            BytePtr.allocateString(Arena.global(), VkConstants.KHR_SWAPCHAIN_EXTENSION_NAME);
 
     private static final Logger logger = Logger.getLogger(VREContextInitialiser.class.getName());
 }

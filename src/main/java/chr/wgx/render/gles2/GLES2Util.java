@@ -3,9 +3,9 @@ package chr.wgx.render.gles2;
 import chr.wgx.render.RenderException;
 import club.doki7.gles2.GLES2;
 import club.doki7.gles2.GLES2Constants;
-import club.doki7.ffm.buffer.ByteBuffer;
-import club.doki7.ffm.buffer.IntBuffer;
-import club.doki7.ffm.buffer.PointerBuffer;
+import club.doki7.ffm.ptr.BytePtr;
+import club.doki7.ffm.ptr.IntPtr;
+import club.doki7.ffm.ptr.PointerPtr;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -16,56 +16,56 @@ public final class GLES2Util {
             String vertexShaderSource,
             String fragmentShaderSource
     ) throws RenderException {
-        int vertexShader = gles2.glCreateShader(GLES2Constants.GL_VERTEX_SHADER);
-        int fragmentShader = gles2.glCreateShader(GLES2Constants.GL_FRAGMENT_SHADER);
+        int vertexShader = gles2.createShader(GLES2Constants.VERTEX_SHADER);
+        int fragmentShader = gles2.createShader(GLES2Constants.FRAGMENT_SHADER);
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment vertexShaderSourceSegment = arena.allocateFrom(vertexShaderSource);
             MemorySegment fragmentShaderSourceSegment = arena.allocateFrom(fragmentShaderSource);
-            PointerBuffer pVertexShaderSource = PointerBuffer.allocate(arena);
-            PointerBuffer pFragmentShaderSource = PointerBuffer.allocate(arena);
+            PointerPtr pVertexShaderSource = PointerPtr.allocate(arena);
+            PointerPtr pFragmentShaderSource = PointerPtr.allocate(arena);
             pVertexShaderSource.write(vertexShaderSourceSegment);
             pFragmentShaderSource.write(fragmentShaderSourceSegment);
 
-            gles2.glShaderSource(vertexShader, 1, pVertexShaderSource, null);
-            gles2.glShaderSource(fragmentShader, 1, pFragmentShaderSource, null);
+            gles2.shaderSource(vertexShader, 1, pVertexShaderSource, null);
+            gles2.shaderSource(fragmentShader, 1, pFragmentShaderSource, null);
 
-            IntBuffer pStatus = IntBuffer.allocate(arena);
+            IntPtr pStatus = IntPtr.allocate(arena);
 
-            gles2.glCompileShader(vertexShader);
-            gles2.glGetShaderiv(vertexShader, GLES2Constants.GL_COMPILE_STATUS, pStatus);
-            if (pStatus.read() == GLES2Constants.GL_FALSE) {
-                gles2.glGetShaderiv(vertexShader, GLES2Constants.GL_INFO_LOG_LENGTH, pStatus);
+            gles2.compileShader(vertexShader);
+            gles2.getShaderiv(vertexShader, GLES2Constants.COMPILE_STATUS, pStatus);
+            if (pStatus.read() == GLES2Constants.FALSE) {
+                gles2.getShaderiv(vertexShader, GLES2Constants.INFO_LOG_LENGTH, pStatus);
                 int infoLogLength = pStatus.read();
 
-                ByteBuffer infoLog = ByteBuffer.allocate(arena, infoLogLength);
-                gles2.glGetShaderInfoLog(vertexShader, infoLogLength, pStatus, infoLog);
+                BytePtr infoLog = BytePtr.allocate(arena, infoLogLength);
+                gles2.getShaderInfoLog(vertexShader, infoLogLength, pStatus, infoLog);
                 throw new RenderException("顶点着色器编译失败: " + infoLog.readString());
             }
 
-            gles2.glCompileShader(fragmentShader);
-            gles2.glGetShaderiv(fragmentShader, GLES2Constants.GL_COMPILE_STATUS, pStatus);
-            if (pStatus.read() == GLES2Constants.GL_FALSE) {
-                gles2.glGetShaderiv(fragmentShader, GLES2Constants.GL_INFO_LOG_LENGTH, pStatus);
+            gles2.compileShader(fragmentShader);
+            gles2.getShaderiv(fragmentShader, GLES2Constants.COMPILE_STATUS, pStatus);
+            if (pStatus.read() == GLES2Constants.FALSE) {
+                gles2.getShaderiv(fragmentShader, GLES2Constants.INFO_LOG_LENGTH, pStatus);
                 int infoLogLength = pStatus.read();
 
-                ByteBuffer infoLog = ByteBuffer.allocate(arena, infoLogLength);
-                gles2.glGetShaderInfoLog(fragmentShader, infoLogLength, pStatus, infoLog);
+                BytePtr infoLog = BytePtr.allocate(arena, infoLogLength);
+                gles2.getShaderInfoLog(fragmentShader, infoLogLength, pStatus, infoLog);
                 throw new RenderException("片段着色器编译失败: " + infoLog.readString());
             }
 
-            int program = gles2.glCreateProgram();
-            gles2.glAttachShader(program, vertexShader);
-            gles2.glAttachShader(program, fragmentShader);
-            gles2.glLinkProgram(program);
-            gles2.glGetProgramiv(program, GLES2Constants.GL_LINK_STATUS, pStatus);
-            if (pStatus.read() == GLES2Constants.GL_FALSE) {
-                gles2.glGetProgramiv(program, GLES2Constants.GL_INFO_LOG_LENGTH, pStatus);
+            int program = gles2.createProgram();
+            gles2.attachShader(program, vertexShader);
+            gles2.attachShader(program, fragmentShader);
+            gles2.linkProgram(program);
+            gles2.getProgramiv(program, GLES2Constants.LINK_STATUS, pStatus);
+            if (pStatus.read() == GLES2Constants.FALSE) {
+                gles2.getProgramiv(program, GLES2Constants.INFO_LOG_LENGTH, pStatus);
                 int infoLogLength = pStatus.read();
 
-                ByteBuffer infoLog = ByteBuffer.allocate(arena, infoLogLength);
-                gles2.glGetProgramInfoLog(program, infoLogLength, pStatus, infoLog);
+                BytePtr infoLog = BytePtr.allocate(arena, infoLogLength);
+                gles2.getProgramInfoLog(program, infoLogLength, pStatus, infoLog);
 
-                gles2.glDeleteProgram(program);
+                gles2.deleteProgram(program);
                 throw new RenderException("着色器程序链接失败: " + infoLog.readString());
             }
 

@@ -5,8 +5,8 @@ import club.doki7.glfw.GLFW;
 import club.doki7.glfw.GLFWConstants;
 import club.doki7.glfw.datatype.GLFWimage;
 import club.doki7.glfw.handle.GLFWwindow;
-import club.doki7.ffm.annotation.pointer;
-import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.annotation.Pointer;
+import club.doki7.ffm.ptr.IntPtr;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -39,7 +39,7 @@ public final class RenderWindow implements AutoCloseable {
                     descriptor.toMethodType()
             ).bindTo(this);
             MemorySegment segment = Linker.nativeLinker().upcallStub(handle, descriptor, Arena.global());
-            glfw.glfwSetFramebufferSizeCallback(rawWindow, segment);
+            glfw.setFramebufferSizeCallback(rawWindow, segment);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException("找不到回调函数 VulkanWindow::framebufferSizeCallback", e);
         }
@@ -47,23 +47,23 @@ public final class RenderWindow implements AutoCloseable {
         try (Arena arena = Arena.ofConfined()) {
             BufferedImage image = ImageUtil.loadImageFromResource("/resources/icon/icon-v2.png");
             GLFWimage glfwImage = ImageUtil.image2glfw(arena, image);
-            glfw.glfwSetWindowIcon(rawWindow, 1, glfwImage);
+            glfw.setWindowIcon(rawWindow, 1, glfwImage);
         } catch (IOException e) {
             logger.warning("无法加载窗口图标: " + e.getMessage());
         }
     }
 
     public void mainLoop() throws RenderException {
-        while (glfw.glfwWindowShouldClose(rawWindow) != GLFWConstants.GLFW_TRUE) {
-            glfw.glfwPollEvents();
+        while (glfw.windowShouldClose(rawWindow) != GLFWConstants.TRUE) {
+            glfw.pollEvents();
             if (framebufferResized) {
                 framebufferResized = false;
                 int width, height;
                 try (Arena arena = Arena.ofConfined()) {
-                    IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
-                    IntBuffer pWidth = pWidthHeight.offset(0);
-                    IntBuffer pHeight = pWidthHeight.offset(1);
-                    glfw.glfwGetFramebufferSize(rawWindow, pWidth, pHeight);
+                    IntPtr pWidthHeight = IntPtr.allocate(arena, 2);
+                    IntPtr pWidth = pWidthHeight.offset(0);
+                    IntPtr pHeight = pWidthHeight.offset(1);
+                    glfw.getFramebufferSize(rawWindow, pWidth, pHeight);
                     width = pWidth.read();
                     height = pHeight.read();
                 }
@@ -79,11 +79,11 @@ public final class RenderWindow implements AutoCloseable {
 
     @Override
     public void close() {
-        glfw.glfwDestroyWindow(rawWindow);
+        glfw.destroyWindow(rawWindow);
     }
 
     @SuppressWarnings("unused")
-    private void framebufferSizeCallback(@pointer(comment="GLFWwindow*") MemorySegment window, int width, int height) {
+    private void framebufferSizeCallback(@Pointer(comment="GLFWwindow*") MemorySegment window, int width, int height) {
         framebufferResized = true;
     }
 

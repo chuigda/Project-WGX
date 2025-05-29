@@ -7,7 +7,7 @@ import chr.wgx.render.gles2.data.GLES2RenderPipeline;
 import chr.wgx.render.gles2.data.UniformLocation;
 import chr.wgx.render.info.*;
 import club.doki7.gles2.GLES2;
-import club.doki7.ffm.buffer.ByteBuffer;
+import club.doki7.ffm.ptr.BytePtr;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
@@ -34,9 +34,9 @@ public final class ASPECT_PipelineCreate {
             List<AttributeBinding> attributeBindings = new ArrayList<>();
             for (FieldInfo attributeInfo : createInfo.vertexInputInfo.attributes) {
                 String actualAttributeName = makeAttributeName(attributeInfo.name);
-                int location = gles2.glGetAttribLocation(
+                int location = gles2.getAttribLocation(
                         program,
-                        ByteBuffer.allocateString(arena, actualAttributeName)
+                        BytePtr.allocateString(arena, actualAttributeName)
                 );
                 if (location == -1) {
                     throw new RenderException("未找到属性绑定点: " + attributeInfo.name + "(" + actualAttributeName + ")");
@@ -50,9 +50,9 @@ public final class ASPECT_PipelineCreate {
                 for (DescriptorLayoutBindingInfo bindingInfo : layout.createInfo.bindings) {
                     switch (bindingInfo) {
                         case TextureBindingInfo textureBindingInfo -> {
-                            int location = gles2.glGetUniformLocation(
+                            int location = gles2.getUniformLocation(
                                     program,
-                                    ByteBuffer.allocateString(arena, textureBindingInfo.bindingName)
+                                    BytePtr.allocateString(arena, textureBindingInfo.bindingName)
                             );
                             if (location == -1) {
                                 logger.warning("未找到纹理绑定点: " + textureBindingInfo.bindingName + ", 这可能是因为纹理未被着色器使用。着色器程序仍然可以运行，但纹理将不会被更新");
@@ -63,9 +63,9 @@ public final class ASPECT_PipelineCreate {
                         case UniformBufferBindingInfo uniformBufferBindingInfo -> {
                             for (FieldInfo fieldInfo : uniformBufferBindingInfo.fields) {
                                 String uniformFullName = uniformBufferBindingInfo.bindingName + "_" + fieldInfo.name;
-                                int location = gles2.glGetUniformLocation(
+                                int location = gles2.getUniformLocation(
                                         program,
-                                        ByteBuffer.allocateString(arena, uniformFullName)
+                                        BytePtr.allocateString(arena, uniformFullName)
                                 );
                                 if (location == -1) {
                                     logger.warning("未找到统一缓冲区绑定点: " + uniformFullName + ", 这可能是因为统一缓冲区未被着色器使用。着色器程序仍然可以运行，但统一缓冲区将不会被更新");
@@ -81,9 +81,9 @@ public final class ASPECT_PipelineCreate {
             if (createInfo.pushConstantInfo instanceof Option.Some<PushConstantInfo> somePushConstantInfo) {
                 for (PushConstantRange range : somePushConstantInfo.value.pushConstantRanges) {
                     String uniformFullName = "pco_" + range.name;
-                    int location = gles2.glGetUniformLocation(
+                    int location = gles2.getUniformLocation(
                             program,
-                            ByteBuffer.allocateString(arena, uniformFullName)
+                            BytePtr.allocateString(arena, uniformFullName)
                     );
                     if (location == -1) {
                         logger.warning("未找到推送常量绑定点: " + uniformFullName + ", 这可能是因为推送常量未被着色器使用。着色器程序仍然可以运行，但推送常量将不会被更新");

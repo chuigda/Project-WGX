@@ -1,6 +1,6 @@
 package chr.wgx.render.common;
 
-import club.doki7.ffm.buffer.FloatBuffer;
+import club.doki7.ffm.ptr.FloatPtr;
 import club.doki7.vulkan.datatype.VkClearColorValue;
 
 public final class Color {
@@ -24,7 +24,7 @@ public final class Color {
         writeTo(vkColor.float32());
     }
 
-    public void writeTo(FloatBuffer buffer) {
+    public void writeTo(FloatPtr buffer) {
         assert buffer.size() >= 4;
 
         buffer.write(0, r);

@@ -38,9 +38,8 @@ public final class ASPECT_UniformCreate {
                 buffers.add(Resource.Buffer.create(
                         cx,
                         info.bindingInfo.bufferSize,
-                        VkBufferUsageFlags.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                        VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_MAPPED_BIT
-                        | VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                        VkBufferUsageFlags.UNIFORM_BUFFER,
+                        VmaAllocationCreateFlags.MAPPED | VmaAllocationCreateFlags.HOST_ACCESS_RANDOM,
                         allocationInfo
                 ));
                 mappedMemory.add(allocationInfo.pMappedData().reinterpret(info.bindingInfo.bufferSize));

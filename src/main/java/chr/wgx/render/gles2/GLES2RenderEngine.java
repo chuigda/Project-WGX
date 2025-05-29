@@ -18,8 +18,8 @@ import club.doki7.gles2.GLES2Constants;
 import club.doki7.glfw.GLFW;
 import club.doki7.glfw.handle.GLFWwindow;
 import club.doki7.ffm.RawFunctionLoader;
-import club.doki7.ffm.buffer.ByteBuffer;
-import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.ptr.BytePtr;
+import club.doki7.ffm.ptr.IntPtr;
 import tech.icey.xjbutil.container.Either;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.sync.Oneshot;
@@ -37,16 +37,16 @@ public final class GLES2RenderEngine extends RenderEngine {
         this.glfw = glfw;
         this.window = window;
 
-        glfw.glfwMakeContextCurrent(window);
+        glfw.makeContextCurrent(window);
         RawFunctionLoader loadWithGLFW = name -> {
             try (Arena arena = Arena.ofConfined()) {
-                return glfw.glfwGetProcAddress(ByteBuffer.allocateString(arena, name));
+                return glfw.getProcAddress(BytePtr.allocateString(arena, name));
             }
         };
 
         this.gles2 = new GLES2(loadWithGLFW);
 
-        @Nullable ByteBuffer extensions = gles2.glGetString(GLES2Constants.GL_EXTENSIONS);
+        @Nullable BytePtr extensions = gles2.getString(GLES2Constants.EXTENSIONS);
         if (extensions != null) {
             String extensionsString = extensions.readString();
             logger.info("支持的 OpenGL ES2 扩展: " + extensionsString);
@@ -56,9 +56,9 @@ public final class GLES2RenderEngine extends RenderEngine {
                 try {
                     debugFunctions = new KHR_debug(loadWithGLFW);
                     debugFunctions.glDebugMessageControl(
-                            GLES2Constants.GL_DONT_CARE,
-                            GLES2Constants.GL_DONT_CARE,
-                            GLES2Constants.GL_DONT_CARE,
+                            GLES2Constants.DONT_CARE,
+                            GLES2Constants.DONT_CARE,
+                            GLES2Constants.DONT_CARE,
                             0,
                             null,
                             true
@@ -90,8 +90,8 @@ public final class GLES2RenderEngine extends RenderEngine {
         }
 
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
-            glfw.glfwGetFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));
+            IntPtr pWidthHeight = IntPtr.allocate(arena, 2);
+            glfw.getFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));
 
             framebufferWidth = pWidthHeight.read();
             framebufferHeight = pWidthHeight.read(1);
@@ -126,7 +126,7 @@ public final class GLES2RenderEngine extends RenderEngine {
 
     @Override
     protected void resize(int width, int height) {
-        glfw.glfwMakeContextCurrent(window);
+        glfw.makeContextCurrent(window);
         this.framebufferWidth = width;
         this.framebufferHeight = height;
 
@@ -135,9 +135,9 @@ public final class GLES2RenderEngine extends RenderEngine {
         }
 
         for (GLES2Texture texture : dynamicallySizedTextures) {
-            gles2.glBindTexture(GLES2Constants.GL_TEXTURE_2D, texture.textureObject);
-            gles2.glTexImage2D(
-                    GLES2Constants.GL_TEXTURE_2D,
+            gles2.bindTexture(GLES2Constants.TEXTURE_2D, texture.textureObject);
+            gles2.texImage2D(
+                    GLES2Constants.TEXTURE_2D,
                     0,
                     texture.pixelFormat.glInternalFormat,
                     width,
@@ -156,14 +156,14 @@ public final class GLES2RenderEngine extends RenderEngine {
             return;
         }
 
-        glfw.glfwMakeContextCurrent(window);
+        glfw.makeContextCurrent(window);
         for (DeferredTask<?> task : taskQueue.getAndSet(new ArrayList<>())) {
             task.runTask();
         }
 
         renderFrameAspect.renderFrameImpl();
 
-        glfw.glfwSwapBuffers(window);
+        glfw.swapBuffers(window);
     }
 
     @Override

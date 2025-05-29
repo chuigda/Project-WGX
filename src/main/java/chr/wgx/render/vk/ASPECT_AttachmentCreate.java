@@ -58,10 +58,10 @@ public final class ASPECT_AttachmentCreate {
                 actualHeight,
                 1,
                 VkSampleCountFlags._1,
-                VkFormat.VK_FORMAT_B8G8R8A8_SRGB,
+                VkFormat.B8G8R8A8_SRGB,
                 VkImageTiling.OPTIMAL,
-                VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
-                VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
+                VkImageUsageFlags.COLOR_ATTACHMENT | VkImageUsageFlags.SAMPLED,
+                VkImageAspectFlags.COLOR
         );
     }
 
@@ -81,7 +81,7 @@ public final class ASPECT_AttachmentCreate {
                 actualHeight,
                 1,
                 VkSampleCountFlags._1,
-                VkFormat.VK_FORMAT_D32_SFLOAT,
+                VkFormat.D32_SFLOAT,
                 VkImageTiling.OPTIMAL,
                 VkImageUsageFlags.DEPTH_STENCIL_ATTACHMENT,
                 VkImageAspectFlags.DEPTH

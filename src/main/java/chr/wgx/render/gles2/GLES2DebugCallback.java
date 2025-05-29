@@ -3,9 +3,9 @@ package chr.wgx.render.gles2;
 import chr.wgx.render.gles2.glext.KHR_debug;
 import club.doki7.gles2.GLES2Constants;
 import club.doki7.ffm.annotation.EnumType;
-import club.doki7.ffm.annotation.pointer;
-import club.doki7.ffm.annotation.unsigned;
-import club.doki7.ffm.buffer.ByteBuffer;
+import club.doki7.ffm.annotation.Pointer;
+import club.doki7.ffm.annotation.Unsigned;
+import club.doki7.ffm.ptr.BytePtr;
 import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.Arena;
@@ -22,10 +22,10 @@ public final class GLES2DebugCallback {
             @Unsigned int id,
             @EnumType(GLES2Constants.class) int severity,
             int ignoredLength,
-            @pointer(comment = "const GLchar*") MemorySegment message,
-            @pointer(comment = "const void*") MemorySegment ignoredUserParam
+            @Pointer(comment = "const GLchar*") MemorySegment message,
+            @Pointer(comment = "const void*") MemorySegment ignoredUserParam
     ) {
-        String messageString = new ByteBuffer(message).readString();
+        String messageString = new BytePtr(message).readString();
         Action1<String> action = getSeverityLoggingFunction(severity);
         action.accept(String.format("%s | %s | %s | %s | %s",
                 describeDebugSource(source),

@@ -16,6 +16,6 @@ public final class VulkanDescriptorSetLayout extends DescriptorSetLayout impleme
 
     @Override
     public void dispose(VulkanRenderEngineContext cx) {
-        cx.dCmd.vkDestroyDescriptorSetLayout(cx.device, layout, null);
+        cx.dCmd.destroyDescriptorSetLayout(cx.device, layout, null);
     }
 }

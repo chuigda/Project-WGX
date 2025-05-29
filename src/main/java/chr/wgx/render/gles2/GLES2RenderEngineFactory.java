@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import club.doki7.glfw.GLFW;
 import club.doki7.glfw.GLFWConstants;
 import club.doki7.glfw.handle.GLFWwindow;
-import club.doki7.ffm.buffer.ByteBuffer;
+import club.doki7.ffm.ptr.BytePtr;
 
 import java.lang.foreign.Arena;
 
@@ -19,17 +19,17 @@ public final class GLES2RenderEngineFactory implements IRenderEngineFactory {
     public RenderWindow createRenderWindow(GLFW glfw, String title, int width, int height) throws RenderException {
         Config config = Config.config();
 
-        glfw.glfwWindowHint(GLFWConstants.GLFW_CLIENT_API, GLFWConstants.GLFW_OPENGL_ES_API);
-        glfw.glfwWindowHint(GLFWConstants.GLFW_CONTEXT_VERSION_MAJOR, 2);
-        glfw.glfwWindowHint(GLFWConstants.GLFW_CONTEXT_VERSION_MINOR, 0);
-        glfw.glfwWindowHint(GLFWConstants.GLFW_OPENGL_PROFILE, GLFWConstants.GLFW_OPENGL_ES_API);
+        glfw.windowHint(GLFWConstants.CLIENT_API, GLFWConstants.OPENGL_ES_API);
+        glfw.windowHint(GLFWConstants.CONTEXT_VERSION_MAJOR, 2);
+        glfw.windowHint(GLFWConstants.CONTEXT_VERSION_MINOR, 0);
+        glfw.windowHint(GLFWConstants.OPENGL_PROFILE, GLFWConstants.OPENGL_ES_API);
         if (config.gles2Config.debug) {
-            glfw.glfwWindowHint(GLFWConstants.GLFW_OPENGL_DEBUG_CONTEXT, GLFWConstants.GLFW_TRUE);
+            glfw.windowHint(GLFWConstants.OPENGL_DEBUG_CONTEXT, GLFWConstants.TRUE);
         }
 
         try (Arena arena = Arena.ofConfined()) {
-            ByteBuffer titleBuffer = ByteBuffer.allocateString(arena, title);
-            @Nullable GLFWwindow window = glfw.glfwCreateWindow(width, height, titleBuffer, null, null);
+            BytePtr titleBuffer = BytePtr.allocateString(arena, title);
+            @Nullable GLFWwindow window = glfw.createWindow(width, height, titleBuffer, null, null);
             if (window == null) {
                 throw new RenderException("无法创建 GLFW 窗口");
             }
