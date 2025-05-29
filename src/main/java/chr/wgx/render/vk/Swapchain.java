@@ -10,6 +10,7 @@ import club.doki7.vulkan.bitmask.*;
 import club.doki7.vulkan.datatype.*;
 import club.doki7.vulkan.enumtype.*;
 import club.doki7.vulkan.handle.VkImage;
+import club.doki7.vulkan.handle.VkSemaphore;
 import club.doki7.vulkan.handle.VkSwapchainKHR;
 
 import java.lang.foreign.Arena;
@@ -22,6 +23,7 @@ public final class Swapchain {
 
     public final VkSwapchainKHR vkSwapchain;
     public final Resource.SwapchainImage[] swapchainImages;
+    public final VkSemaphore[] renderFinishedSemaphores;
     public final Resource.Image depthImage;
 
     public static Swapchain create(VulkanRenderEngineContext cx, int width, int height) throws RenderException {
@@ -71,13 +73,29 @@ public final class Swapchain {
                     VkImageAspectFlags.DEPTH
             );
 
+            VkSemaphore[] renderFinishedSemaphores = new VkSemaphore[swapchainImages.length];
+            VkSemaphore.Ptr pSemaphore = VkSemaphore.Ptr.allocate(arena);
+            for (int i = 0; i < swapchainImages.length; i++) {
+                @EnumType(VkResult.class) int result = cx.dCmd.createSemaphore(
+                        cx.device,
+                        VkSemaphoreCreateInfo.allocate(arena),
+                        null,
+                        pSemaphore
+                );
+                if (result != VkResult.SUCCESS) {
+                    throw new RenderException("无法创建 Vulkan 渲染完成信号量, 错误代码: " + VkResult.explain(result));
+                }
+                renderFinishedSemaphores[i] = Objects.requireNonNull(pSemaphore.read());
+            }
+
             return new Swapchain(
                     surfaceFormat.format(),
                     depthFormat,
                     extent,
                     swapchain,
                     swapchainImages,
-                    depthImage
+                    depthImage,
+                    renderFinishedSemaphores
             );
         }
     }
@@ -88,6 +106,9 @@ public final class Swapchain {
         }
         depthImage.dispose(cx);
 
+        for (VkSemaphore semaphore : renderFinishedSemaphores) {
+            cx.dCmd.destroySemaphore(cx.device, semaphore, null);
+        }
         cx.dCmd.destroySwapchainKHR(cx.device, vkSwapchain, null);
     }
 
@@ -97,7 +118,9 @@ public final class Swapchain {
             VkExtent2D swapExtent,
             VkSwapchainKHR swapchain,
             Resource.SwapchainImage[] swapchainImages,
-            Resource.Image depthImage
+            Resource.Image depthImage,
+            VkSemaphore[] renderFinishedSemaphores
+
     ) {
         this.swapChainImageFormat = swapChainImageFormat;
         this.depthFormat = depthFormat;
@@ -105,6 +128,7 @@ public final class Swapchain {
         this.vkSwapchain = swapchain;
         this.swapchainImages = swapchainImages;
         this.depthImage = depthImage;
+        this.renderFinishedSemaphores = renderFinishedSemaphores;
     }
 
     private static VkSwapchainKHR createSwapchain(

@@ -53,7 +53,6 @@ public final class VulkanRenderEngineContext {
     public final VmaAllocator vmaAllocator;
 
     public final VkSemaphore[] imageAvailableSemaphores;
-    public final VkSemaphore[] renderFinishedSemaphores;
     public final VkFence[] inFlightFences;
 
     public final VkCommandPool commandPool;
@@ -87,7 +86,6 @@ public final class VulkanRenderEngineContext {
             VmaAllocator vmaAllocator,
 
             VkSemaphore[] imageAvailableSemaphores,
-            VkSemaphore[] renderFinishedSemaphores,
             VkFence[] inFlightFences,
 
             VkCommandPool commandPool,
@@ -117,7 +115,6 @@ public final class VulkanRenderEngineContext {
         this.dedicatedTransferQueue = dedicatedTransferQueue;
         this.vmaAllocator = vmaAllocator;
         this.imageAvailableSemaphores = imageAvailableSemaphores;
-        this.renderFinishedSemaphores = renderFinishedSemaphores;
         this.inFlightFences = inFlightFences;
 
         this.commandPool = commandPool;
@@ -197,9 +194,6 @@ public final class VulkanRenderEngineContext {
         dCmd.destroyCommandPool(device, graphicsOnceCommandPool, null);
         for (VkFence fence : inFlightFences) {
             dCmd.destroyFence(device, fence, null);
-        }
-        for (VkSemaphore semaphore : renderFinishedSemaphores) {
-            dCmd.destroySemaphore(device, semaphore, null);
         }
         for (VkSemaphore semaphore : imageAvailableSemaphores) {
             dCmd.destroySemaphore(device, semaphore, null);

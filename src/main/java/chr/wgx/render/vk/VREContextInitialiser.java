@@ -61,7 +61,6 @@ final class VREContextInitialiser {
     private VMA vma;
     private VmaAllocator vmaAllocator;
     private VkSemaphore[] imageAvailableSemaphores;
-    private VkSemaphore[] renderFinishedSemaphores;
     private VkFence[] inFlightFences;
     private VkCommandPool commandPool;
     private VkCommandBuffer.Ptr commandBuffers;
@@ -109,7 +108,6 @@ final class VREContextInitialiser {
                 dedicatedTransferQueue,
                 vmaAllocator,
                 imageAvailableSemaphores,
-                renderFinishedSemaphores,
                 inFlightFences,
                 commandPool,
                 graphicsOnceCommandPool,
@@ -471,11 +469,9 @@ final class VREContextInitialiser {
             fenceCreateInfo.flags(VkFenceCreateFlags.SIGNALED);
 
             imageAvailableSemaphores = new VkSemaphore[Config.config().vulkanConfig.maxFramesInFlight];
-            renderFinishedSemaphores = new VkSemaphore[Config.config().vulkanConfig.maxFramesInFlight];
             inFlightFences = new VkFence[Config.config().vulkanConfig.maxFramesInFlight];
 
             VkSemaphore.Ptr pImageAvailableSemaphore = VkSemaphore.Ptr.allocate(arena);
-            VkSemaphore.Ptr pRenderFinishedSemaphore = VkSemaphore.Ptr.allocate(arena);
             VkFence.Ptr pInFlightFence = VkFence.Ptr.allocate(arena);
 
             @EnumType(VkResult.class) int result;
@@ -485,17 +481,11 @@ final class VREContextInitialiser {
                     throw new RenderException("无法创建 Vulkan 信号量, 错误代码: " + VkResult.explain(result));
                 }
 
-                result = dCmd.createSemaphore(device, semaphoreCreateInfo, null, pRenderFinishedSemaphore);
-                if (result != VkResult.SUCCESS) {
-                    throw new RenderException("无法创建 Vulkan 信号量, 错误代码: " + VkResult.explain(result));
-                }
-
                 result = dCmd.createFence(device, fenceCreateInfo, null, pInFlightFence);
                 if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法创建 Vulkan 栅栏, 错误代码: " + VkResult.explain(result));
                 }
 
-                renderFinishedSemaphores[i] = Objects.requireNonNull(pRenderFinishedSemaphore.read());
                 imageAvailableSemaphores[i] = Objects.requireNonNull(pImageAvailableSemaphore.read());
                 inFlightFences[i] = Objects.requireNonNull(pInFlightFence.read());
             }

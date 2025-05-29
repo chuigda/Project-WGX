@@ -32,10 +32,7 @@ public final class ASPECT_RenderFrame {
                 cx.prefabArena,
                 cx.imageAvailableSemaphores.length
         );
-        this.pRenderFinishedSemaphores = VkSemaphore.Ptr.allocate(
-                cx.prefabArena,
-                cx.renderFinishedSemaphores.length
-        );
+        this.pRenderFinishedSemaphore = VkSemaphore.Ptr.allocate(cx.prefabArena);
         this.pWaitStages = IntPtr.allocate(cx.prefabArena);
         this.commandBufferBeginInfos = VkCommandBufferBeginInfo.allocate(cx.prefabArena, cx.commandBuffers.size());
         this.pCommandBuffers = VkCommandBuffer.Ptr.allocate(cx.prefabArena, cx.commandBuffers.size());
@@ -51,10 +48,6 @@ public final class ASPECT_RenderFrame {
             pImageAvailableSemaphores.write(i, cx.imageAvailableSemaphores[i]);
         }
 
-        for (int i = 0; i < cx.renderFinishedSemaphores.length; i++) {
-            pRenderFinishedSemaphores.write(i, cx.renderFinishedSemaphores[i]);
-        }
-
         pWaitStages.write(VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT);
 
         for (int i = 0; i < cx.commandBuffers.size(); i++) {
@@ -68,11 +61,11 @@ public final class ASPECT_RenderFrame {
             submitInfo.commandBufferCount(1);
             submitInfo.pCommandBuffers(pCommandBuffers.offset(i));
             submitInfo.signalSemaphoreCount(1);
-            submitInfo.pSignalSemaphores(pRenderFinishedSemaphores.offset(i));
+            submitInfo.pSignalSemaphores(pRenderFinishedSemaphore);
 
             VkPresentInfoKHR presentInfo = presentInfos.at(i);
             presentInfo.waitSemaphoreCount(1);
-            presentInfo.pWaitSemaphores(pRenderFinishedSemaphores.offset(i));
+            presentInfo.pWaitSemaphores(pRenderFinishedSemaphore);
             presentInfo.swapchainCount(1);
             presentInfo.pSwapchains(pSwapchain);
             presentInfo.pImageIndices(pImageIndex);
@@ -113,6 +106,7 @@ public final class ASPECT_RenderFrame {
 
         int imageIndex = pImageIndex.read();
         engine.swapchainColorAttachment.swapchainImage = swapchain.swapchainImages[imageIndex];
+        pRenderFinishedSemaphore.write(swapchain.renderFinishedSemaphores[imageIndex]);
 
         VkCommandBuffer cmdBuf = Objects.requireNonNull(cx.commandBuffers.read(currentFrameIndex));
 
@@ -161,7 +155,7 @@ public final class ASPECT_RenderFrame {
     private final VkFence.Ptr pInFlightFences;
     private final IntPtr pImageIndex;
     private final VkSemaphore.Ptr pImageAvailableSemaphores;
-    private final VkSemaphore.Ptr pRenderFinishedSemaphores;
+    private final VkSemaphore.Ptr pRenderFinishedSemaphore;
     private final IntPtr pWaitStages;
     private final VkCommandBufferBeginInfo.Ptr commandBufferBeginInfos;
     private final VkCommandBuffer.Ptr pCommandBuffers;

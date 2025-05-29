@@ -286,33 +286,6 @@ public final class VulkanRenderEngine extends RenderEngine {
 
     public static final IRenderEngineFactory FACTORY = new VulkanRenderEngineFactory();
 
-    private void resetAndRecordCommandBuffer(
-            VkCommandBuffer commandBuffer,
-            Resource.SwapchainImage swapchainImage
-    ) throws RenderException {
-        swapchainColorAttachment.swapchainImage = swapchainImage;
-
-        cx.dCmd.resetCommandBuffer(commandBuffer, 0);
-
-        try (Arena arena = Arena.ofConfined()) {
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.allocate(arena);
-            beginInfo.flags(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT);
-            @EnumType(VkResult.class) int result = cx.dCmd.beginCommandBuffer(commandBuffer, beginInfo);
-            if (result != VkResult.SUCCESS) {
-                throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));
-            }
-
-            for (CompiledRenderPassOp op : compiledRenderPassOps) {
-                op.recordToCommandBuffer(cx, swapchain, commandBuffer, currentFrameIndex);
-            }
-
-            result = cx.dCmd.endCommandBuffer(commandBuffer);
-            if (result != VkResult.SUCCESS) {
-                throw new RenderException("无法结束指令缓冲记录, 错误代码: " + VkResult.explain(result));
-            }
-        }
-    }
-
     private final ASPECT_ObjectCreate objectCreateAspect;
     private final ASPECT_AttachmentCreate attachmentCreateAspect;
     private final ASPECT_UniformCreate uniformCreateAspect;
