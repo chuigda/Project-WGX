@@ -6,27 +6,27 @@ import chr.wgx.render.vk.VulkanRenderEngineContext;
 import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.data.VulkanSwapchainAttachment;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.VkAccessFlags;
-import tech.icey.vk4j.bitmask.VkImageAspectFlags;
-import tech.icey.vk4j.bitmask.VkPipelineStageFlags;
-import tech.icey.vk4j.datatype.VkImageMemoryBarrier;
-import tech.icey.vk4j.enumtype.VkImageLayout;
-import tech.icey.vk4j.handle.VkCommandBuffer;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.vulkan.VkConstants;
+import club.doki7.vulkan.bitmask.VkAccessFlags;
+import club.doki7.vulkan.bitmask.VkImageAspectFlags;
+import club.doki7.vulkan.bitmask.VkPipelineStageFlags;
+import club.doki7.vulkan.datatype.VkImageMemoryBarrier;
+import club.doki7.vulkan.enumtype.VkImageLayout;
+import club.doki7.vulkan.handle.VkCommandBuffer;
 import tech.icey.xjbutil.container.Pair;
 
 import java.util.List;
 
 public final class ImageBarrierOp implements CompiledRenderPassOp {
     public final List<VulkanAttachment> attachments;
-    public final VkImageMemoryBarrier[] barriers;
+    public final VkImageMemoryBarrier.Ptr barriers;
 
     public ImageBarrierOp(
             VulkanRenderEngineContext cx,
             List<VulkanAttachment> attachments,
-            @enumtype(VkImageLayout.class) List<Integer> oldLayouts,
-            @enumtype(VkImageLayout.class) List<Integer> newLayouts
+            @EnumType(VkImageLayout.class) List<Integer> oldLayouts,
+            @EnumType(VkImageLayout.class) List<Integer> newLayouts
     ) {
         assert attachments.size() == oldLayouts.size()
                && attachments.size() == newLayouts.size();
@@ -35,23 +35,23 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
         barriers = VkImageMemoryBarrier.allocate(cx.prefabArena, attachments.size());
         for (int i = 0; i < attachments.size(); i++) {
             VulkanAttachment attachment = attachments.get(i);
-            VkImageMemoryBarrier barrier = barriers[i];
+            VkImageMemoryBarrier barrier = barriers.at(i);
 
-            @enumtype(VkImageAspectFlags.class) int aspectMask =
+            @EnumType(VkImageAspectFlags.class) int aspectMask =
                     attachment.createInfo.pixelFormat == PixelFormat.DEPTH_BUFFER_OPTIMAL
-                            ? VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT
-                            : VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT;
+                            ? VkImageAspectFlags.DEPTH
+                            : VkImageAspectFlags.COLOR;
 
-            @enumtype(VkImageLayout.class) int oldLayout = oldLayouts.get(i);
-            @enumtype(VkImageLayout.class) int newLayout = newLayouts.get(i);
+            @EnumType(VkImageLayout.class) int oldLayout = oldLayouts.get(i);
+            @EnumType(VkImageLayout.class) int newLayout = newLayouts.get(i);
             Pair<Integer, Integer> accessMasks = chooseAccessMasks(oldLayout, newLayout);
 
             barrier.oldLayout(oldLayout);
             barrier.newLayout(newLayout);
             barrier.srcAccessMask(accessMasks.first());
             barrier.dstAccessMask(accessMasks.second());
-            barrier.srcQueueFamilyIndex(Constants.VK_QUEUE_FAMILY_IGNORED);
-            barrier.dstQueueFamilyIndex(Constants.VK_QUEUE_FAMILY_IGNORED);
+            barrier.srcQueueFamilyIndex(VkConstants.QUEUE_FAMILY_IGNORED);
+            barrier.dstQueueFamilyIndex(VkConstants.QUEUE_FAMILY_IGNORED);
             barrier.subresourceRange().aspectMask(aspectMask);
             barrier.subresourceRange().baseMipLevel(0);
             barrier.subresourceRange().levelCount(1);
@@ -69,7 +69,7 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
     ) {
         for (int i = 0; i < attachments.size(); i++) {
             VulkanAttachment attachment = attachments.get(i);
-            VkImageMemoryBarrier barrier = barriers[i];
+            VkImageMemoryBarrier barrier = barriers.at(i);
 
             switch (attachment) {
                 case VulkanImageAttachment imageAttachment -> barrier.image(
@@ -81,43 +81,43 @@ public final class ImageBarrierOp implements CompiledRenderPassOp {
             }
         }
 
-        cx.dCmd.vkCmdPipelineBarrier(
+        cx.dCmd.cmdPipelineBarrier(
                 cmdBuf,
-                VkPipelineStageFlags.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                VkPipelineStageFlags.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-                | VkPipelineStageFlags.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-                | VkPipelineStageFlags.VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT,
+                VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT
+                | VkPipelineStageFlags.FRAGMENT_SHADER
+                | VkPipelineStageFlags.TRANSFER,
                 0,
                 0, null,
                 0, null,
-                barriers.length, barriers[0]
+                (int) barriers.size(), barriers
         );
     }
 
-    private static @enumtype(VkAccessFlags.class) Pair<Integer, Integer> chooseAccessMasks(
-            @enumtype(VkImageLayout.class) int oldLayout,
-            @enumtype(VkImageLayout.class) int newLayout
+    private static @EnumType(VkAccessFlags.class) Pair<Integer, Integer> chooseAccessMasks(
+            @EnumType(VkImageLayout.class) int oldLayout,
+            @EnumType(VkImageLayout.class) int newLayout
     ) {
-        if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED) {
-            if (newLayout == VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-                return new Pair<>(0, VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-            } else if (newLayout == VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-                return new Pair<>(0, VkAccessFlags.VK_ACCESS_SHADER_READ_BIT);
-            } else if (newLayout == VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-                return new Pair<>(0, VkAccessFlags.VK_ACCESS_MEMORY_READ_BIT);
+        if (oldLayout == VkImageLayout.UNDEFINED) {
+            if (newLayout == VkImageLayout.COLOR_ATTACHMENT_OPTIMAL) {
+                return new Pair<>(0, VkAccessFlags.COLOR_ATTACHMENT_WRITE);
+            } else if (newLayout == VkImageLayout.SHADER_READ_ONLY_OPTIMAL) {
+                return new Pair<>(0, VkAccessFlags.SHADER_READ);
+            } else if (newLayout == VkImageLayout.PRESENT_SRC_KHR) {
+                return new Pair<>(0, VkAccessFlags.MEMORY_READ);
             }
         }
-        else if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-                 && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-            return new Pair<>(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VkAccessFlags.VK_ACCESS_SHADER_READ_BIT);
+        else if (oldLayout == VkImageLayout.COLOR_ATTACHMENT_OPTIMAL
+                 && newLayout == VkImageLayout.SHADER_READ_ONLY_OPTIMAL) {
+            return new Pair<>(VkAccessFlags.COLOR_ATTACHMENT_WRITE, VkAccessFlags.SHADER_WRITE);
         }
-        else if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-                 && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-            return new Pair<>(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VkAccessFlags.VK_ACCESS_MEMORY_READ_BIT);
+        else if (oldLayout == VkImageLayout.COLOR_ATTACHMENT_OPTIMAL
+                 && newLayout == VkImageLayout.PRESENT_SRC_KHR) {
+            return new Pair<>(VkAccessFlags.COLOR_ATTACHMENT_WRITE, VkAccessFlags.MEMORY_READ);
         }
-        else if (oldLayout == VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-                 && newLayout == VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-            return new Pair<>(VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VkAccessFlags.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+        else if (oldLayout == VkImageLayout.COLOR_ATTACHMENT_OPTIMAL
+                 && newLayout == VkImageLayout.COLOR_ATTACHMENT_OPTIMAL) {
+            return new Pair<>(VkAccessFlags.COLOR_ATTACHMENT_WRITE, VkAccessFlags.COLOR_ATTACHMENT_WRITE);
         }
 
         throw new UnsupportedOperationException("不支持的布局转换: 从 " + VkImageLayout.explain(oldLayout) + " 到 " + VkImageLayout.explain(newLayout));

@@ -5,10 +5,10 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.common.UniformUpdateFrequency;
 import chr.wgx.render.info.UniformBufferCreateInfo;
 import chr.wgx.render.vk.data.VulkanUniformBuffer;
-import tech.icey.vk4j.bitmask.VkBufferUsageFlags;
-import tech.icey.vk4j.handle.VkDeviceMemory;
-import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
-import tech.icey.vma.datatype.VmaAllocationInfo;
+import club.doki7.vulkan.bitmask.VkBufferUsageFlags;
+import club.doki7.vulkan.handle.VkDeviceMemory;
+import club.doki7.vma.bitmask.VmaAllocationCreateFlags;
+import club.doki7.vma.datatype.VmaAllocationInfo;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;

@@ -1,7 +1,7 @@
 package chr.wgx.render.common;
 
-import tech.icey.panama.buffer.FloatBuffer;
-import tech.icey.vk4j.datatype.VkClearColorValue;
+import club.doki7.ffm.buffer.FloatBuffer;
+import club.doki7.vulkan.datatype.VkClearColorValue;
 
 public final class Color {
     public final float r;

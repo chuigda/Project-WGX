@@ -4,20 +4,20 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.info.TextureCreateInfo;
 import chr.wgx.render.vk.data.CombinedImageSampler;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.panama.buffer.PointerBuffer;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.*;
-import tech.icey.vk4j.datatype.VkBufferImageCopy;
-import tech.icey.vk4j.datatype.VkExtent3D;
-import tech.icey.vk4j.datatype.VkImageMemoryBarrier;
-import tech.icey.vk4j.datatype.VkImageSubresourceLayers;
-import tech.icey.vk4j.enumtype.VkFormat;
-import tech.icey.vk4j.enumtype.VkImageLayout;
-import tech.icey.vk4j.enumtype.VkImageTiling;
-import tech.icey.vk4j.enumtype.VkResult;
-import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.ptr.IntPtr;
+import club.doki7.ffm.ptr.PointerPtr;
+import club.doki7.vulkan.VkConstants;
+import club.doki7.vulkan.bitmask.*;
+import club.doki7.vulkan.datatype.VkBufferImageCopy;
+import club.doki7.vulkan.datatype.VkExtent3D;
+import club.doki7.vulkan.datatype.VkImageMemoryBarrier;
+import club.doki7.vulkan.datatype.VkImageSubresourceLayers;
+import club.doki7.vulkan.enumtype.VkFormat;
+import club.doki7.vulkan.enumtype.VkImageLayout;
+import club.doki7.vulkan.enumtype.VkImageTiling;
+import club.doki7.vulkan.enumtype.VkResult;
+import club.doki7.vma.bitmask.VmaAllocationCreateFlags;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -43,24 +43,24 @@ public final class ASPECT_TextureCreate {
                 Resource.Buffer stagingBuffer = Resource.Buffer.create(
                         cx,
                         imageSize,
-                        VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                        VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                        VkBufferUsageFlags.TRANSFER_SRC,
+                        VmaAllocationCreateFlags.HOST_ACCESS_RANDOM,
                         null
                 );
                 stagingBufferList.add(stagingBuffer);
 
-                PointerBuffer ppData = PointerBuffer.allocate(arena);
-                @enumtype(VkResult.class) int result = cx.vma.vmaMapMemory(
+                PointerPtr ppData = PointerPtr.allocate(arena);
+                @EnumType(VkResult.class) int result = cx.vma.mapMemory(
                         cx.vmaAllocator,
                         stagingBuffer.allocation,
                         ppData
                 );
-                if (result != VkResult.VK_SUCCESS) {
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("vmaMapMemory 失败: " + result);
                 }
 
                 MemorySegment pData = ppData.read().reinterpret(imageSize);
-                IntBuffer colorBuf = new IntBuffer(pData);
+                IntPtr colorBuf = new IntPtr(pData);
                 for (int y = 0; y < info.image.getHeight(); y++) {
                     for (int x = 0; x < info.image.getWidth(); x++) {
                         int data = info.image.getRGB(x, y);
@@ -68,19 +68,18 @@ public final class ASPECT_TextureCreate {
                         colorBuf.write(linearIndex, data);
                     }
                 }
-                cx.vma.vmaUnmapMemory(cx.vmaAllocator, stagingBuffer.allocation);
+                cx.vma.unmapMemory(cx.vmaAllocator, stagingBuffer.allocation);
 
                 Resource.Image image = Resource.Image.create(
                         cx,
                         info.image.getWidth(),
                         info.image.getHeight(),
                         1,
-                        VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
-                        VkFormat.VK_FORMAT_R8G8B8A8_SRGB,
-                        VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                        VkImageUsageFlags.VK_IMAGE_USAGE_TRANSFER_DST_BIT
-                        | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
-                        VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
+                        VkSampleCountFlags._1,
+                        VkFormat.R8G8B8A8_SRGB,
+                        VkImageTiling.OPTIMAL,
+                        VkImageUsageFlags.TRANSFER_DST | VkImageUsageFlags.SAMPLED,
+                        VkImageAspectFlags.COLOR
                 );
                 imageList.add(image);
 
@@ -89,29 +88,29 @@ public final class ASPECT_TextureCreate {
 
             if (cx.dedicatedTransferQueue.isSome()) {
                 cx.executeTransferCommand(cmdBuf -> {
-                    VkImageMemoryBarrier[] barriers = VkImageMemoryBarrier.allocate(arena, infoList.size());
+                    VkImageMemoryBarrier.Ptr barriers = VkImageMemoryBarrier.allocate(arena, infoList.size());
                     for (int i = 0; i < infoList.size(); i++) {
                         Resource.Image image = imageList.get(i);
-                        VkImageMemoryBarrier barrier = barriers[i];
+                        VkImageMemoryBarrier barrier = barriers.at(i);
 
                         imageLayout_undefinedToTransferDest(
                                 image,
                                 barrier
                         );
                     }
-                    cx.dCmd.vkCmdPipelineBarrier(
+                    cx.dCmd.cmdPipelineBarrier(
                             cmdBuf,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                            VkDependencyFlags.VK_DEPENDENCY_BY_REGION_BIT,
+                            VkPipelineStageFlags.TOP_OF_PIPE,
+                            VkPipelineStageFlags.TRANSFER,
+                            VkDependencyFlags.BY_REGION,
                             0, null,
                             0, null,
-                            infoList.size(), barriers[0]
+                            infoList.size(), barriers
                     );
 
                     VkBufferImageCopy copyRegion = VkBufferImageCopy.allocate(arena);
                     VkImageSubresourceLayers imageSubresource = copyRegion.imageSubresource();
-                    imageSubresource.aspectMask(VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT);
+                    imageSubresource.aspectMask(VkImageAspectFlags.COLOR);
                     imageSubresource.mipLevel(0);
                     imageSubresource.baseArrayLayer(0);
                     imageSubresource.layerCount(1);
@@ -126,11 +125,11 @@ public final class ASPECT_TextureCreate {
                         extent.width(info.image.getWidth());
                         extent.height(info.image.getHeight());
 
-                        cx.dCmd.vkCmdCopyBufferToImage(
+                        cx.dCmd.cmdCopyBufferToImage(
                                 cmdBuf,
                                 stagingBuffer.buffer,
                                 image.image,
-                                VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                VkImageLayout.TRANSFER_DST_OPTIMAL,
                                 1,
                                 copyRegion
                         );
@@ -138,10 +137,10 @@ public final class ASPECT_TextureCreate {
                 });
 
                 cx.executeGraphicsCommand(cmdBuf -> {
-                    VkImageMemoryBarrier[] barriers = VkImageMemoryBarrier.allocate(arena, infoList.size());
+                    VkImageMemoryBarrier.Ptr barriers = VkImageMemoryBarrier.allocate(arena, infoList.size());
                     for (int i = 0; i < infoList.size(); i++) {
                         Resource.Image image = imageList.get(i);
-                        VkImageMemoryBarrier barrier = barriers[i];
+                        VkImageMemoryBarrier barrier = barriers.at(i);
 
                         imageLayout_transferDestToSharedReadOnly(
                                 image,
@@ -150,41 +149,41 @@ public final class ASPECT_TextureCreate {
                                 cx.graphicsQueueFamilyIndex
                         );
                     }
-                    cx.dCmd.vkCmdPipelineBarrier(
+                    cx.dCmd.cmdPipelineBarrier(
                             cmdBuf,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                            VkDependencyFlags.VK_DEPENDENCY_BY_REGION_BIT,
+                            VkPipelineStageFlags.TRANSFER,
+                            VkPipelineStageFlags.FRAGMENT_SHADER,
+                            VkDependencyFlags.BY_REGION,
                             0, null,
                             0, null,
-                            infoList.size(), barriers[0]
+                            infoList.size(), barriers
                     );
                 });
             } else {
                 cx.executeGraphicsCommand(cmdBuf -> {
-                    VkImageMemoryBarrier[] barriers = VkImageMemoryBarrier.allocate(arena, infoList.size());
+                    VkImageMemoryBarrier.Ptr barriers = VkImageMemoryBarrier.allocate(arena, infoList.size());
                     for (int i = 0; i < infoList.size(); i++) {
                         Resource.Image image = imageList.get(i);
-                        VkImageMemoryBarrier barrier = barriers[i];
+                        VkImageMemoryBarrier barrier = barriers.at(i);
 
                         imageLayout_undefinedToTransferDest(
                                 image,
                                 barrier
                         );
                     }
-                    cx.dCmd.vkCmdPipelineBarrier(
+                    cx.dCmd.cmdPipelineBarrier(
                             cmdBuf,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                            VkDependencyFlags.VK_DEPENDENCY_BY_REGION_BIT,
+                            VkPipelineStageFlags.TOP_OF_PIPE,
+                            VkPipelineStageFlags.TRANSFER,
+                            VkDependencyFlags.BY_REGION,
                             0, null,
                             0, null,
-                            infoList.size(), barriers[0]
+                            infoList.size(), barriers
                     );
 
                     VkBufferImageCopy copyRegion = VkBufferImageCopy.allocate(arena);
                     VkImageSubresourceLayers imageSubresource = copyRegion.imageSubresource();
-                    imageSubresource.aspectMask(VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT);
+                    imageSubresource.aspectMask(VkImageAspectFlags.COLOR);
                     imageSubresource.mipLevel(0);
                     imageSubresource.baseArrayLayer(0);
                     imageSubresource.layerCount(1);
@@ -199,11 +198,11 @@ public final class ASPECT_TextureCreate {
                         extent.width(info.image.getWidth());
                         extent.height(info.image.getHeight());
 
-                        cx.dCmd.vkCmdCopyBufferToImage(
+                        cx.dCmd.cmdCopyBufferToImage(
                                 cmdBuf,
                                 stagingBuffer.buffer,
                                 image.image,
-                                VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                VkImageLayout.TRANSFER_DST_OPTIMAL,
                                 1,
                                 copyRegion
                         );
@@ -211,23 +210,23 @@ public final class ASPECT_TextureCreate {
 
                     for (int i = 0; i < infoList.size(); i++) {
                         Resource.Image image = imageList.get(i);
-                        VkImageMemoryBarrier barrier = barriers[i];
+                        VkImageMemoryBarrier barrier = barriers.at(i);
 
                         imageLayout_transferDestToSharedReadOnly(
                                 image,
                                 barrier,
-                                Constants.VK_QUEUE_FAMILY_IGNORED,
-                                Constants.VK_QUEUE_FAMILY_IGNORED
+                                VkConstants.QUEUE_FAMILY_IGNORED,
+                                VkConstants.QUEUE_FAMILY_IGNORED
                         );
                     }
-                    cx.dCmd.vkCmdPipelineBarrier(
+                    cx.dCmd.cmdPipelineBarrier(
                             cmdBuf,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                            VkPipelineStageFlags.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                            VkDependencyFlags.VK_DEPENDENCY_BY_REGION_BIT,
+                            VkPipelineStageFlags.TRANSFER,
+                            VkPipelineStageFlags.FRAGMENT_SHADER,
+                            VkDependencyFlags.BY_REGION,
                             0, null,
                             0, null,
-                            infoList.size(), barriers[0]
+                            infoList.size(), barriers
                     );
                 });
             }
@@ -259,13 +258,13 @@ public final class ASPECT_TextureCreate {
 
     private void imageLayout_undefinedToTransferDest(Resource.Image image, VkImageMemoryBarrier barrier) {
         barrier.srcAccessMask(0);
-        barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-        barrier.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED);
-        barrier.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        barrier.srcQueueFamilyIndex(Constants.VK_QUEUE_FAMILY_IGNORED);
-        barrier.dstQueueFamilyIndex(Constants.VK_QUEUE_FAMILY_IGNORED);
+        barrier.dstAccessMask(VkAccessFlags.TRANSFER_WRITE);
+        barrier.oldLayout(VkImageLayout.UNDEFINED);
+        barrier.newLayout(VkImageLayout.TRANSFER_DST_OPTIMAL);
+        barrier.srcQueueFamilyIndex(VkConstants.QUEUE_FAMILY_IGNORED);
+        barrier.dstQueueFamilyIndex(VkConstants.QUEUE_FAMILY_IGNORED);
         barrier.image(image.image);
-        barrier.subresourceRange().aspectMask(VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT);
+        barrier.subresourceRange().aspectMask(VkImageAspectFlags.COLOR);
         barrier.subresourceRange().baseMipLevel(0);
         barrier.subresourceRange().levelCount(1);
         barrier.subresourceRange().baseArrayLayer(0);
@@ -279,13 +278,13 @@ public final class ASPECT_TextureCreate {
             int dstQueueFamilyIndex
     ) {
         barrier.srcAccessMask(0);
-        barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_SHADER_READ_BIT);
-        barrier.oldLayout(VkImageLayout.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        barrier.newLayout(VkImageLayout.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        barrier.dstAccessMask(VkAccessFlags.SHADER_READ);
+        barrier.oldLayout(VkImageLayout.TRANSFER_DST_OPTIMAL);
+        barrier.newLayout(VkImageLayout.SHADER_READ_ONLY_OPTIMAL);
         barrier.srcQueueFamilyIndex(srcQueueFamilyIndex);
         barrier.dstQueueFamilyIndex(dstQueueFamilyIndex);
         barrier.image(image.image);
-        barrier.subresourceRange().aspectMask(VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT);
+        barrier.subresourceRange().aspectMask(VkImageAspectFlags.COLOR);
         barrier.subresourceRange().baseMipLevel(0);
         barrier.subresourceRange().levelCount(1);
         barrier.subresourceRange().baseArrayLayer(0);

@@ -7,11 +7,11 @@ module chr.wgx {
     requires org.jetbrains.annotations;
     requires org.joml;
     requires org.openjdk.nashorn;
-    requires tech.icey.gles2;
-    requires tech.icey.glfw;
-    requires tech.icey.panama;
-    requires tech.icey.vk4j;
-    requires tech.icey.vma;
+    requires club.doki7.gles2;
+    requires club.doki7.glfw;
+    requires club.doki7.ffm;
+    requires club.doki7.vulkan;
+    requires club.doki7.vma;
 
     requires xjbutil;
     requires jsr305;

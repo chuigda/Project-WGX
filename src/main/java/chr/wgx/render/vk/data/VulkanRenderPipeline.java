@@ -4,8 +4,8 @@ import chr.wgx.render.data.RenderPipeline;
 import chr.wgx.render.info.RenderPipelineCreateInfo;
 import chr.wgx.render.vk.IVkDisposable;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
-import tech.icey.vk4j.handle.VkPipeline;
-import tech.icey.vk4j.handle.VkPipelineLayout;
+import club.doki7.vulkan.handle.VkPipeline;
+import club.doki7.vulkan.handle.VkPipelineLayout;
 
 public class VulkanRenderPipeline extends RenderPipeline implements IVkDisposable {
     public final VkPipelineLayout pipelineLayout;

@@ -7,11 +7,11 @@ import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.data.VulkanSwapchainAttachment;
 import chr.wgx.render.vk.task.VulkanRenderPass;
-import tech.icey.vk4j.datatype.*;
-import tech.icey.vk4j.enumtype.VkAttachmentLoadOp;
-import tech.icey.vk4j.enumtype.VkAttachmentStoreOp;
-import tech.icey.vk4j.enumtype.VkImageLayout;
-import tech.icey.vk4j.handle.VkCommandBuffer;
+import club.doki7.vulkan.datatype.*;
+import club.doki7.vulkan.enumtype.VkAttachmentLoadOp;
+import club.doki7.vulkan.enumtype.VkAttachmentStoreOp;
+import club.doki7.vulkan.enumtype.VkImageLayout;
+import club.doki7.vulkan.handle.VkCommandBuffer;
 import tech.icey.xjbutil.container.Option;
 
 import java.util.List;
@@ -144,14 +144,14 @@ public final class RenderingBeginOp implements CompiledRenderPassOp {
             some.value.imageView(attachment.image.value.imageView);
         }
 
-        cx.dCmd.vkCmdBeginRendering(cmdBuf, renderingInfo);
+        cx.dCmd.cmdBeginRendering(cmdBuf, renderingInfo);
 
         viewport.width(renderAreaWidth);
         viewport.height(renderAreaHeight);
-        cx.dCmd.vkCmdSetViewport(cmdBuf, 0, 1, viewport);
+        cx.dCmd.cmdSetViewport(cmdBuf, 0, 1, viewport);
 
         scissorExtent.width(renderAreaWidth);
         scissorExtent.height(renderAreaHeight);
-        cx.dCmd.vkCmdSetScissor(cmdBuf, 0, 1, scissor);
+        cx.dCmd.cmdSetScissor(cmdBuf, 0, 1, scissor);
     }
 }

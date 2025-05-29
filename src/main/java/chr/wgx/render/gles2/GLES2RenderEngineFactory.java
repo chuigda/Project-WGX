@@ -5,10 +5,10 @@ import chr.wgx.render.IRenderEngineFactory;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.RenderWindow;
 import org.jetbrains.annotations.Nullable;
-import tech.icey.glfw.GLFW;
-import tech.icey.glfw.GLFWConstants;
-import tech.icey.glfw.handle.GLFWwindow;
-import tech.icey.panama.buffer.ByteBuffer;
+import club.doki7.glfw.GLFW;
+import club.doki7.glfw.GLFWConstants;
+import club.doki7.glfw.handle.GLFWwindow;
+import club.doki7.ffm.buffer.ByteBuffer;
 
 import java.lang.foreign.Arena;
 

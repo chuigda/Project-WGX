@@ -4,7 +4,7 @@ import chr.wgx.render.data.DescriptorSetLayout;
 import chr.wgx.render.info.DescriptorSetLayoutCreateInfo;
 import chr.wgx.render.vk.IVkDisposable;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
-import tech.icey.vk4j.handle.VkDescriptorSetLayout;
+import club.doki7.vulkan.handle.VkDescriptorSetLayout;
 
 public final class VulkanDescriptorSetLayout extends DescriptorSetLayout implements IVkDisposable {
     public final VkDescriptorSetLayout layout;

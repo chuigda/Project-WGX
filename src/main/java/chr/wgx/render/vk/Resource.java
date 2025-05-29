@@ -4,27 +4,28 @@ import chr.wgx.config.Config;
 import chr.wgx.config.VulkanConfig;
 import chr.wgx.render.RenderException;
 import org.jetbrains.annotations.Nullable;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.annotation.pointer;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.VkBufferUsageFlags;
-import tech.icey.vk4j.bitmask.VkImageAspectFlags;
-import tech.icey.vk4j.bitmask.VkImageUsageFlags;
-import tech.icey.vk4j.bitmask.VkSampleCountFlags;
-import tech.icey.vk4j.datatype.*;
-import tech.icey.vk4j.enumtype.*;
-import tech.icey.vk4j.handle.VkBuffer;
-import tech.icey.vk4j.handle.VkImage;
-import tech.icey.vk4j.handle.VkImageView;
-import tech.icey.vk4j.handle.VkSampler;
-import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
-import tech.icey.vma.datatype.VmaAllocationCreateInfo;
-import tech.icey.vma.datatype.VmaAllocationInfo;
-import tech.icey.vma.enumtype.VmaMemoryUsage;
-import tech.icey.vma.handle.VmaAllocation;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.annotation.Pointer;
+import club.doki7.vulkan.VkConstants;
+import club.doki7.vulkan.bitmask.VkBufferUsageFlags;
+import club.doki7.vulkan.bitmask.VkImageAspectFlags;
+import club.doki7.vulkan.bitmask.VkImageUsageFlags;
+import club.doki7.vulkan.bitmask.VkSampleCountFlags;
+import club.doki7.vulkan.datatype.*;
+import club.doki7.vulkan.enumtype.*;
+import club.doki7.vulkan.handle.VkBuffer;
+import club.doki7.vulkan.handle.VkImage;
+import club.doki7.vulkan.handle.VkImageView;
+import club.doki7.vulkan.handle.VkSampler;
+import club.doki7.vma.bitmask.VmaAllocationCreateFlags;
+import club.doki7.vma.datatype.VmaAllocationCreateInfo;
+import club.doki7.vma.datatype.VmaAllocationInfo;
+import club.doki7.vma.enumtype.VmaMemoryUsage;
+import club.doki7.vma.handle.VmaAllocation;
 import tech.icey.xjbutil.container.Pair;
 
 import java.lang.foreign.Arena;
+import java.util.Objects;
 
 public final class Resource {
     public static final class Image implements IVkDisposable {
@@ -47,11 +48,11 @@ public final class Resource {
                 int width,
                 int height,
                 int mipLevels,
-                @enumtype(VkSampleCountFlags.class) int sampleCountFlags,
-                @enumtype(VkFormat.class) int format,
-                @enumtype(VkImageTiling.class) int tiling,
-                @enumtype(VkImageUsageFlags.class) int usage,
-                @enumtype(VkImageAspectFlags.class) int aspect
+                @EnumType(VkSampleCountFlags.class) int sampleCountFlags,
+                @EnumType(VkFormat.class) int format,
+                @EnumType(VkImageTiling.class) int tiling,
+                @EnumType(VkImageUsageFlags.class) int usage,
+                @EnumType(VkImageAspectFlags.class) int aspect
         ) throws RenderException {
             Pair<VkImage, VmaAllocation> pair = createImage(
                     cx,
@@ -72,8 +73,8 @@ public final class Resource {
 
         @Override
         public void dispose(VulkanRenderEngineContext cx) {
-            cx.dCmd.vkDestroyImageView(cx.device, imageView, null);
-            cx.vma.vmaDestroyImage(cx.vmaAllocator, image, allocation);
+            cx.dCmd.destroyImageView(cx.device, imageView, null);
+            cx.vma.destroyImage(cx.vmaAllocator, image, allocation);
         }
     }
 
@@ -89,35 +90,35 @@ public final class Resource {
 
             try (Arena arena = Arena.ofConfined()) {
                 VkSamplerCreateInfo createInfo = VkSamplerCreateInfo.allocate(arena);
-                createInfo.magFilter(VkFilter.VK_FILTER_LINEAR);
-                createInfo.minFilter(VkFilter.VK_FILTER_LINEAR);
-                createInfo.addressModeU(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                createInfo.addressModeV(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                createInfo.addressModeW(VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                createInfo.anisotropyEnable(config.enableAnisotropy ? Constants.VK_TRUE : Constants.VK_FALSE);
+                createInfo.magFilter(VkFilter.LINEAR);
+                createInfo.minFilter(VkFilter.LINEAR);
+                createInfo.addressModeU(VkSamplerAddressMode.REPEAT);
+                createInfo.addressModeV(VkSamplerAddressMode.REPEAT);
+                createInfo.addressModeW(VkSamplerAddressMode.REPEAT);
+                createInfo.anisotropyEnable(config.enableAnisotropy ? VkConstants.TRUE : VkConstants.FALSE);
                 createInfo.maxAnisotropy(config.anisotropyLevel);
-                createInfo.borderColor(VkBorderColor.VK_BORDER_COLOR_INT_OPAQUE_BLACK);
-                createInfo.unnormalizedCoordinates(Constants.VK_FALSE);
-                createInfo.compareEnable(Constants.VK_FALSE);
-                createInfo.compareOp(VkCompareOp.VK_COMPARE_OP_ALWAYS);
-                createInfo.mipmapMode(VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_LINEAR);
+                createInfo.borderColor(VkBorderColor.INT_OPAQUE_BLACK);
+                createInfo.unnormalizedCoordinates(VkConstants.FALSE);
+                createInfo.compareEnable(VkConstants.FALSE);
+                createInfo.compareOp(VkCompareOp.ALWAYS);
+                createInfo.mipmapMode(VkSamplerMipmapMode.LINEAR);
                 createInfo.mipLodBias(0);
                 createInfo.minLod(0);
                 createInfo.maxLod(mipLevels);
 
-                VkSampler.Buffer pSampler = VkSampler.Buffer.allocate(arena);
-                @enumtype(VkResult.class) int result = cx.dCmd.vkCreateSampler(cx.device, createInfo, null, pSampler);
-                if (result != VkResult.VK_SUCCESS) {
+                VkSampler.Ptr pSampler = VkSampler.Ptr.allocate(arena);
+                @EnumType(VkResult.class) int result = cx.dCmd.createSampler(cx.device, createInfo, null, pSampler);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法创建 Vulkan 采样器, 错误代码: " + result);
                 }
 
-                return new Sampler(pSampler.read());
+                return new Sampler(Objects.requireNonNull(pSampler.read()));
             }
         }
 
         @Override
         public void dispose(VulkanRenderEngineContext cx) {
-            cx.dCmd.vkDestroySampler(cx.device, sampler, null);
+            cx.dCmd.destroySampler(cx.device, sampler, null);
         }
     }
 
@@ -132,15 +133,15 @@ public final class Resource {
 
         @Override
         public void dispose(VulkanRenderEngineContext cx) {
-            cx.dCmd.vkDestroyImageView(cx.device, imageView, null);
+            cx.dCmd.destroyImageView(cx.device, imageView, null);
         }
 
         public static SwapchainImage create(
                 VulkanRenderEngineContext cx,
                 VkImage image,
-                @enumtype(VkFormat.class) int format
+                @EnumType(VkFormat.class) int format
         ) throws RenderException {
-            VkImageView imageView = createImageView(cx, image, format, VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT, 1);
+            VkImageView imageView = createImageView(cx, image, format, VkImageAspectFlags.COLOR, 1);
             return new SwapchainImage(image, imageView);
         }
     }
@@ -156,29 +157,29 @@ public final class Resource {
 
         @Override
         public void dispose(VulkanRenderEngineContext cx) {
-            cx.vma.vmaDestroyBuffer(cx.vmaAllocator, buffer, allocation);
+            cx.vma.destroyBuffer(cx.vmaAllocator, buffer, allocation);
         }
 
         public static Buffer create(
                 VulkanRenderEngineContext cx,
                 long size,
-                @enumtype(VkBufferUsageFlags.class) int usage,
-                @enumtype(VmaAllocationCreateFlags.class) int allocationFlags,
-                @Nullable @pointer VmaAllocationInfo allocationInfo
+                @EnumType(VkBufferUsageFlags.class) int usage,
+                @EnumType(VmaAllocationCreateFlags.class) int allocationFlags,
+                @Nullable @Pointer VmaAllocationInfo allocationInfo
         ) throws RenderException {
             try (Arena arena = Arena.ofConfined()) {
                 VkBufferCreateInfo createInfo = VkBufferCreateInfo.allocate(arena);
                 createInfo.size(size);
                 createInfo.usage(usage);
-                createInfo.sharingMode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
+                createInfo.sharingMode(VkSharingMode.EXCLUSIVE);
 
                 VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.allocate(arena);
-                allocationCreateInfo.usage(VmaMemoryUsage.VMA_MEMORY_USAGE_AUTO);
+                allocationCreateInfo.usage(VmaMemoryUsage.AUTO);
                 allocationCreateInfo.flags(allocationFlags);
 
-                VkBuffer.Buffer pBuffer = VkBuffer.Buffer.allocate(arena);
-                VmaAllocation.Buffer pAllocation = VmaAllocation.Buffer.allocate(arena);
-                @enumtype(VkResult.class) int result = cx.vma.vmaCreateBuffer(
+                VkBuffer.Ptr pBuffer = VkBuffer.Ptr.allocate(arena);
+                VmaAllocation.Ptr pAllocation = VmaAllocation.Ptr.allocate(arena);
+                @EnumType(VkResult.class) int result = cx.vma.createBuffer(
                         cx.vmaAllocator,
                         createInfo,
                         allocationCreateInfo,
@@ -186,11 +187,14 @@ public final class Resource {
                         pAllocation,
                         allocationInfo
                 );
-                if (result != VkResult.VK_SUCCESS) {
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法分配 Vulkan 缓冲区, 错误代码: " + result);
                 }
 
-                return new Buffer(pBuffer.read(), pAllocation.read());
+                return new Buffer(
+                        Objects.requireNonNull(pBuffer.read()),
+                        Objects.requireNonNull(pAllocation.read())
+                );
             }
         }
     }
@@ -200,14 +204,14 @@ public final class Resource {
             int width,
             int height,
             int mipLevels,
-            @enumtype(VkSampleCountFlags.class) int sampleCountFlags,
-            @enumtype(VkFormat.class) int format,
-            @enumtype(VkImageTiling.class) int tiling,
-            @enumtype(VkImageUsageFlags.class) int usage
+            @EnumType(VkSampleCountFlags.class) int sampleCountFlags,
+            @EnumType(VkFormat.class) int format,
+            @EnumType(VkImageTiling.class) int tiling,
+            @EnumType(VkImageUsageFlags.class) int usage
     ) throws RenderException {
         try (Arena arena = Arena.ofConfined()) {
             VkImageCreateInfo createInfo = VkImageCreateInfo.allocate(arena);
-            createInfo.imageType(VkImageType.VK_IMAGE_TYPE_2D);
+            createInfo.imageType(VkImageType._2D);
             createInfo.extent().width(width);
             createInfo.extent().height(height);
             createInfo.extent().depth(1);
@@ -217,14 +221,14 @@ public final class Resource {
             createInfo.tiling(tiling);
             createInfo.usage(usage);
             createInfo.samples(sampleCountFlags);
-            createInfo.sharingMode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
+            createInfo.sharingMode(VkSharingMode.EXCLUSIVE);
 
             VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.allocate(arena);
-            allocationCreateInfo.usage(VmaMemoryUsage.VMA_MEMORY_USAGE_GPU_ONLY);
+            allocationCreateInfo.usage(VmaMemoryUsage.GPU_ONLY);
 
-            VkImage.Buffer pImage = VkImage.Buffer.allocate(arena);
-            VmaAllocation.Buffer pAllocation = VmaAllocation.Buffer.allocate(arena);
-            @enumtype(VkResult.class) int result = cx.vma.vmaCreateImage(
+            VkImage.Ptr pImage = VkImage.Ptr.allocate(arena);
+            VmaAllocation.Ptr pAllocation = VmaAllocation.Ptr.allocate(arena);
+            @EnumType(VkResult.class) int result = cx.vma.createImage(
                     cx.vmaAllocator,
                     createInfo,
                     allocationCreateInfo,
@@ -232,7 +236,7 @@ public final class Resource {
                     pAllocation,
                     null
             );
-            if (result != VkResult.VK_SUCCESS) {
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建 Vulkan 图像, 错误代码: " + VkResult.explain(result));
             }
 
@@ -243,14 +247,14 @@ public final class Resource {
     private static VkImageView createImageView(
             VulkanRenderEngineContext cx,
             VkImage image,
-            @enumtype(VkFormat.class) int format,
-            @enumtype(VkImageAspectFlags.class) int aspect,
+            @EnumType(VkFormat.class) int format,
+            @EnumType(VkImageAspectFlags.class) int aspect,
             int mipLevels
     ) throws RenderException {
         try (Arena arena = Arena.ofConfined()) {
             VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.allocate(arena);
             createInfo.image(image);
-            createInfo.viewType(VkImageViewType.VK_IMAGE_VIEW_TYPE_2D);
+            createInfo.viewType(VkImageViewType._2D);
             createInfo.format(format);
 
             VkImageSubresourceRange subresourceRange = createInfo.subresourceRange();
@@ -260,12 +264,12 @@ public final class Resource {
             subresourceRange.baseArrayLayer(0);
             subresourceRange.layerCount(1);
 
-            VkImageView.Buffer pImageView = VkImageView.Buffer.allocate(arena);
-            @enumtype(VkResult.class) int result = cx.dCmd.vkCreateImageView(cx.device, createInfo, null, pImageView);
-            if (result != VkResult.VK_SUCCESS) {
+            VkImageView.Ptr pImageView = VkImageView.Ptr.allocate(arena);
+            @EnumType(VkResult.class) int result = cx.dCmd.createImageView(cx.device, createInfo, null, pImageView);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建 Vulkan 图像视图, 错误代码: " + result);
             }
-            return pImageView.read();
+            return Objects.requireNonNull(pImageView.read());
         }
     }
 }

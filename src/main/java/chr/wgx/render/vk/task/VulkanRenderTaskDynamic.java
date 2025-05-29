@@ -6,9 +6,9 @@ import chr.wgx.render.task.RenderTaskDynamic;
 import chr.wgx.render.vk.data.VulkanDescriptorSet;
 import chr.wgx.render.vk.data.VulkanPushConstant;
 import chr.wgx.render.vk.data.VulkanRenderObject;
-import tech.icey.panama.buffer.LongBuffer;
-import tech.icey.vk4j.handle.VkBuffer;
-import tech.icey.vk4j.handle.VkDescriptorSet;
+import club.doki7.ffm.buffer.LongBuffer;
+import club.doki7.vulkan.handle.VkBuffer;
+import club.doki7.vulkan.handle.VkDescriptorSet;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;

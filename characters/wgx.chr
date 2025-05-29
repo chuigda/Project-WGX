@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 java \
-  --enable-native-access=tech.icey.vk4j,tech.icey.vma,tech.icey.glfw,tech.icey.gles2,tech.icey.panama,chr.wgx \
+  --enable-native-access=club.doki7.vulkan,club.doki7.vma,club.doki7.glfw,club.doki7.gles2,club.doki7.ffm,chr.wgx \
   -XX:+UnlockExperimentalVMOptions \
   -XX:+TrustFinalNonStaticFields \
   -jar wgx.jar

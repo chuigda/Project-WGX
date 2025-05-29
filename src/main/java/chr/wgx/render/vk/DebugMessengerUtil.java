@@ -2,13 +2,13 @@ package chr.wgx.render.vk;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.annotation.pointer;
-import tech.icey.panama.buffer.ByteBuffer;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.VkDebugUtilsMessageSeverityFlagsEXT;
-import tech.icey.vk4j.bitmask.VkDebugUtilsMessageTypeFlagsEXT;
-import tech.icey.vk4j.datatype.VkDebugUtilsMessengerCallbackDataEXT;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.annotation.pointer;
+import club.doki7.ffm.buffer.ByteBuffer;
+import club.doki7.vulkan.Constants;
+import club.doki7.vulkan.bitmask.VkDebugUtilsMessageSeverityFlagsEXT;
+import club.doki7.vulkan.bitmask.VkDebugUtilsMessageTypeFlagsEXT;
+import club.doki7.vulkan.datatype.VkDebugUtilsMessengerCallbackDataEXT;
 import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.*;
@@ -20,8 +20,8 @@ public final class DebugMessengerUtil {
     private static final Logger logger = Logger.getLogger("vulkan.validation-layer");
 
     private static /* VkBool32 */ int debugCallback(
-            @enumtype(VkDebugUtilsMessageSeverityFlagsEXT.class) int messageSeverity,
-            @enumtype(VkDebugUtilsMessageTypeFlagsEXT.class) int ignoredMessageType,
+            @EnumType(VkDebugUtilsMessageSeverityFlagsEXT.class) int messageSeverity,
+            @EnumType(VkDebugUtilsMessageTypeFlagsEXT.class) int ignoredMessageType,
             @pointer(comment="const VkDebugUtilsMessengerCallbackDataEXT*") MemorySegment pCallbackData,
             @pointer(comment="void*") MemorySegment ignoredPUserData
     ) {
@@ -43,10 +43,10 @@ public final class DebugMessengerUtil {
             action.accept(sb.toString());
         }
 
-        return Constants.VK_FALSE;
+        return VkConstants.FALSE;
     }
 
-    private static @NotNull Action1<String> getSeverityLoggingFunction(@enumtype(VkDebugUtilsMessageSeverityFlagsEXT.class) int messageSeverity) {
+    private static @NotNull Action1<String> getSeverityLoggingFunction(@EnumType(VkDebugUtilsMessageSeverityFlagsEXT.class) int messageSeverity) {
         Action1<String> action;
         if (messageSeverity >= VkDebugUtilsMessageSeverityFlagsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
             action = logger::severe;

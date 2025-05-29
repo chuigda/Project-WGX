@@ -3,8 +3,8 @@ package chr.wgx.render.gles2.data;
 import chr.wgx.render.common.PixelFormat;
 import chr.wgx.render.data.Texture;
 import chr.wgx.render.gles2.IGLES2Disposable;
-import tech.icey.gles2.GLES2;
-import tech.icey.panama.buffer.IntBuffer;
+import club.doki7.gles2.GLES2;
+import club.doki7.ffm.buffer.IntBuffer;
 
 import java.lang.foreign.Arena;
 

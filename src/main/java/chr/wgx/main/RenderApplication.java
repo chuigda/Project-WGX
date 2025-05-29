@@ -10,10 +10,10 @@ import chr.wgx.render.vk.VulkanRenderEngine;
 import chr.wgx.ui.ControlWindow;
 import chr.wgx.ui.ProgressDialog;
 import chr.wgx.util.SharedObjectLoader;
-import tech.icey.glfw.GLFW;
-import tech.icey.glfw.GLFWConstants;
-import tech.icey.glfw.GLFWLoader;
-import tech.icey.vk4j.VulkanLoader;
+import club.doki7.glfw.GLFW;
+import club.doki7.glfw.GLFWConstants;
+import club.doki7.glfw.GLFWLoader;
+import club.doki7.vulkan.VulkanLoader;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -59,7 +59,7 @@ public final class RenderApplication {
         boolean isVulkan = config.renderMode.equals("vulkan");
 
         if (isVulkan) {
-            logger.fine("正使用 tech.icey.vk4j.VulkanLoader 加载 vulkan 本地库");
+            logger.fine("正使用 club.doki7.vulkan.VulkanLoader 加载 vulkan 本地库");
             VulkanLoader.loadVulkanLibrary();
         }
 

@@ -7,8 +7,8 @@ import chr.wgx.render.vk.data.VulkanAttachment;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
 import chr.wgx.render.vk.task.VulkanRenderPass;
 import chr.wgx.render.vk.task.VulkanRenderPipelineBind;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.vk4j.enumtype.VkImageLayout;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.vulkan.enumtype.VkImageLayout;
 import tech.icey.xjbutil.container.Option;
 
 import java.util.ArrayList;
@@ -34,12 +34,12 @@ public final class ASPECT_RenderPassCompilation {
             VulkanRenderPass renderPass = renderPassList.get(renderPassIndex);
 
             List<VulkanAttachment> transformedAttachments = new ArrayList<>();
-            @enumtype(VkImageLayout.class) List<Integer> oldLayout = new ArrayList<>();
-            @enumtype(VkImageLayout.class) List<Integer> newLayout = new ArrayList<>();
+            @EnumType(VkImageLayout.class) List<Integer> oldLayout = new ArrayList<>();
+            @EnumType(VkImageLayout.class) List<Integer> newLayout = new ArrayList<>();
 
             // 将所有输入附件的布局转换为可供组合图像采样器使用的布局
             for (VulkanAttachment inputAttachment : renderPass.inputAttachments) {
-                @enumtype(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
+                @EnumType(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
                         inputAttachment,
                         VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
                 );
@@ -54,7 +54,7 @@ public final class ASPECT_RenderPassCompilation {
             for (RenderPassAttachmentInfo colorAttachmentInfo : renderPass.info.colorAttachmentInfos) {
                 VulkanAttachment attachment = (VulkanAttachment) colorAttachmentInfo.attachment;
 
-                @enumtype(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
+                @EnumType(VkImageLayout.class) int currentLayout = currentLayouts.getOrDefault(
                         attachment,
                         VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
                 );

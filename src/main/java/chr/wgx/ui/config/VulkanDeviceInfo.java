@@ -1,29 +1,29 @@
 package chr.wgx.ui.config;
 
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.annotation.unsigned;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.Version;
-import tech.icey.vk4j.VulkanLoader;
-import tech.icey.vk4j.bitmask.VkQueueFlags;
-import tech.icey.vk4j.bitmask.VkSampleCountFlags;
-import tech.icey.vk4j.command.EntryCommands;
-import tech.icey.vk4j.command.InstanceCommands;
-import tech.icey.vk4j.command.StaticCommands;
-import tech.icey.vk4j.datatype.*;
-import tech.icey.vk4j.enumtype.VkPhysicalDeviceType;
-import tech.icey.vk4j.enumtype.VkResult;
-import tech.icey.vk4j.handle.VkInstance;
-import tech.icey.vk4j.handle.VkPhysicalDevice;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.annotation.unsigned;
+import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.vulkan.Constants;
+import club.doki7.vulkan.Version;
+import club.doki7.vulkan.VulkanLoader;
+import club.doki7.vulkan.bitmask.VkQueueFlags;
+import club.doki7.vulkan.bitmask.VkSampleCountFlags;
+import club.doki7.vulkan.command.EntryCommands;
+import club.doki7.vulkan.command.InstanceCommands;
+import club.doki7.vulkan.command.StaticCommands;
+import club.doki7.vulkan.datatype.*;
+import club.doki7.vulkan.enumtype.VkPhysicalDeviceType;
+import club.doki7.vulkan.enumtype.VkResult;
+import club.doki7.vulkan.handle.VkInstance;
+import club.doki7.vulkan.handle.VkPhysicalDevice;
 
 import java.lang.foreign.Arena;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class VulkanDeviceInfo {
-    public final @unsigned int deviceId;
-    public final @enumtype(VkPhysicalDeviceType.class) int deviceType;
+    public final @Unsigned int deviceId;
+    public final @EnumType(VkPhysicalDeviceType.class) int deviceType;
     public final String deviceName;
     public final Version.Decoded apiVersion;
     public final boolean supportsMSAA;
@@ -32,8 +32,8 @@ public final class VulkanDeviceInfo {
     public final boolean dedicatedTransferQueue;
 
     public VulkanDeviceInfo(
-            @unsigned int deviceId,
-            @enumtype(VkPhysicalDeviceType.class) int deviceType,
+            @Unsigned int deviceId,
+            @EnumType(VkPhysicalDeviceType.class) int deviceType,
             String deviceName,
             Version.Decoded apiVersion,
             boolean supportsMSAA,
@@ -107,15 +107,15 @@ public final class VulkanDeviceInfo {
 
                 VkPhysicalDeviceLimits limits = properties.limits();
 
-                @unsigned int deviceId = properties.deviceID();
-                @enumtype(VkPhysicalDeviceType.class) int deviceType = properties.deviceType();
+                @Unsigned int deviceId = properties.deviceID();
+                @EnumType(VkPhysicalDeviceType.class) int deviceType = properties.deviceType();
                 String deviceName = properties.deviceName().readString();
 
-                boolean supportsMSAA = features.sampleRateShading() == Constants.VK_TRUE;
+                boolean supportsMSAA = features.sampleRateShading() == VkConstants.TRUE;
                 List<Integer> msaaSampleCounts = sampleCountBitsToSampleCountList(
                         limits.framebufferColorSampleCounts() & limits.framebufferDepthSampleCounts()
                 );
-                boolean supportsAnisotropy = features.samplerAnisotropy() == Constants.VK_TRUE;
+                boolean supportsAnisotropy = features.samplerAnisotropy() == VkConstants.TRUE;
                 float maxAnisotropy = supportsAnisotropy ? limits.maxSamplerAnisotropy() : 1.0f;
 
                 boolean dedicatedTransferQueue = false;
@@ -162,10 +162,10 @@ public final class VulkanDeviceInfo {
     }
 
     private static List<Integer> sampleCountBitsToSampleCountList(
-            @enumtype(VkSampleCountFlags.class) int sampleCountBits
+            @EnumType(VkSampleCountFlags.class) int sampleCountBits
     ) {
         List<Integer> sampleCounts = new ArrayList<>();
-        if ((sampleCountBits & VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT) != 0) {
+        if ((sampleCountBits & VkSampleCountFlags._1) != 0) {
             sampleCounts.add(1);
         }
         if ((sampleCountBits & VkSampleCountFlags.VK_SAMPLE_COUNT_2_BIT) != 0) {

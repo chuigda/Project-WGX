@@ -4,15 +4,15 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.data.RenderObject;
 import chr.wgx.render.info.ObjectCreateInfo;
 import chr.wgx.render.vk.data.VulkanRenderObject;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.PointerBuffer;
-import tech.icey.vk4j.bitmask.VkAccessFlags;
-import tech.icey.vk4j.bitmask.VkBufferUsageFlags;
-import tech.icey.vk4j.bitmask.VkPipelineStageFlags;
-import tech.icey.vk4j.datatype.VkBufferCopy;
-import tech.icey.vk4j.datatype.VkBufferMemoryBarrier;
-import tech.icey.vk4j.enumtype.VkResult;
-import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.ptr.PointerPtr;
+import club.doki7.vulkan.bitmask.VkAccessFlags;
+import club.doki7.vulkan.bitmask.VkBufferUsageFlags;
+import club.doki7.vulkan.bitmask.VkPipelineStageFlags;
+import club.doki7.vulkan.datatype.VkBufferCopy;
+import club.doki7.vulkan.datatype.VkBufferMemoryBarrier;
+import club.doki7.vulkan.enumtype.VkResult;
+import club.doki7.vma.bitmask.VmaAllocationCreateFlags;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -46,56 +46,55 @@ public final class ASPECT_ObjectCreate {
         List<Resource.Buffer> vertexBuffers = new ArrayList<>();
         List<Resource.Buffer> indexBuffers = new ArrayList<>();
         try (Arena arena = Arena.ofConfined()) {
-            PointerBuffer ppData = PointerBuffer.allocate(arena);
+            PointerPtr ppData = PointerPtr.allocate(arena);
 
             for (ObjectCreateInfo oci : infoList) {
                 Resource.Buffer vertexStagingBuffer = Resource.Buffer.create(
                         cx,
                         oci.pVertices.byteSize(),
-                        VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                        VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                        VkBufferUsageFlags.TRANSFER_SRC,
+                        VmaAllocationCreateFlags.HOST_ACCESS_RANDOM,
                         null
                 );
                 vertexStagingBuffers.add(vertexStagingBuffer);
 
-                @enumtype(VkResult.class) int result = cx.vma.vmaMapMemory(
+                @EnumType(VkResult.class) int result = cx.vma.mapMemory(
                         cx.vmaAllocator,
                         vertexStagingBuffer.allocation,
                         ppData
                 );
-                if (result != VkResult.VK_SUCCESS) {
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法映射顶点缓冲区内存, 错误代码: " + VkResult.explain(result));
                 }
                 MemorySegment pData = ppData.read().reinterpret(oci.pVertices.byteSize());
                 pData.copyFrom(oci.pVertices);
-                cx.vma.vmaUnmapMemory(cx.vmaAllocator, vertexStagingBuffer.allocation);
+                cx.vma.unmapMemory(cx.vmaAllocator, vertexStagingBuffer.allocation);
 
                 Resource.Buffer indexStagingBuffer = Resource.Buffer.create(
                         cx,
                         oci.pIndices.byteSize(),
-                        VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                        VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                        VkBufferUsageFlags.TRANSFER_SRC,
+                        VmaAllocationCreateFlags.HOST_ACCESS_RANDOM,
                         null
                 );
                 indexStagingBuffers.add(indexStagingBuffer);
 
-                result = cx.vma.vmaMapMemory(
+                result = cx.vma.mapMemory(
                         cx.vmaAllocator,
                         indexStagingBuffer.allocation,
                         ppData
                 );
-                if (result != VkResult.VK_SUCCESS) {
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法映射索引缓冲区内存, 错误代码: " + VkResult.explain(result));
                 }
                 pData = ppData.read().reinterpret(oci.pIndices.byteSize());
                 pData.copyFrom(oci.pIndices);
-                cx.vma.vmaUnmapMemory(cx.vmaAllocator, indexStagingBuffer.allocation);
+                cx.vma.unmapMemory(cx.vmaAllocator, indexStagingBuffer.allocation);
 
                 Resource.Buffer vertexBuffer = Resource.Buffer.create(
                         cx,
                         oci.pVertices.byteSize(),
-                        VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT
-                        | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                        VkBufferUsageFlags.TRANSFER_DST | VkBufferUsageFlags.VERTEX_BUFFER,
                         0,
                         null
                 );
@@ -104,8 +103,7 @@ public final class ASPECT_ObjectCreate {
                 Resource.Buffer indexBuffer = Resource.Buffer.create(
                         cx,
                         oci.pIndices.byteSize(),
-                        VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT
-                        | VkBufferUsageFlags.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                        VkBufferUsageFlags.TRANSFER_DST | VkBufferUsageFlags.INDEX_BUFFER,
                         0,
                         null
                 );
@@ -122,19 +120,19 @@ public final class ASPECT_ObjectCreate {
                         Resource.Buffer targetBuffer = vertexBuffers.get(i);
 
                         copyRegion.size(oci.pVertices.byteSize());
-                        cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, targetBuffer.buffer, 1, copyRegion);
+                        cx.dCmd.cmdCopyBuffer(cmd, stagingBuffer.buffer, targetBuffer.buffer, 1, copyRegion);
 
-                        barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-                        barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+                        barrier.srcAccessMask(VkAccessFlags.TRANSFER_WRITE);
+                        barrier.dstAccessMask(VkAccessFlags.VERTEX_ATTRIBUTE_READ);
                         barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
                         barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
                         barrier.buffer(targetBuffer.buffer);
                         barrier.offset(0);
                         barrier.size(oci.pVertices.byteSize());
-                        cx.dCmd.vkCmdPipelineBarrier(
+                        cx.dCmd.cmdPipelineBarrier(
                                 cmd,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                VkPipelineStageFlags.ALL_COMMANDS,
+                                VkPipelineStageFlags.ALL_COMMANDS,
                                 0,
                                 0, null,
                                 1, barrier,
@@ -144,19 +142,19 @@ public final class ASPECT_ObjectCreate {
                         stagingBuffer = indexStagingBuffers.get(i);
                         targetBuffer = indexBuffers.get(i);
                         copyRegion.size(oci.pIndices.byteSize());
-                        cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, targetBuffer.buffer, 1, copyRegion);
+                        cx.dCmd.cmdCopyBuffer(cmd, stagingBuffer.buffer, targetBuffer.buffer, 1, copyRegion);
 
-                        barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-                        barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+                        barrier.srcAccessMask(VkAccessFlags.TRANSFER_WRITE);
+                        barrier.dstAccessMask(VkAccessFlags.VERTEX_ATTRIBUTE_READ);
                         barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
                         barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
                         barrier.buffer(targetBuffer.buffer);
                         barrier.offset(0);
                         barrier.size(oci.pIndices.byteSize());
-                        cx.dCmd.vkCmdPipelineBarrier(
+                        cx.dCmd.cmdPipelineBarrier(
                                 cmd,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                VkPipelineStageFlags.ALL_COMMANDS,
+                                VkPipelineStageFlags.ALL_COMMANDS,
                                 0,
                                 0, null,
                                 1, barrier,
@@ -171,17 +169,17 @@ public final class ASPECT_ObjectCreate {
                         ObjectCreateInfo oci = infoList.get(i);
 
                         Resource.Buffer vertexBuffer = vertexBuffers.get(i);
-                        barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-                        barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+                        barrier.srcAccessMask(VkAccessFlags.TRANSFER_WRITE);
+                        barrier.dstAccessMask(VkAccessFlags.VERTEX_ATTRIBUTE_READ);
                         barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
                         barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
                         barrier.buffer(vertexBuffer.buffer);
                         barrier.offset(0);
                         barrier.size(oci.pVertices.byteSize());
-                        cx.dCmd.vkCmdPipelineBarrier(
+                        cx.dCmd.cmdPipelineBarrier(
                                 cmd,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                VkPipelineStageFlags.ALL_COMMANDS,
+                                VkPipelineStageFlags.ALL_COMMANDS,
                                 0,
                                 0, null,
                                 1, barrier,
@@ -189,17 +187,17 @@ public final class ASPECT_ObjectCreate {
                         );
 
                         Resource.Buffer indexBuffer = indexBuffers.get(i);
-                        barrier.srcAccessMask(VkAccessFlags.VK_ACCESS_TRANSFER_WRITE_BIT);
-                        barrier.dstAccessMask(VkAccessFlags.VK_ACCESS_INDEX_READ_BIT);
+                        barrier.srcAccessMask(VkAccessFlags.TRANSFER_WRITE);
+                        barrier.dstAccessMask(VkAccessFlags.INDEX_READ);
                         barrier.srcQueueFamilyIndex(cx.dedicatedTransferQueueFamilyIndex.get());
                         barrier.dstQueueFamilyIndex(cx.graphicsQueueFamilyIndex);
                         barrier.buffer(indexBuffer.buffer);
                         barrier.offset(0);
                         barrier.size(oci.pIndices.byteSize());
-                        cx.dCmd.vkCmdPipelineBarrier(
+                        cx.dCmd.cmdPipelineBarrier(
                                 cmd,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                                VkPipelineStageFlags.VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                VkPipelineStageFlags.ALL_COMMANDS,
+                                VkPipelineStageFlags.ALL_COMMANDS,
                                 0,
                                 0, null,
                                 1, barrier,
@@ -217,12 +215,12 @@ public final class ASPECT_ObjectCreate {
                         Resource.Buffer targetBuffer = vertexBuffers.get(i);
 
                         copyRegion.size(oci.pVertices.byteSize());
-                        cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, targetBuffer.buffer, 1, copyRegion);
+                        cx.dCmd.cmdCopyBuffer(cmd, stagingBuffer.buffer, targetBuffer.buffer, 1, copyRegion);
 
                         stagingBuffer = indexStagingBuffers.get(i);
                         targetBuffer = indexBuffers.get(i);
                         copyRegion.size(oci.pIndices.byteSize());
-                        cx.dCmd.vkCmdCopyBuffer(cmd, stagingBuffer.buffer, targetBuffer.buffer, 1, copyRegion);
+                        cx.dCmd.cmdCopyBuffer(cmd, stagingBuffer.buffer, targetBuffer.buffer, 1, copyRegion);
                     }
                 });
             }

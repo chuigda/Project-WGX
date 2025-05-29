@@ -11,16 +11,16 @@ import chr.wgx.render.task.RenderPass;
 import chr.wgx.render.vk.compiled.CompiledRenderPassOp;
 import chr.wgx.render.vk.data.*;
 import chr.wgx.render.vk.task.VulkanRenderPass;
-import tech.icey.glfw.GLFW;
-import tech.icey.glfw.handle.GLFWwindow;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.vk4j.bitmask.VkCommandBufferUsageFlags;
-import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
-import tech.icey.vk4j.datatype.VkExtent2D;
-import tech.icey.vk4j.enumtype.VkResult;
-import tech.icey.vk4j.handle.VkCommandBuffer;
-import tech.icey.vk4j.handle.VkDescriptorPool;
+import club.doki7.glfw.GLFW;
+import club.doki7.glfw.handle.GLFWwindow;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.ptr.IntPtr;
+import club.doki7.vulkan.bitmask.VkCommandBufferUsageFlags;
+import club.doki7.vulkan.datatype.VkCommandBufferBeginInfo;
+import club.doki7.vulkan.datatype.VkExtent2D;
+import club.doki7.vulkan.enumtype.VkResult;
+import club.doki7.vulkan.handle.VkCommandBuffer;
+import club.doki7.vulkan.handle.VkDescriptorPool;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.container.Ref;
 
@@ -35,8 +35,8 @@ public final class VulkanRenderEngine extends RenderEngine {
     VulkanRenderEngine(GLFW glfw, GLFWwindow window) throws RenderException {
         cx = VulkanRenderEngineContext.create(glfw, window);
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pWidthHeight = IntBuffer.allocate(arena, 2);
-            glfw.glfwGetFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));
+            IntPtr pWidthHeight = IntPtr.allocate(arena, 2);
+            glfw.getFramebufferSize(window, pWidthHeight, pWidthHeight.offset(1));
 
             int width = pWidthHeight.read(0);
             int height = pWidthHeight.read(1);
@@ -200,7 +200,7 @@ public final class VulkanRenderEngine extends RenderEngine {
         }
 
         for (Map.Entry<VulkanDescriptorSetLayout, VkDescriptorPool> entry : descriptorPools.entrySet()) {
-            cx.dCmd.vkDestroyDescriptorPool(cx.device, entry.getValue(), null);
+            cx.dCmd.destroyDescriptorPool(cx.device, entry.getValue(), null);
             entry.getKey().dispose(cx);
         }
 
@@ -297,7 +297,7 @@ public final class VulkanRenderEngine extends RenderEngine {
         try (Arena arena = Arena.ofConfined()) {
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.allocate(arena);
             beginInfo.flags(VkCommandBufferUsageFlags.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-            @enumtype(VkResult.class) int result = cx.dCmd.vkBeginCommandBuffer(commandBuffer, beginInfo);
+            @EnumType(VkResult.class) int result = cx.dCmd.vkBeginCommandBuffer(commandBuffer, beginInfo);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));
             }

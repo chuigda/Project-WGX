@@ -2,21 +2,22 @@ package chr.wgx.render.vk;
 
 import chr.wgx.config.Config;
 import chr.wgx.render.RenderException;
-import tech.icey.panama.NativeLayout;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.*;
-import tech.icey.vk4j.datatype.*;
-import tech.icey.vk4j.enumtype.*;
-import tech.icey.vk4j.handle.VkImage;
-import tech.icey.vk4j.handle.VkSwapchainKHR;
+import club.doki7.ffm.NativeLayout;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.ptr.IntPtr;
+import club.doki7.vulkan.VkConstants;
+import club.doki7.vulkan.bitmask.*;
+import club.doki7.vulkan.datatype.*;
+import club.doki7.vulkan.enumtype.*;
+import club.doki7.vulkan.handle.VkImage;
+import club.doki7.vulkan.handle.VkSwapchainKHR;
 
 import java.lang.foreign.Arena;
+import java.util.Objects;
 
 public final class Swapchain {
-    public final @enumtype(VkFormat.class) int swapChainImageFormat;
-    public final @enumtype(VkFormat.class) int depthFormat;
+    public final @EnumType(VkFormat.class) int swapChainImageFormat;
+    public final @EnumType(VkFormat.class) int depthFormat;
     public final VkExtent2D swapExtent;
 
     public final VkSwapchainKHR vkSwapchain;
@@ -28,11 +29,11 @@ public final class Swapchain {
             SwapchainSupportDetails swapchainSupportDetails = querySwapchainSupportDetails(cx, arena);
 
             VkSurfaceFormatKHR surfaceFormat = chooseSwapchainSurfaceFormat(swapchainSupportDetails.formats());
-            @enumtype(VkPresentModeKHR.class) int presentMode = chooseSwapchainPresentMode(
+            @EnumType(VkPresentModeKHR.class) int presentMode = chooseSwapchainPresentMode(
                     swapchainSupportDetails.presentModes()
             );
             VkExtent2D extent = chooseSwapExtent(cx, swapchainSupportDetails.capabilities(), width, height);
-            @enumtype(VkSurfaceTransformFlagsKHR.class) int currentTransform =
+            @EnumType(VkSurfaceTransformFlagsKHR.class) int currentTransform =
                     swapchainSupportDetails.capabilities.currentTransform();
 
             int imageCount = swapchainSupportDetails.capabilities().minImageCount() + 1;
@@ -47,23 +48,27 @@ public final class Swapchain {
                     surfaceFormat,
                     extent,
                     currentTransform, imageCount, presentMode);
-            VkImage[] vkSwapchainImages = getSwapchainImages(cx, swapchain);
-            Resource.SwapchainImage[] swapchainImages = new Resource.SwapchainImage[vkSwapchainImages.length];
-            for (int i = 0; i < vkSwapchainImages.length; i++) {
-                swapchainImages[i] = Resource.SwapchainImage.create(cx, vkSwapchainImages[i], surfaceFormat.format());
+            VkImage.Ptr vkSwapchainImages = getSwapchainImages(cx, swapchain, arena);
+            Resource.SwapchainImage[] swapchainImages = new Resource.SwapchainImage[(int) vkSwapchainImages.size()];
+            for (int i = 0; i < vkSwapchainImages.size(); i++) {
+                swapchainImages[i] = Resource.SwapchainImage.create(
+                        cx,
+                        Objects.requireNonNull(vkSwapchainImages.read(i)),
+                        surfaceFormat.format()
+                );
             }
 
-            @enumtype(VkFormat.class) int depthFormat = findSupportedDepthFormat(cx);
+            @EnumType(VkFormat.class) int depthFormat = findSupportedDepthFormat(cx);
             Resource.Image depthImage = Resource.Image.create(
                     cx,
                     extent.width(),
                     extent.height(),
                     1,
-                    VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
+                    VkSampleCountFlags._1,
                     depthFormat,
-                    VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                    VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                    VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT
+                    VkImageTiling.OPTIMAL,
+                    VkImageUsageFlags.DEPTH_STENCIL_ATTACHMENT,
+                    VkImageAspectFlags.DEPTH
             );
 
             return new Swapchain(
@@ -83,12 +88,12 @@ public final class Swapchain {
         }
         depthImage.dispose(cx);
 
-        cx.dCmd.vkDestroySwapchainKHR(cx.device, vkSwapchain, null);
+        cx.dCmd.destroySwapchainKHR(cx.device, vkSwapchain, null);
     }
 
     private Swapchain(
-            @enumtype(VkFormat.class) int swapChainImageFormat,
-            @enumtype(VkFormat.class) int depthFormat,
+            @EnumType(VkFormat.class) int swapChainImageFormat,
+            @EnumType(VkFormat.class) int depthFormat,
             VkExtent2D swapExtent,
             VkSwapchainKHR swapchain,
             Resource.SwapchainImage[] swapchainImages,
@@ -107,9 +112,9 @@ public final class Swapchain {
             Arena arena,
             VkSurfaceFormatKHR surfaceFormat,
             VkExtent2D extent,
-            @enumtype(VkSurfaceTransformFlagsKHR.class) int currentTransform,
+            @EnumType(VkSurfaceTransformFlagsKHR.class) int currentTransform,
             int imageCount,
-            @enumtype(VkPresentModeKHR.class) int presentMode
+            @EnumType(VkPresentModeKHR.class) int presentMode
     ) throws RenderException {
         VkSwapchainCreateInfoKHR swapchainCreateInfo = VkSwapchainCreateInfoKHR.allocate(arena);
         swapchainCreateInfo.surface(cx.surface);
@@ -118,60 +123,61 @@ public final class Swapchain {
         swapchainCreateInfo.imageColorSpace(surfaceFormat.colorSpace());
         swapchainCreateInfo.imageExtent(extent);
         swapchainCreateInfo.imageArrayLayers(1);
-        swapchainCreateInfo.imageUsage(VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+        swapchainCreateInfo.imageUsage(VkImageUsageFlags.COLOR_ATTACHMENT);
         if (cx.graphicsQueueFamilyIndex != cx.presentQueueFamilyIndex) {
-            swapchainCreateInfo.imageSharingMode(VkSharingMode.VK_SHARING_MODE_CONCURRENT);
-            IntBuffer pQueueFamilyIndices = IntBuffer.allocate(arena, 2);
+            swapchainCreateInfo.imageSharingMode(VkSharingMode.CONCURRENT);
+            IntPtr pQueueFamilyIndices = IntPtr.allocate(arena, 2);
             pQueueFamilyIndices.write(0, cx.graphicsQueueFamilyIndex);
             pQueueFamilyIndices.write(1, cx.presentQueueFamilyIndex);
             swapchainCreateInfo.pQueueFamilyIndices(pQueueFamilyIndices);
         } else {
-            swapchainCreateInfo.imageSharingMode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
+            swapchainCreateInfo.imageSharingMode(VkSharingMode.EXCLUSIVE);
         }
         swapchainCreateInfo.preTransform(currentTransform);
-        swapchainCreateInfo.compositeAlpha(VkCompositeAlphaFlagsKHR.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
+        swapchainCreateInfo.compositeAlpha(VkCompositeAlphaFlagsKHR.OPAQUE);
         swapchainCreateInfo.presentMode(presentMode);
-        swapchainCreateInfo.clipped(Constants.VK_TRUE);
+        swapchainCreateInfo.clipped(VkConstants.TRUE);
 
-        VkSwapchainKHR.Buffer pSwapchain = VkSwapchainKHR.Buffer.allocate(arena);
-        @enumtype(VkResult.class) int result = cx.dCmd.vkCreateSwapchainKHR(
+        VkSwapchainKHR.Ptr pSwapchain = VkSwapchainKHR.Ptr.allocate(arena);
+        @EnumType(VkResult.class) int result = cx.dCmd.createSwapchainKHR(
                 cx.device,
                 swapchainCreateInfo,
                 null,
                 pSwapchain
         );
-        if (result != VkResult.VK_SUCCESS) {
+        if (result != VkResult.SUCCESS) {
             throw new RenderException("无法创建 Vulkan 交换链, 错误代码: " + VkResult.explain(result));
         }
-        return pSwapchain.read();
+        return Objects.requireNonNull(pSwapchain.read());
     }
 
-    private static VkImage[] getSwapchainImages(
+    private static VkImage.Ptr getSwapchainImages(
             VulkanRenderEngineContext cx,
-            VkSwapchainKHR swapchain
+            VkSwapchainKHR swapchain,
+            Arena arena
     ) throws RenderException {
-        try (Arena arena = Arena.ofConfined()) {
-            IntBuffer pImageCount = IntBuffer.allocate(arena);
-            @enumtype(VkResult.class) int result =
-                    cx.dCmd.vkGetSwapchainImagesKHR(cx.device, swapchain, pImageCount, null);
-            if (result != VkResult.VK_SUCCESS) {
+        try (Arena localArena = Arena.ofConfined()) {
+            IntPtr pImageCount = IntPtr.allocate(localArena);
+            @EnumType(VkResult.class) int result =
+                    cx.dCmd.getSwapchainImagesKHR(cx.device, swapchain, pImageCount, null);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 交换链图像, 错误代码: " + VkResult.explain(result));
             }
 
             int imageCount = pImageCount.read();
-            VkImage.Buffer pImages = VkImage.Buffer.allocate(arena, imageCount);
-            result = cx.dCmd.vkGetSwapchainImagesKHR(cx.device, swapchain, pImageCount, pImages);
-            if (result != VkResult.VK_SUCCESS) {
+            VkImage.Ptr pImages = VkImage.Ptr.allocate(arena, imageCount);
+            result = cx.dCmd.getSwapchainImagesKHR(cx.device, swapchain, pImageCount, pImages);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 交换链图像, 错误代码: " + VkResult.explain(result));
             }
-            return pImages.readAll();
+            return pImages;
         }
     }
 
     private record SwapchainSupportDetails(
             VkSurfaceCapabilitiesKHR capabilities,
-            VkSurfaceFormatKHR[] formats,
-            @enumtype(VkPresentModeKHR.class) IntBuffer presentModes
+            VkSurfaceFormatKHR.Ptr formats,
+            @EnumType(VkPresentModeKHR.class) IntPtr presentModes
     ) {}
 
     private static SwapchainSupportDetails querySwapchainSupportDetails(
@@ -179,53 +185,53 @@ public final class Swapchain {
             Arena arena
     ) throws RenderException {
         VkSurfaceCapabilitiesKHR surfaceCapabilities = VkSurfaceCapabilitiesKHR.allocate(arena);
-        @enumtype(VkResult.class) int result = cx.iCmd.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+        @EnumType(VkResult.class) int result = cx.iCmd.getPhysicalDeviceSurfaceCapabilitiesKHR(
                 cx.physicalDevice,
                 cx.surface,
                 surfaceCapabilities
         );
-        if (result != VkResult.VK_SUCCESS) {
+        if (result != VkResult.SUCCESS) {
             throw new RenderException("无法获取 Vulkan 表面能力, 错误代码: " + VkResult.explain(result));
         }
 
         try (Arena localArena = Arena.ofConfined()) {
-            IntBuffer pCount = IntBuffer.allocate(localArena);
-            result = cx.iCmd.vkGetPhysicalDeviceSurfaceFormatsKHR(cx.physicalDevice, cx.surface, pCount, null);
-            if (result != VkResult.VK_SUCCESS) {
+            IntPtr pCount = IntPtr.allocate(localArena);
+            result = cx.iCmd.getPhysicalDeviceSurfaceFormatsKHR(cx.physicalDevice, cx.surface, pCount, null);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 表面格式, 错误代码: " + VkResult.explain(result));
             }
 
             int formatCount = pCount.read();
-            VkSurfaceFormatKHR[] surfaceFormats = VkSurfaceFormatKHR.allocate(arena, formatCount);
-            result = cx.iCmd.vkGetPhysicalDeviceSurfaceFormatsKHR(
+            VkSurfaceFormatKHR.Ptr surfaceFormats = VkSurfaceFormatKHR.allocate(arena, formatCount);
+            result = cx.iCmd.getPhysicalDeviceSurfaceFormatsKHR(
                     cx.physicalDevice,
                     cx.surface,
                     pCount,
-                    surfaceFormats[0]
+                    surfaceFormats
             );
-            if (result != VkResult.VK_SUCCESS) {
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 表面格式, 错误代码: " + VkResult.explain(result));
             }
 
-            result = cx.iCmd.vkGetPhysicalDeviceSurfacePresentModesKHR(
+            result = cx.iCmd.getPhysicalDeviceSurfacePresentModesKHR(
                     cx.physicalDevice,
                     cx.surface,
                     pCount,
                     null
             );
-            if (result != VkResult.VK_SUCCESS) {
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 表面呈现模式, 错误代码: " + VkResult.explain(result));
             }
 
             int presentModeCount = pCount.read();
-            IntBuffer presentModes = IntBuffer.allocate(arena, presentModeCount);
-            result = cx.iCmd.vkGetPhysicalDeviceSurfacePresentModesKHR(
+            IntPtr presentModes = IntPtr.allocate(arena, presentModeCount);
+            result = cx.iCmd.getPhysicalDeviceSurfacePresentModesKHR(
                     cx.physicalDevice,
                     cx.surface,
                     pCount,
                     presentModes
             );
-            if (result != VkResult.VK_SUCCESS) {
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法获取 Vulkan 表面呈现模式, 错误代码: " + VkResult.explain(result));
             }
 
@@ -233,43 +239,43 @@ public final class Swapchain {
         }
     }
 
-    private static VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(VkSurfaceFormatKHR[] formats) {
-        @enumtype(VkFormat.class) int preferredFormat = VkFormat.VK_FORMAT_B8G8R8A8_SRGB;
+    private static VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(VkSurfaceFormatKHR.Ptr formats) {
+        @EnumType(VkFormat.class) int preferredFormat = VkFormat.B8G8R8A8_SRGB;
         for (VkSurfaceFormatKHR format : formats) {
             if (format.format() == preferredFormat &&
-                format.colorSpace() == VkColorSpaceKHR.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                format.colorSpace() == VkColorSpaceKHR.SRGB_NONLINEAR) {
                 return format;
             }
         }
-        return formats[0];
+        return formats.at(0);
     }
 
-    private static @enumtype(VkPresentModeKHR.class) int chooseSwapchainPresentMode(
-            @enumtype(VkPresentModeKHR.class) IntBuffer presentModes
+    private static @EnumType(VkPresentModeKHR.class) int chooseSwapchainPresentMode(
+            @EnumType(VkPresentModeKHR.class) IntPtr presentModes
     ) {
         int vsyncPreference = Config.config().vulkanConfig.vsync;
 
         if (vsyncPreference == 2) {
-            return VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
+            return VkPresentModeKHR.FIFO;
         }
 
         for (int i = 0; i < presentModes.size(); i++) {
-            @enumtype(VkPresentModeKHR.class) int presentMode = presentModes.read(i);
-            if (presentMode == VkPresentModeKHR.VK_PRESENT_MODE_MAILBOX_KHR) {
+            @EnumType(VkPresentModeKHR.class) int presentMode = presentModes.read(i);
+            if (presentMode == VkPresentModeKHR.MAILBOX) {
                 return presentMode;
             }
         }
 
         if (vsyncPreference == 0) {
             for (int i = 0; i < presentModes.size(); i++) {
-                @enumtype(VkPresentModeKHR.class) int presentMode = presentModes.read(i);
-                if (presentMode == VkPresentModeKHR.VK_PRESENT_MODE_IMMEDIATE_KHR) {
+                @EnumType(VkPresentModeKHR.class) int presentMode = presentModes.read(i);
+                if (presentMode == VkPresentModeKHR.IMMEDIATE) {
                     return presentMode;
                 }
             }
         }
 
-        return VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR;
+        return VkPresentModeKHR.FIFO;
     }
 
     private static VkExtent2D chooseSwapExtent(
@@ -294,21 +300,21 @@ public final class Swapchain {
         return actualExtent;
     }
 
-    @enumtype(VkFormat.class) static final int[] CANDIDATE_DEPTH_FORMATS = new int[] {
-            VkFormat.VK_FORMAT_D32_SFLOAT,
-            VkFormat.VK_FORMAT_D32_SFLOAT_S8_UINT,
-            VkFormat.VK_FORMAT_D24_UNORM_S8_UINT
+    @EnumType(VkFormat.class) static final int[] CANDIDATE_DEPTH_FORMATS = new int[] {
+            VkFormat.D32_SFLOAT,
+            VkFormat.D32_SFLOAT_S8_UINT,
+            VkFormat.D24_UNORM_S8_UINT
     };
-    @enumtype(VkFormatFeatureFlags.class) static final int DEPTH_IMAGE_FEATURES =
-            VkFormatFeatureFlags.VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    @EnumType(VkFormatFeatureFlags.class) static final int DEPTH_IMAGE_FEATURES =
+            VkFormatFeatureFlags.DEPTH_STENCIL_ATTACHMENT;
 
-    private static @enumtype(VkFormat.class) int findSupportedDepthFormat(
+    private static @EnumType(VkFormat.class) int findSupportedDepthFormat(
             VulkanRenderEngineContext cx
     ) throws RenderException {
         try (Arena arena = Arena.ofConfined()) {
             VkFormatProperties formatProperties = VkFormatProperties.allocate(arena);
-            for (@enumtype(VkFormat.class) int format : CANDIDATE_DEPTH_FORMATS) {
-                cx.iCmd.vkGetPhysicalDeviceFormatProperties(cx.physicalDevice, format, formatProperties);
+            for (@EnumType(VkFormat.class) int format : CANDIDATE_DEPTH_FORMATS) {
+                cx.iCmd.getPhysicalDeviceFormatProperties(cx.physicalDevice, format, formatProperties);
                 if ((formatProperties.optimalTilingFeatures() & DEPTH_IMAGE_FEATURES) != 0) {
                     return format;
                 }

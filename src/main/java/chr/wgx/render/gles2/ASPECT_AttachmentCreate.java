@@ -6,9 +6,9 @@ import chr.wgx.render.data.Texture;
 import chr.wgx.render.gles2.data.GLES2Texture;
 import chr.wgx.render.gles2.data.GLES2TextureAttachment;
 import chr.wgx.render.info.AttachmentCreateInfo;
-import tech.icey.gles2.GLES2;
-import tech.icey.gles2.GLES2Constants;
-import tech.icey.panama.buffer.IntBuffer;
+import club.doki7.gles2.GLES2;
+import club.doki7.gles2.GLES2Constants;
+import club.doki7.ffm.buffer.IntBuffer;
 import tech.icey.xjbutil.container.Pair;
 
 import java.lang.foreign.Arena;

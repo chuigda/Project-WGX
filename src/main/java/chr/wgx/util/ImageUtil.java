@@ -1,7 +1,7 @@
 package chr.wgx.util;
 
-import tech.icey.glfw.datatype.GLFWimage;
-import tech.icey.panama.buffer.ByteBuffer;
+import club.doki7.glfw.datatype.GLFWimage;
+import club.doki7.ffm.buffer.ByteBuffer;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

@@ -1,12 +1,12 @@
 package chr.wgx.render.common;
 
-import tech.icey.gles2.GLES2Constants;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.vk4j.enumtype.VkFormat;
+import club.doki7.gles2.GLES2Constants;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.vulkan.enumtype.VkFormat;
 
 import static chr.wgx.render.gles2.glext.EXT_texture_storage.GL_R32F_EXT;
-import static tech.icey.gles2.GLES2Constants.*;
-import static tech.icey.vk4j.enumtype.VkFormat.VK_FORMAT_D32_SFLOAT;
+import static club.doki7.gles2.GLES2Constants.*;
+import static club.doki7.vulkan.enumtype.VkFormat.VK_FORMAT_D32_SFLOAT;
 
 public enum PixelFormat {
     /// 供一般彩色附件和纹理使用的格式，这个格式也非常方便从 CPU 上传 RGBA 数据到 GPU
@@ -20,16 +20,16 @@ public enum PixelFormat {
     /// 深度缓冲附件使用的格式
     DEPTH_BUFFER_OPTIMAL(VK_FORMAT_D32_SFLOAT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
 
-    public final @enumtype(VkFormat.class) int vkFormat;
-    public final @enumtype(GLES2Constants.class) int glFormat;
-    public final @enumtype(GLES2Constants.class) int glInternalFormat;
-    public final @enumtype(GLES2Constants.class) int glType;
+    public final @EnumType(VkFormat.class) int vkFormat;
+    public final @EnumType(GLES2Constants.class) int glFormat;
+    public final @EnumType(GLES2Constants.class) int glInternalFormat;
+    public final @EnumType(GLES2Constants.class) int glType;
 
     PixelFormat(
-            @enumtype(VkFormat.class) int vkFormat,
-            @enumtype(GLES2Constants.class) int glFormat,
-            @enumtype(GLES2Constants.class) int glInternalFormat,
-            @enumtype(GLES2Constants.class) int glType
+            @EnumType(VkFormat.class) int vkFormat,
+            @EnumType(GLES2Constants.class) int glFormat,
+            @EnumType(GLES2Constants.class) int glInternalFormat,
+            @EnumType(GLES2Constants.class) int glType
     ) {
         this.vkFormat = vkFormat;
 

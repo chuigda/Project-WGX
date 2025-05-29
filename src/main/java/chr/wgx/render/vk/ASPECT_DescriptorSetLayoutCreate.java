@@ -6,15 +6,15 @@ import chr.wgx.render.info.DescriptorSetLayoutCreateInfo;
 import chr.wgx.render.info.TextureBindingInfo;
 import chr.wgx.render.info.UniformBufferBindingInfo;
 import chr.wgx.render.vk.data.VulkanDescriptorSetLayout;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.vk4j.datatype.VkDescriptorPoolCreateInfo;
-import tech.icey.vk4j.datatype.VkDescriptorPoolSize;
-import tech.icey.vk4j.datatype.VkDescriptorSetLayoutBinding;
-import tech.icey.vk4j.datatype.VkDescriptorSetLayoutCreateInfo;
-import tech.icey.vk4j.enumtype.VkDescriptorType;
-import tech.icey.vk4j.enumtype.VkResult;
-import tech.icey.vk4j.handle.VkDescriptorPool;
-import tech.icey.vk4j.handle.VkDescriptorSetLayout;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.vulkan.datatype.VkDescriptorPoolCreateInfo;
+import club.doki7.vulkan.datatype.VkDescriptorPoolSize;
+import club.doki7.vulkan.datatype.VkDescriptorSetLayoutBinding;
+import club.doki7.vulkan.datatype.VkDescriptorSetLayoutCreateInfo;
+import club.doki7.vulkan.enumtype.VkDescriptorType;
+import club.doki7.vulkan.enumtype.VkResult;
+import club.doki7.vulkan.handle.VkDescriptorPool;
+import club.doki7.vulkan.handle.VkDescriptorSetLayout;
 
 import java.lang.foreign.Arena;
 
@@ -53,7 +53,7 @@ public final class ASPECT_DescriptorSetLayoutCreate {
             createInfo.pBindings(bindings[0]);
 
             VkDescriptorSetLayout.Buffer pDescriptorSetLayout = VkDescriptorSetLayout.Buffer.allocate(arena);
-            @enumtype(VkResult.class) int result = cx.dCmd.vkCreateDescriptorSetLayout(
+            @EnumType(VkResult.class) int result = cx.dCmd.vkCreateDescriptorSetLayout(
                     cx.device,
                     createInfo,
                     null,

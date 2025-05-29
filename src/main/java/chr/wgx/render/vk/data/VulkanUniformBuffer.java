@@ -6,7 +6,7 @@ import chr.wgx.render.info.UniformBufferCreateInfo;
 import chr.wgx.render.vk.IVkDisposable;
 import chr.wgx.render.vk.Resource;
 import chr.wgx.render.vk.VulkanRenderEngineContext;
-import tech.icey.vk4j.handle.VkDeviceMemory;
+import club.doki7.vulkan.handle.VkDeviceMemory;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action1;
 

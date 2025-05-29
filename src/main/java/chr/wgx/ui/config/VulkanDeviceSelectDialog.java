@@ -1,8 +1,8 @@
 package chr.wgx.ui.config;
 
 import chr.wgx.ui.SwingUtil;
-import tech.icey.panama.annotation.unsigned;
-import tech.icey.vk4j.enumtype.VkPhysicalDeviceType;
+import club.doki7.ffm.annotation.unsigned;
+import club.doki7.vulkan.enumtype.VkPhysicalDeviceType;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action1;
 
@@ -14,7 +14,7 @@ public final class VulkanDeviceSelectDialog extends JDialog {
     public VulkanDeviceSelectDialog(
             JFrame parent,
             List<VulkanDeviceInfo> deviceInfoList,
-            @unsigned int initialSelectedDeviceId,
+            @Unsigned int initialSelectedDeviceId,
             Action1<Option<VulkanDeviceInfo>> onDeviceSelected
     ) {
         super(parent, "选择 Vulkan 设备", true);

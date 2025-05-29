@@ -1,10 +1,10 @@
 package chr.wgx.render.gles2.glext;
 
 import org.jetbrains.annotations.Nullable;
-import tech.icey.panama.IPointer;
-import tech.icey.panama.RawFunctionLoader;
-import tech.icey.panama.annotation.unsigned;
-import tech.icey.panama.buffer.IntBuffer;
+import club.doki7.ffm.IPointer;
+import club.doki7.ffm.RawFunctionLoader;
+import club.doki7.ffm.annotation.unsigned;
+import club.doki7.ffm.buffer.IntBuffer;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
@@ -51,7 +51,7 @@ public final class KHR_debug {
             int type,
             int severity,
             int count,
-            @Nullable @unsigned IntBuffer ids,
+            @Nullable @Unsigned IntBuffer ids,
             boolean enabled) {
         try {
             HANDLE$glDebugMessageControl.invokeExact(

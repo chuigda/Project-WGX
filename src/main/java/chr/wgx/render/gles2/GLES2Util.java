@@ -1,11 +1,11 @@
 package chr.wgx.render.gles2;
 
 import chr.wgx.render.RenderException;
-import tech.icey.gles2.GLES2;
-import tech.icey.gles2.GLES2Constants;
-import tech.icey.panama.buffer.ByteBuffer;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.panama.buffer.PointerBuffer;
+import club.doki7.gles2.GLES2;
+import club.doki7.gles2.GLES2Constants;
+import club.doki7.ffm.buffer.ByteBuffer;
+import club.doki7.ffm.buffer.IntBuffer;
+import club.doki7.ffm.buffer.PointerBuffer;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;

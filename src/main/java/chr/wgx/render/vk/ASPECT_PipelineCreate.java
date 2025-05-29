@@ -5,23 +5,24 @@ import chr.wgx.render.info.*;
 import chr.wgx.render.vk.data.VulkanDescriptorSetLayout;
 import chr.wgx.render.vk.data.VulkanRenderPipeline;
 import org.jetbrains.annotations.Nullable;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.ByteBuffer;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.VkColorComponentFlags;
-import tech.icey.vk4j.bitmask.VkCullModeFlags;
-import tech.icey.vk4j.bitmask.VkSampleCountFlags;
-import tech.icey.vk4j.bitmask.VkShaderStageFlags;
-import tech.icey.vk4j.datatype.*;
-import tech.icey.vk4j.enumtype.*;
-import tech.icey.vk4j.handle.VkDescriptorSetLayout;
-import tech.icey.vk4j.handle.VkPipeline;
-import tech.icey.vk4j.handle.VkPipelineLayout;
-import tech.icey.vk4j.handle.VkShaderModule;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.ptr.BytePtr;
+import club.doki7.ffm.ptr.IntPtr;
+import club.doki7.vulkan.VkConstants;
+import club.doki7.vulkan.bitmask.VkColorComponentFlags;
+import club.doki7.vulkan.bitmask.VkCullModeFlags;
+import club.doki7.vulkan.bitmask.VkSampleCountFlags;
+import club.doki7.vulkan.bitmask.VkShaderStageFlags;
+import club.doki7.vulkan.datatype.*;
+import club.doki7.vulkan.enumtype.*;
+import club.doki7.vulkan.handle.VkDescriptorSetLayout;
+import club.doki7.vulkan.handle.VkPipeline;
+import club.doki7.vulkan.handle.VkPipelineLayout;
+import club.doki7.vulkan.handle.VkShaderModule;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
+import java.util.Objects;
 
 public final class ASPECT_PipelineCreate {
     public ASPECT_PipelineCreate(VulkanRenderEngine engine) {
@@ -42,41 +43,44 @@ public final class ASPECT_PipelineCreate {
             vertexShaderModule = cx.createShaderModule(program.vertexShader);
             fragmentShaderModule = cx.createShaderModule(program.fragmentShader);
 
-            VkPipelineShaderStageCreateInfo[] shaderStages = VkPipelineShaderStageCreateInfo.allocate(arena, 2);
-            shaderStages[0].stage(VkShaderStageFlags.VK_SHADER_STAGE_VERTEX_BIT);
-            shaderStages[0].module(vertexShaderModule);
-            shaderStages[0].pName(MAIN_NAME_BUF);
-            shaderStages[1].stage(VkShaderStageFlags.VK_SHADER_STAGE_FRAGMENT_BIT);
-            shaderStages[1].module(fragmentShaderModule);
-            shaderStages[1].pName(MAIN_NAME_BUF);
+            VkPipelineShaderStageCreateInfo.Ptr shaderStages = VkPipelineShaderStageCreateInfo.allocate(arena, 2);
+            VkPipelineShaderStageCreateInfo vertexStage = shaderStages.at(0);
+            vertexStage.stage(VkShaderStageFlags.VERTEX);
+            vertexStage.module(vertexShaderModule);
+            vertexStage.pName(MAIN_NAME_BUF);
+            VkPipelineShaderStageCreateInfo fragmentStage = shaderStages.at(1);
+            fragmentStage.stage(VkShaderStageFlags.FRAGMENT);
+            fragmentStage.module(fragmentShaderModule);
+            fragmentStage.pName(MAIN_NAME_BUF);
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.allocate(arena);
             VkVertexInputBindingDescription bindingDescription = VkVertexInputBindingDescription.allocate(arena);
             bindingDescription.binding(0);
             bindingDescription.stride(info.vertexInputInfo.stride);
-            bindingDescription.inputRate(VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX);
-            VkVertexInputAttributeDescription[] attributeDescriptions =
+            bindingDescription.inputRate(VkVertexInputRate.VERTEX);
+            VkVertexInputAttributeDescription.Ptr attributeDescriptions =
                     VkVertexInputAttributeDescription.allocate(arena, info.vertexInputInfo.attributes.size());
-            for (int i = 0; i < attributeDescriptions.length; i++) {
+            for (int i = 0; i < attributeDescriptions.size(); i++) {
                 FieldInfo attribute = info.vertexInputInfo.attributes.get(i);
+                VkVertexInputAttributeDescription attributeDescription = attributeDescriptions.at(i);
 
-                attributeDescriptions[i].binding(0);
-                attributeDescriptions[i].location(attribute.location);
-                attributeDescriptions[i].format(attribute.type.vkFormat);
-                attributeDescriptions[i].offset(attribute.byteOffset);
+                attributeDescription.binding(0);
+                attributeDescription.location(attribute.location);
+                attributeDescription.format(attribute.type.vkFormat);
+                attributeDescription.offset(attribute.byteOffset);
             }
             vertexInputInfo.vertexBindingDescriptionCount(1);
             vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
-            vertexInputInfo.vertexAttributeDescriptionCount(attributeDescriptions.length);
-            vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions[0]);
+            vertexInputInfo.vertexAttributeDescriptionCount((int) attributeDescriptions.size());
+            vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions);
 
             VkPipelineInputAssemblyStateCreateInfo inputAssembly =
                     VkPipelineInputAssemblyStateCreateInfo.allocate(arena);
-            inputAssembly.topology(VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+            inputAssembly.topology(VkPrimitiveTopology.TRIANGLE_LIST);
 
-            IntBuffer dynamicStates = IntBuffer.allocate(arena, 2);
-            dynamicStates.write(0, VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT);
-            dynamicStates.write(1, VkDynamicState.VK_DYNAMIC_STATE_SCISSOR);
+            IntPtr dynamicStates = IntPtr.allocate(arena, 2);
+            dynamicStates.write(0, VkDynamicState.VIEWPORT);
+            dynamicStates.write(1, VkDynamicState.SCISSOR);
             VkPipelineDynamicStateCreateInfo dynamicStateInfo = VkPipelineDynamicStateCreateInfo.allocate(arena);
             dynamicStateInfo.dynamicStateCount(2);
             dynamicStateInfo.pDynamicStates(dynamicStates);
@@ -86,49 +90,49 @@ public final class ASPECT_PipelineCreate {
             viewportState.scissorCount(1);
 
             VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.allocate(arena);
-            rasterizer.depthClampEnable(Constants.VK_FALSE);
-            rasterizer.rasterizerDiscardEnable(Constants.VK_FALSE);
-            rasterizer.polygonMode(VkPolygonMode.VK_POLYGON_MODE_FILL);
+            rasterizer.depthClampEnable(VkConstants.FALSE);
+            rasterizer.rasterizerDiscardEnable(VkConstants.FALSE);
+            rasterizer.polygonMode(VkPolygonMode.FILL);
             rasterizer.lineWidth(1.0f);
-            rasterizer.cullMode(VkCullModeFlags.VK_CULL_MODE_NONE);
-            rasterizer.frontFace(VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE);
-            rasterizer.depthBiasEnable(Constants.VK_FALSE);
+            rasterizer.cullMode(VkCullModeFlags.NONE);
+            rasterizer.frontFace(VkFrontFace.COUNTER_CLOCKWISE);
+            rasterizer.depthBiasEnable(VkConstants.FALSE);
             rasterizer.depthBiasConstantFactor(0.0f);
             rasterizer.depthBiasClamp(0.0f);
             rasterizer.depthBiasSlopeFactor(0.0f);
 
             VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.allocate(arena);
-            multisampling.sampleShadingEnable(Constants.VK_FALSE);
-            multisampling.rasterizationSamples(VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT);
+            multisampling.sampleShadingEnable(VkConstants.FALSE);
+            multisampling.rasterizationSamples(VkSampleCountFlags._1);
 
             VkPipelineColorBlendAttachmentState colorBlendAttachment =
                     VkPipelineColorBlendAttachmentState.allocate(arena);
             colorBlendAttachment.colorWriteMask(
-                    VkColorComponentFlags.VK_COLOR_COMPONENT_R_BIT |
-                            VkColorComponentFlags.VK_COLOR_COMPONENT_G_BIT |
-                            VkColorComponentFlags.VK_COLOR_COMPONENT_B_BIT |
-                            VkColorComponentFlags.VK_COLOR_COMPONENT_A_BIT
+                    VkColorComponentFlags.R |
+                            VkColorComponentFlags.G |
+                            VkColorComponentFlags.B |
+                            VkColorComponentFlags.A
             );
             // TODO make these parameters of PipelineCreateInfo
-            colorBlendAttachment.blendEnable(Constants.VK_FALSE);
-            colorBlendAttachment.srcColorBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_ONE);
-            colorBlendAttachment.dstColorBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_ZERO);
-            colorBlendAttachment.colorBlendOp(VkBlendOp.VK_BLEND_OP_ADD);
-            colorBlendAttachment.srcAlphaBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_ONE);
-            colorBlendAttachment.dstAlphaBlendFactor(VkBlendFactor.VK_BLEND_FACTOR_ZERO);
-            colorBlendAttachment.alphaBlendOp(VkBlendOp.VK_BLEND_OP_ADD);
+            colorBlendAttachment.blendEnable(VkConstants.FALSE);
+            colorBlendAttachment.srcColorBlendFactor(VkBlendFactor.ONE);
+            colorBlendAttachment.dstColorBlendFactor(VkBlendFactor.ZERO);
+            colorBlendAttachment.colorBlendOp(VkBlendOp.ADD);
+            colorBlendAttachment.srcAlphaBlendFactor(VkBlendFactor.ONE);
+            colorBlendAttachment.dstAlphaBlendFactor(VkBlendFactor.ZERO);
+            colorBlendAttachment.alphaBlendOp(VkBlendOp.ADD);
 
             VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.allocate(arena);
-            colorBlending.logicOpEnable(Constants.VK_FALSE);
-            colorBlending.logicOp(VkLogicOp.VK_LOGIC_OP_COPY);
+            colorBlending.logicOpEnable(VkConstants.FALSE);
+            colorBlending.logicOp(VkLogicOp.COPY);
             colorBlending.attachmentCount(1);
             colorBlending.pAttachments(colorBlendAttachment);
 
             VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.allocate(arena);
             if (info.depthTest) {
-                depthStencil.depthTestEnable(Constants.VK_TRUE);
-                depthStencil.depthWriteEnable(Constants.VK_TRUE);
-                depthStencil.depthCompareOp(VkCompareOp.VK_COMPARE_OP_LESS);
+                depthStencil.depthTestEnable(VkConstants.TRUE);
+                depthStencil.depthWriteEnable(VkConstants.TRUE);
+                depthStencil.depthCompareOp(VkCompareOp.LESS);
                 depthStencil.minDepthBounds(0.0f);
                 depthStencil.maxDepthBounds(1.0f);
             }
@@ -136,7 +140,7 @@ public final class ASPECT_PipelineCreate {
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.allocate(arena);
             pipelineLayoutInfo.setLayoutCount(info.descriptorSetLayouts.size());
             if (!info.descriptorSetLayouts.isEmpty()) {
-                VkDescriptorSetLayout.Buffer pSetLayouts = VkDescriptorSetLayout.Buffer.allocate(
+                VkDescriptorSetLayout.Ptr pSetLayouts = VkDescriptorSetLayout.Ptr.allocate(
                         arena,
                         info.descriptorSetLayouts.size()
                 );
@@ -149,13 +153,13 @@ public final class ASPECT_PipelineCreate {
             if (info.pushConstantInfo instanceof Option.Some<PushConstantInfo> some) {
                 PushConstantInfo pushConstantInfo = some.value;
 
-                VkPushConstantRange[] pushConstantRanges = VkPushConstantRange.allocate(
+                VkPushConstantRange.Ptr pushConstantRanges = VkPushConstantRange.allocate(
                         arena,
                         pushConstantInfo.pushConstantRanges.size()
                 );
                 for (int i = 0; i < pushConstantInfo.pushConstantRanges.size(); i++) {
                     PushConstantRange range = pushConstantInfo.pushConstantRanges.get(i);
-                    VkPushConstantRange rangeVk = pushConstantRanges[i];
+                    VkPushConstantRange rangeVk = pushConstantRanges.at(i);
 
                     rangeVk.stageFlags(range.shaderStage.vkShaderStageFlags);
                     rangeVk.offset(range.offset);
@@ -163,24 +167,24 @@ public final class ASPECT_PipelineCreate {
                 }
 
                 pipelineLayoutInfo.pushConstantRangeCount(pushConstantInfo.pushConstantRanges.size());
-                pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges[0]);
+                pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges);
             }
 
-            VkPipelineLayout.Buffer pPipelineLayout = VkPipelineLayout.Buffer.allocate(arena);
-            @enumtype(VkResult.class) int result = cx.dCmd.vkCreatePipelineLayout(
+            VkPipelineLayout.Ptr pPipelineLayout = VkPipelineLayout.Ptr.allocate(arena);
+            @EnumType(VkResult.class) int result = cx.dCmd.createPipelineLayout(
                     cx.device,
                     pipelineLayoutInfo,
                     null,
                     pPipelineLayout
             );
-            if (result != VkResult.VK_SUCCESS) {
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建管线布局, 错误代码: " + VkResult.explain(result));
             }
-            VkPipelineLayout pipelineLayout = pPipelineLayout.read();
+            VkPipelineLayout pipelineLayout = Objects.requireNonNull(pPipelineLayout.read());
 
             VkGraphicsPipelineCreateInfo pipelineInfo = VkGraphicsPipelineCreateInfo.allocate(arena);
             pipelineInfo.stageCount(2);
-            pipelineInfo.pStages(shaderStages[0]);
+            pipelineInfo.pStages(shaderStages);
             pipelineInfo.pVertexInputState(vertexInputInfo);
             pipelineInfo.pInputAssemblyState(inputAssembly);
             pipelineInfo.pViewportState(viewportState);
@@ -195,7 +199,7 @@ public final class ASPECT_PipelineCreate {
 
             VkPipelineRenderingCreateInfo pipelineRenderingCreateInfo = VkPipelineRenderingCreateInfo.allocate(arena);
             pipelineRenderingCreateInfo.colorAttachmentCount(info.colorAttachmentCount);
-            IntBuffer pColorAttachmentFormats = IntBuffer.allocate(arena, info.colorAttachmentCount);
+            IntPtr pColorAttachmentFormats = IntPtr.allocate(arena, info.colorAttachmentCount);
             for (int i = 0; i < info.colorAttachmentCount; i++) {
                 pColorAttachmentFormats.write(i, engine.swapchain.swapChainImageFormat);
             }
@@ -205,27 +209,27 @@ public final class ASPECT_PipelineCreate {
             }
             pipelineInfo.pNext(pipelineRenderingCreateInfo);
 
-            VkPipeline.Buffer pPipeline = VkPipeline.Buffer.allocate(arena);
-            result = cx.dCmd.vkCreateGraphicsPipelines(cx.device, null, 1, pipelineInfo, null, pPipeline);
-            if (result != VkResult.VK_SUCCESS) {
+            VkPipeline.Ptr pPipeline = VkPipeline.Ptr.allocate(arena);
+            result = cx.dCmd.createGraphicsPipelines(cx.device, null, 1, pipelineInfo, null, pPipeline);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建图形管线, 错误代码: " + VkResult.explain(result));
             }
-            VkPipeline pipeline = pPipeline.read();
+            VkPipeline pipeline = Objects.requireNonNull(pPipeline.read());
 
             VulkanRenderPipeline ret = new VulkanRenderPipeline(info, pipelineLayout, pipeline);
             engine.pipelines.add(ret);
             return ret;
         } finally {
             if (vertexShaderModule != null) {
-                cx.dCmd.vkDestroyShaderModule(cx.device, vertexShaderModule, null);
+                cx.dCmd.destroyShaderModule(cx.device, vertexShaderModule, null);
             }
             if (fragmentShaderModule != null) {
-                cx.dCmd.vkDestroyShaderModule(cx.device, fragmentShaderModule, null);
+                cx.dCmd.destroyShaderModule(cx.device, fragmentShaderModule, null);
             }
         }
     }
 
     private final VulkanRenderEngine engine;
 
-    private static final ByteBuffer MAIN_NAME_BUF = ByteBuffer.allocateString(Arena.global(), "main");
+    private static final BytePtr MAIN_NAME_BUF = BytePtr.allocateString(Arena.global(), "main");
 }

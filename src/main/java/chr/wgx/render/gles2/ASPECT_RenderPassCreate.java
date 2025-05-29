@@ -4,10 +4,10 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.gles2.data.GLES2TextureAttachment;
 import chr.wgx.render.gles2.task.GLES2RenderPass;
 import chr.wgx.render.info.RenderPassCreateInfo;
-import tech.icey.gles2.GLES2;
-import tech.icey.gles2.GLES2Constants;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.IntBuffer;
+import club.doki7.gles2.GLES2;
+import club.doki7.gles2.GLES2Constants;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.buffer.IntBuffer;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
@@ -33,7 +33,7 @@ public final class ASPECT_RenderPassCreate {
             int framebufferObject = pFramebufferObject.read();
 
             gles2.glBindFramebuffer(GLES2Constants.GL_FRAMEBUFFER, framebufferObject);
-            @enumtype(GLES2Constants.class) int currentAttachment = GLES2Constants.GL_COLOR_ATTACHMENT0;
+            @EnumType(GLES2Constants.class) int currentAttachment = GLES2Constants.GL_COLOR_ATTACHMENT0;
             for (GLES2TextureAttachment attachment : colorTextureAttachments) {
                 gles2.glFramebufferTexture2D(
                         GLES2Constants.GL_FRAMEBUFFER,

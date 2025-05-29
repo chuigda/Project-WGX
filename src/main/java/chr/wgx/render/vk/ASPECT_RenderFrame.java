@@ -3,20 +3,20 @@ package chr.wgx.render.vk;
 import chr.wgx.render.RenderException;
 import chr.wgx.render.vk.compiled.CompiledRenderPassOp;
 import chr.wgx.render.vk.data.VulkanUniformBuffer;
-import tech.icey.panama.NativeLayout;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.VkCommandBufferUsageFlags;
-import tech.icey.vk4j.bitmask.VkPipelineStageFlags;
-import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
-import tech.icey.vk4j.datatype.VkPresentInfoKHR;
-import tech.icey.vk4j.datatype.VkSubmitInfo;
-import tech.icey.vk4j.enumtype.VkResult;
-import tech.icey.vk4j.handle.VkCommandBuffer;
-import tech.icey.vk4j.handle.VkFence;
-import tech.icey.vk4j.handle.VkSemaphore;
-import tech.icey.vk4j.handle.VkSwapchainKHR;
+import club.doki7.ffm.NativeLayout;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.ptr.IntPtr;
+import club.doki7.vulkan.VkConstants;
+import club.doki7.vulkan.bitmask.VkCommandBufferUsageFlags;
+import club.doki7.vulkan.bitmask.VkPipelineStageFlags;
+import club.doki7.vulkan.datatype.VkCommandBufferBeginInfo;
+import club.doki7.vulkan.datatype.VkPresentInfoKHR;
+import club.doki7.vulkan.datatype.VkSubmitInfo;
+import club.doki7.vulkan.enumtype.VkResult;
+import club.doki7.vulkan.handle.VkCommandBuffer;
+import club.doki7.vulkan.handle.VkFence;
+import club.doki7.vulkan.handle.VkSemaphore;
+import club.doki7.vulkan.handle.VkSwapchainKHR;
 
 @SuppressWarnings("FieldCanBeLocal")
 public final class ASPECT_RenderFrame {
@@ -24,21 +24,21 @@ public final class ASPECT_RenderFrame {
         this.engine = engine;
 
         VulkanRenderEngineContext cx = engine.cx;
-        this.pInFlightFences = VkFence.Buffer.allocate(cx.prefabArena, cx.inFlightFences.length);
-        this.pImageIndex = IntBuffer.allocate(cx.prefabArena);
-        this.pImageAvailableSemaphores = VkSemaphore.Buffer.allocate(
+        this.pInFlightFences = VkFence.Ptr.allocate(cx.prefabArena, cx.inFlightFences.length);
+        this.pImageIndex = IntPtr.allocate(cx.prefabArena);
+        this.pImageAvailableSemaphores = VkSemaphore.Ptr.allocate(
                 cx.prefabArena,
                 cx.imageAvailableSemaphores.length
         );
-        this.pRenderFinishedSemaphores = VkSemaphore.Buffer.allocate(
+        this.pRenderFinishedSemaphores = VkSemaphore.Ptr.allocate(
                 cx.prefabArena,
                 cx.renderFinishedSemaphores.length
         );
-        this.pWaitStages = IntBuffer.allocate(cx.prefabArena);
+        this.pWaitStages = IntPtr.allocate(cx.prefabArena);
         this.commandBufferBeginInfos = VkCommandBufferBeginInfo.allocate(cx.prefabArena, cx.commandBuffers.length);
-        this.pCommandBuffers = VkCommandBuffer.Buffer.allocate(cx.prefabArena, cx.commandBuffers.length);
+        this.pCommandBuffers = VkCommandBuffer.Ptr.allocate(cx.prefabArena, cx.commandBuffers.length);
         this.submitInfos = VkSubmitInfo.allocate(cx.prefabArena, cx.commandBuffers.length);
-        this.pSwapchain = VkSwapchainKHR.Buffer.allocate(cx.prefabArena);
+        this.pSwapchain = VkSwapchainKHR.Ptr.allocate(cx.prefabArena);
         this.presentInfos = VkPresentInfoKHR.allocate(cx.prefabArena, cx.commandBuffers.length);
 
         for (int i = 0; i < cx.inFlightFences.length; i++) {
@@ -53,25 +53,27 @@ public final class ASPECT_RenderFrame {
             pRenderFinishedSemaphores.write(i, cx.renderFinishedSemaphores[i]);
         }
 
-        pWaitStages.write(VkPipelineStageFlags.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        pWaitStages.write(VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT);
 
         for (int i = 0; i < cx.commandBuffers.length; i++) {
-            commandBufferBeginInfos[i].flags(VkCommandBufferUsageFlags.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+            commandBufferBeginInfos.at(i).flags(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT);
             pCommandBuffers.write(i, cx.commandBuffers[i]);
 
-            submitInfos[i].waitSemaphoreCount(1);
-            submitInfos[i].pWaitSemaphores(pImageAvailableSemaphores.offset(i));
-            submitInfos[i].pWaitDstStageMask(pWaitStages);
-            submitInfos[i].commandBufferCount(1);
-            submitInfos[i].pCommandBuffers(pCommandBuffers.offset(i));
-            submitInfos[i].signalSemaphoreCount(1);
-            submitInfos[i].pSignalSemaphores(pRenderFinishedSemaphores.offset(i));
+            VkSubmitInfo submitInfo = submitInfos.at(i);
+            submitInfo.waitSemaphoreCount(1);
+            submitInfo.pWaitSemaphores(pImageAvailableSemaphores.offset(i));
+            submitInfo.pWaitDstStageMask(pWaitStages);
+            submitInfo.commandBufferCount(1);
+            submitInfo.pCommandBuffers(pCommandBuffers.offset(i));
+            submitInfo.signalSemaphoreCount(1);
+            submitInfo.pSignalSemaphores(pRenderFinishedSemaphores.offset(i));
 
-            presentInfos[i].waitSemaphoreCount(1);
-            presentInfos[i].pWaitSemaphores(pRenderFinishedSemaphores.offset(i));
-            presentInfos[i].swapchainCount(1);
-            presentInfos[i].pSwapchains(pSwapchain);
-            presentInfos[i].pImageIndices(pImageIndex);
+            VkPresentInfoKHR presentInfo = presentInfos.at(i);
+            presentInfo.waitSemaphoreCount(1);
+            presentInfo.pWaitSemaphores(pRenderFinishedSemaphores.offset(i));
+            presentInfo.swapchainCount(1);
+            presentInfo.pSwapchains(pSwapchain);
+            presentInfo.pImageIndices(pImageIndex);
         }
     }
 
@@ -79,11 +81,11 @@ public final class ASPECT_RenderFrame {
         VulkanRenderEngineContext cx = engine.cx;
         Swapchain swapchain = engine.swapchain;
 
-        cx.dCmd.vkWaitForFences(
+        cx.dCmd.waitForFences(
                 cx.device,
                 1,
                 pInFlightFences.offset(currentFrameIndex),
-                Constants.VK_TRUE,
+                VkConstants.TRUE,
                 NativeLayout.UINT64_MAX
         );
 
@@ -91,7 +93,7 @@ public final class ASPECT_RenderFrame {
             uniform.updateGPU(currentFrameIndex);
         }
 
-        @enumtype(VkResult.class) int result = cx.dCmd.vkAcquireNextImageKHR(
+        @EnumType(VkResult.class) int result = cx.dCmd.acquireNextImageKHR(
                 cx.device,
                 swapchain.vkSwapchain,
                 NativeLayout.UINT64_MAX,
@@ -99,22 +101,22 @@ public final class ASPECT_RenderFrame {
                 null,
                 pImageIndex
         );
-        if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR) {
+        if (result == VkResult.ERROR_OUT_OF_DATE_KHR) {
             return;
         }
-        if (result != VkResult.VK_SUCCESS && result != VkResult.VK_SUBOPTIMAL_KHR) {
+        if (result != VkResult.SUCCESS && result != VkResult.SUBOPTIMAL_KHR) {
             throw new RenderException("无法获取交换链图像, 错误代码: " + VkResult.explain(result));
         }
-        cx.dCmd.vkResetFences(cx.device, 1, pInFlightFences.offset(currentFrameIndex));
+        cx.dCmd.resetFences(cx.device, 1, pInFlightFences.offset(currentFrameIndex));
 
         int imageIndex = pImageIndex.read();
         engine.swapchainColorAttachment.swapchainImage = swapchain.swapchainImages[imageIndex];
 
         VkCommandBuffer cmdBuf = cx.commandBuffers[currentFrameIndex];
 
-        cx.dCmd.vkResetCommandBuffer(cmdBuf, 0);
-        result = cx.dCmd.vkBeginCommandBuffer(cmdBuf, commandBufferBeginInfos[currentFrameIndex]);
-        if (result != VkResult.VK_SUCCESS) {
+        cx.dCmd.resetCommandBuffer(cmdBuf, 0);
+        result = cx.dCmd.beginCommandBuffer(cmdBuf, commandBufferBeginInfos.at(currentFrameIndex));
+        if (result != VkResult.SUCCESS) {
             throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));
         }
 
@@ -122,16 +124,16 @@ public final class ASPECT_RenderFrame {
             op.recordToCommandBuffer(cx, swapchain, cmdBuf, currentFrameIndex);
         }
 
-        result = cx.dCmd.vkEndCommandBuffer(cmdBuf);
-        if (result != VkResult.VK_SUCCESS) {
+        result = cx.dCmd.endCommandBuffer(cmdBuf);
+        if (result != VkResult.SUCCESS) {
             throw new RenderException("无法结束指令缓冲记录, 错误代码: " + VkResult.explain(result));
         }
 
-        VkSubmitInfo submitInfo = submitInfos[currentFrameIndex];
+        VkSubmitInfo submitInfo = submitInfos.at(currentFrameIndex);
         synchronized (cx.graphicsQueue) {
-            result = cx.dCmd.vkQueueSubmit(cx.graphicsQueue, 1, submitInfo, cx.inFlightFences[currentFrameIndex]);
+            result = cx.dCmd.queueSubmit(cx.graphicsQueue, 1, submitInfo, cx.inFlightFences[currentFrameIndex]);
         }
-        if (result != VkResult.VK_SUCCESS) {
+        if (result != VkResult.SUCCESS) {
             throw new RenderException("无法提交指令缓冲, 错误代码: " + VkResult.explain(result));
         }
 
@@ -141,12 +143,12 @@ public final class ASPECT_RenderFrame {
                         cx.graphicsQueue :
                         cx.presentQueue
         ) {
-            result = cx.dCmd.vkQueuePresentKHR(cx.presentQueue, presentInfos[currentFrameIndex]);
-            if (result == VkResult.VK_ERROR_OUT_OF_DATE_KHR || result == VkResult.VK_SUBOPTIMAL_KHR) {
+            result = cx.dCmd.queuePresentKHR(cx.presentQueue, presentInfos.at(currentFrameIndex));
+            if (result == VkResult.ERROR_OUT_OF_DATE_KHR || result == VkResult.SUBOPTIMAL_KHR) {
                 return;
             }
 
-            if (result != VkResult.VK_SUCCESS) {
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法提交交换链图像, 错误代码: " + VkResult.explain(result));
             }
         }
@@ -154,14 +156,14 @@ public final class ASPECT_RenderFrame {
 
     private final VulkanRenderEngine engine;
 
-    private final VkFence.Buffer pInFlightFences;
-    private final IntBuffer pImageIndex;
-    private final VkSemaphore.Buffer pImageAvailableSemaphores;
-    private final VkSemaphore.Buffer pRenderFinishedSemaphores;
-    private final IntBuffer pWaitStages;
-    private final VkCommandBufferBeginInfo[] commandBufferBeginInfos;
-    private final VkCommandBuffer.Buffer pCommandBuffers;
-    private final VkSubmitInfo[] submitInfos;
-    private final VkSwapchainKHR.Buffer pSwapchain;
-    private final VkPresentInfoKHR[] presentInfos;
+    private final VkFence.Ptr pInFlightFences;
+    private final IntPtr pImageIndex;
+    private final VkSemaphore.Ptr pImageAvailableSemaphores;
+    private final VkSemaphore.Ptr pRenderFinishedSemaphores;
+    private final IntPtr pWaitStages;
+    private final VkCommandBufferBeginInfo.Ptr commandBufferBeginInfos;
+    private final VkCommandBuffer.Ptr pCommandBuffers;
+    private final VkSubmitInfo.Ptr submitInfos;
+    private final VkSwapchainKHR.Ptr pSwapchain;
+    private final VkPresentInfoKHR.Ptr presentInfos;
 }

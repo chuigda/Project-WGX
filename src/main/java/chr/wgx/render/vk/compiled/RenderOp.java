@@ -9,13 +9,13 @@ import chr.wgx.render.vk.task.VulkanRenderPipelineBind;
 import chr.wgx.render.vk.task.VulkanRenderTask;
 import chr.wgx.render.vk.task.VulkanRenderTaskDynamic;
 import chr.wgx.render.vk.task.VulkanRenderTaskGroup;
-import tech.icey.panama.buffer.LongBuffer;
-import tech.icey.vk4j.enumtype.VkIndexType;
-import tech.icey.vk4j.enumtype.VkPipelineBindPoint;
-import tech.icey.vk4j.handle.VkBuffer;
-import tech.icey.vk4j.handle.VkCommandBuffer;
-import tech.icey.vk4j.handle.VkDescriptorSet;
-import tech.icey.vk4j.handle.VkPipelineLayout;
+import club.doki7.ffm.ptr.LongPtr;
+import club.doki7.vulkan.enumtype.VkIndexType;
+import club.doki7.vulkan.enumtype.VkPipelineBindPoint;
+import club.doki7.vulkan.handle.VkBuffer;
+import club.doki7.vulkan.handle.VkCommandBuffer;
+import club.doki7.vulkan.handle.VkDescriptorSet;
+import club.doki7.vulkan.handle.VkPipelineLayout;
 import tech.icey.xjbutil.container.Option;
 
 public final class RenderOp implements CompiledRenderPassOp {
@@ -30,9 +30,9 @@ public final class RenderOp implements CompiledRenderPassOp {
             VkCommandBuffer cmdBuf,
             int frameIndex
     ) {
-        cx.dCmd.vkCmdBindPipeline(
+        cx.dCmd.cmdBindPipeline(
                 cmdBuf,
-                VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+                VkPipelineBindPoint.GRAPHICS,
                 bindPoint.pipeline.pipeline
         );
 
@@ -43,14 +43,14 @@ public final class RenderOp implements CompiledRenderPassOp {
 
             int sharedDescriptorCount = renderTaskGroup.sharedDescriptorSets.size();
             if (sharedDescriptorCount != 0) {
-                VkDescriptorSet.Buffer pDescriptorSetVk;
+                VkDescriptorSet.Ptr pDescriptorSetVk;
                 if (renderTaskGroup.sharedDescriptorSets.size() == 1) {
                     pDescriptorSetVk = renderTaskGroup.sharedDescriptorSetsVk[0];
                 } else {
                     pDescriptorSetVk = renderTaskGroup.sharedDescriptorSetsVk[frameIndex];
                 }
 
-                cx.dCmd.vkCmdBindDescriptorSets(
+                cx.dCmd.cmdBindDescriptorSets(
                         cmdBuf,
                         VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
                         bindPoint.pipeline.pipelineLayout,
@@ -75,7 +75,7 @@ public final class RenderOp implements CompiledRenderPassOp {
                 }
 
                 if (!renderTask.descriptorSets.isEmpty()) {
-                    cx.dCmd.vkCmdBindDescriptorSets(
+                    cx.dCmd.cmdBindDescriptorSets(
                             cmdBuf,
                             VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
                             bindPoint.pipeline.pipelineLayout,
@@ -114,7 +114,7 @@ public final class RenderOp implements CompiledRenderPassOp {
                         }
                     }
 
-                    cx.dCmd.vkCmdBindDescriptorSets(
+                    cx.dCmd.cmdBindDescriptorSets(
                             cmdBuf,
                             VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
                             bindPoint.pipeline.pipelineLayout,
@@ -149,7 +149,7 @@ public final class RenderOp implements CompiledRenderPassOp {
             VulkanPushConstant pushConstant = some.value;
             synchronized (pushConstant) {
                 for (PushConstantRange range : pushConstant.createInfo.pushConstantRanges) {
-                    cx.dCmd.vkCmdPushConstants(
+                    cx.dCmd.cmdPushConstants(
                             cmdBuf,
                             pipelineLayout,
                             range.shaderStage.vkShaderStageFlags,
@@ -165,19 +165,19 @@ public final class RenderOp implements CompiledRenderPassOp {
     private static void recordDrawCommand(
             VulkanRenderEngineContext cx,
             VkCommandBuffer cmdBuf,
-            VkBuffer.Buffer pVertexBuffer,
-            LongBuffer pOffsets,
+            VkBuffer.Ptr pVertexBuffer,
+            LongPtr pOffsets,
             VkBuffer indexBuffer,
             int indexCount
     ) {
-        cx.dCmd.vkCmdBindVertexBuffers(cmdBuf, 0, 1, pVertexBuffer, pOffsets);
-        cx.dCmd.vkCmdBindIndexBuffer(
+        cx.dCmd.cmdBindVertexBuffers(cmdBuf, 0, 1, pVertexBuffer, pOffsets);
+        cx.dCmd.cmdBindIndexBuffer(
                 cmdBuf,
                 indexBuffer,
                 0,
-                VkIndexType.VK_INDEX_TYPE_UINT32
+                VkIndexType.UINT32
         );
-        cx.dCmd.vkCmdDrawIndexed(
+        cx.dCmd.cmdDrawIndexed(
                 cmdBuf,
                 indexCount,
                 1,

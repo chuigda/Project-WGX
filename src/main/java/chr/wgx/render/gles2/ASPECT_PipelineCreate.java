@@ -6,8 +6,8 @@ import chr.wgx.render.gles2.data.AttributeBinding;
 import chr.wgx.render.gles2.data.GLES2RenderPipeline;
 import chr.wgx.render.gles2.data.UniformLocation;
 import chr.wgx.render.info.*;
-import tech.icey.gles2.GLES2;
-import tech.icey.panama.buffer.ByteBuffer;
+import club.doki7.gles2.GLES2;
+import club.doki7.ffm.buffer.ByteBuffer;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;

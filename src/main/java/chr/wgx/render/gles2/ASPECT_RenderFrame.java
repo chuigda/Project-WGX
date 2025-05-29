@@ -17,11 +17,11 @@ import chr.wgx.render.info.FieldInfo;
 import chr.wgx.render.info.PushConstantRange;
 import chr.wgx.render.info.RenderPassAttachmentInfo;
 import org.intellij.lang.annotations.Language;
-import tech.icey.gles2.GLES2;
-import tech.icey.gles2.GLES2Constants;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.FloatBuffer;
-import tech.icey.panama.buffer.IntBuffer;
+import club.doki7.gles2.GLES2;
+import club.doki7.gles2.GLES2Constants;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.buffer.FloatBuffer;
+import club.doki7.ffm.buffer.IntBuffer;
 import tech.icey.xjbutil.container.Option;
 
 import java.lang.foreign.Arena;
@@ -328,7 +328,7 @@ public final class ASPECT_RenderFrame {
             );
         }
 
-        @enumtype(GLES2Constants.class) int status = gles2.glGetError();
+        @EnumType(GLES2Constants.class) int status = gles2.glGetError();
         if (status != GLES2Constants.GL_NO_ERROR) {
             throw new RenderException("OpenGL 错误: " + status);
         }

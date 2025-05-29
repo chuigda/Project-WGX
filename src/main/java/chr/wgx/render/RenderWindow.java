@@ -1,12 +1,12 @@
 package chr.wgx.render;
 
 import chr.wgx.util.ImageUtil;
-import tech.icey.glfw.GLFW;
-import tech.icey.glfw.GLFWConstants;
-import tech.icey.glfw.datatype.GLFWimage;
-import tech.icey.glfw.handle.GLFWwindow;
-import tech.icey.panama.annotation.pointer;
-import tech.icey.panama.buffer.IntBuffer;
+import club.doki7.glfw.GLFW;
+import club.doki7.glfw.GLFWConstants;
+import club.doki7.glfw.datatype.GLFWimage;
+import club.doki7.glfw.handle.GLFWwindow;
+import club.doki7.ffm.annotation.pointer;
+import club.doki7.ffm.buffer.IntBuffer;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;

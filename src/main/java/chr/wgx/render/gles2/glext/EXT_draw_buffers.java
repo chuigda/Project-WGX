@@ -1,7 +1,7 @@
 package chr.wgx.render.gles2.glext;
 
-import tech.icey.panama.RawFunctionLoader;
-import tech.icey.panama.buffer.IntBuffer;
+import club.doki7.ffm.RawFunctionLoader;
+import club.doki7.ffm.buffer.IntBuffer;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;

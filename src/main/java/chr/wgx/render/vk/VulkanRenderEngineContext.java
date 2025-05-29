@@ -1,27 +1,28 @@
 package chr.wgx.render.vk;
 
 import chr.wgx.render.RenderException;
+import club.doki7.vulkan.command.VkDeviceCommands;
+import club.doki7.vulkan.command.VkEntryCommands;
+import club.doki7.vulkan.command.VkInstanceCommands;
+import club.doki7.vulkan.command.VkStaticCommands;
 import org.jetbrains.annotations.Nullable;
-import tech.icey.glfw.GLFW;
-import tech.icey.glfw.handle.GLFWwindow;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.buffer.IntBuffer;
-import tech.icey.vk4j.Constants;
-import tech.icey.vk4j.bitmask.VkCommandBufferUsageFlags;
-import tech.icey.vk4j.command.DeviceCommands;
-import tech.icey.vk4j.command.EntryCommands;
-import tech.icey.vk4j.command.InstanceCommands;
-import tech.icey.vk4j.command.StaticCommands;
-import tech.icey.vk4j.datatype.*;
-import tech.icey.vk4j.enumtype.VkCommandBufferLevel;
-import tech.icey.vk4j.enumtype.VkResult;
-import tech.icey.vk4j.handle.*;
-import tech.icey.vma.VMA;
-import tech.icey.vma.handle.VmaAllocator;
+import club.doki7.glfw.GLFW;
+import club.doki7.glfw.handle.GLFWwindow;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.ptr.IntPtr;
+import club.doki7.vulkan.VkConstants;
+import club.doki7.vulkan.bitmask.VkCommandBufferUsageFlags;
+import club.doki7.vulkan.datatype.*;
+import club.doki7.vulkan.enumtype.VkCommandBufferLevel;
+import club.doki7.vulkan.enumtype.VkResult;
+import club.doki7.vulkan.handle.*;
+import club.doki7.vma.VMA;
+import club.doki7.vma.handle.VmaAllocator;
 import tech.icey.xjbutil.container.Option;
 import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.Arena;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
 public final class VulkanRenderEngineContext {
@@ -29,10 +30,10 @@ public final class VulkanRenderEngineContext {
     /// 同一时刻，最多只允许在渲染线程外额外提交 {@code 4} 个指令缓冲
     public final Semaphore graphicsQueueSubmitPermission = new Semaphore(4);
 
-    public final StaticCommands sCmd;
-    public final EntryCommands eCmd;
-    public final InstanceCommands iCmd;
-    public final DeviceCommands dCmd;
+    public final VkStaticCommands sCmd;
+    public final VkEntryCommands eCmd;
+    public final VkInstanceCommands iCmd;
+    public final VkDeviceCommands dCmd;
     public final VMA vma;
 
     public final VkPhysicalDevice physicalDevice;
@@ -62,10 +63,10 @@ public final class VulkanRenderEngineContext {
     public boolean disposed = false;
 
     VulkanRenderEngineContext(
-            StaticCommands sCmd,
-            EntryCommands eCmd,
-            InstanceCommands iCmd,
-            DeviceCommands dCmd,
+            VkStaticCommands sCmd,
+            VkEntryCommands eCmd,
+            VkInstanceCommands iCmd,
+            VkDeviceCommands dCmd,
             VMA vma,
 
             VkPhysicalDevice physicalDevice,
@@ -128,18 +129,18 @@ public final class VulkanRenderEngineContext {
     public VkShaderModule createShaderModule(byte[] code) throws RenderException {
         assert code.length % Integer.BYTES == 0;
         try (Arena arena = Arena.ofConfined()) {
-            IntBuffer buffer = IntBuffer.allocate(arena, code);
+            IntPtr buffer = IntPtr.allocate(arena, code);
 
             VkShaderModuleCreateInfo createInfo = VkShaderModuleCreateInfo.allocate(arena);
             createInfo.codeSize(buffer.size() * Integer.BYTES);
             createInfo.pCode(buffer);
 
-            VkShaderModule.Buffer pShaderModule = VkShaderModule.Buffer.allocate(arena);
-            @enumtype(VkResult.class) int result = dCmd.vkCreateShaderModule(device, createInfo, null, pShaderModule);
-            if (result != VkResult.VK_SUCCESS) {
+            VkShaderModule.Ptr pShaderModule = VkShaderModule.Ptr.allocate(arena);
+            @EnumType(VkResult.class) int result = dCmd.createShaderModule(device, createInfo, null, pShaderModule);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建着色器模块, 错误代码: " + VkResult.explain(result));
             }
-            return pShaderModule.read();
+            return Objects.requireNonNull(pShaderModule.read());
         }
     }
 
@@ -169,11 +170,11 @@ public final class VulkanRenderEngineContext {
             synchronized (presentQueue) {
                 if (dedicatedTransferQueue instanceof Option.Some<VkQueue> someDedicatedTransferQueue) {
                     synchronized (someDedicatedTransferQueue.value) {
-                        dCmd.vkDeviceWaitIdle(device);
+                        dCmd.deviceWaitIdle(device);
                     }
                 }
                 else {
-                    dCmd.vkDeviceWaitIdle(device);
+                    dCmd.deviceWaitIdle(device);
                 }
             }
         }
@@ -184,27 +185,27 @@ public final class VulkanRenderEngineContext {
 
         waitDeviceIdle();
 
-        vma.vmaDestroyAllocator(vmaAllocator);
+        vma.destroyAllocator(vmaAllocator);
         if (transferCommandPool instanceof Option.Some<VkCommandPool> someTransferCommandPool) {
-            dCmd.vkDestroyCommandPool(device, someTransferCommandPool.value, null);
+            dCmd.destroyCommandPool(device, someTransferCommandPool.value, null);
         }
-        dCmd.vkDestroyCommandPool(device, commandPool, null);
-        dCmd.vkDestroyCommandPool(device, graphicsOnceCommandPool, null);
+        dCmd.destroyCommandPool(device, commandPool, null);
+        dCmd.destroyCommandPool(device, graphicsOnceCommandPool, null);
         for (VkFence fence : inFlightFences) {
-            dCmd.vkDestroyFence(device, fence, null);
+            dCmd.destroyFence(device, fence, null);
         }
         for (VkSemaphore semaphore : renderFinishedSemaphores) {
-            dCmd.vkDestroySemaphore(device, semaphore, null);
+            dCmd.destroySemaphore(device, semaphore, null);
         }
         for (VkSemaphore semaphore : imageAvailableSemaphores) {
-            dCmd.vkDestroySemaphore(device, semaphore, null);
+            dCmd.destroySemaphore(device, semaphore, null);
         }
-        dCmd.vkDestroyDevice(device, null);
+        dCmd.destroyDevice(device, null);
         if (debugMessenger instanceof Option.Some<VkDebugUtilsMessengerEXT> someDebugMessenger) {
-            iCmd.vkDestroyDebugUtilsMessengerEXT(instance, someDebugMessenger.value, null);
+            iCmd.destroyDebugUtilsMessengerEXT(instance, someDebugMessenger.value, null);
         }
-        iCmd.vkDestroySurfaceKHR(instance, surface, null);
-        iCmd.vkDestroyInstance(instance, null);
+        iCmd.destroySurfaceKHR(instance, surface, null);
+        iCmd.destroyInstance(instance, null);
     }
 
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
@@ -219,30 +220,30 @@ public final class VulkanRenderEngineContext {
         try (Arena arena = Arena.ofConfined()) {
             VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.allocate(arena);
             allocateInfo.commandPool(commandPool1);
-            allocateInfo.level(VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+            allocateInfo.level(VkCommandBufferLevel.PRIMARY);
             allocateInfo.commandBufferCount(1);
 
-            VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
-            @enumtype(VkResult.class) int result;
+            VkCommandBuffer.Ptr pCommandBuffer = VkCommandBuffer.Ptr.allocate(arena);
+            @EnumType(VkResult.class) int result;
 
             synchronized (commandPool1) {
-                result = dCmd.vkAllocateCommandBuffers(device, allocateInfo, pCommandBuffer);
-                if (result != VkResult.VK_SUCCESS) {
+                result = dCmd.allocateCommandBuffers(device, allocateInfo, pCommandBuffer);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法为操作分配指令缓冲, 错误代码: " + VkResult.explain(result));
                 }
                 commandBuffer = pCommandBuffer.read();
 
                 VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.allocate(arena);
-                beginInfo.flags(VkCommandBufferUsageFlags.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-                result = dCmd.vkBeginCommandBuffer(commandBuffer, beginInfo);
-                if (result != VkResult.VK_SUCCESS) {
+                beginInfo.flags(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT);
+                result = dCmd.beginCommandBuffer(commandBuffer, beginInfo);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法开始记录指令缓冲, 错误代码: " + VkResult.explain(result));
                 }
 
                 recordCommandBuffer.apply(commandBuffer);
 
-                result = dCmd.vkEndCommandBuffer(commandBuffer);
-                if (result != VkResult.VK_SUCCESS) {
+                result = dCmd.endCommandBuffer(commandBuffer);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法结束指令缓冲记录, 错误代码: " + VkResult.explain(result));
                 }
             }
@@ -252,35 +253,35 @@ public final class VulkanRenderEngineContext {
             submitInfo.pCommandBuffers(pCommandBuffer);
 
             VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.allocate(arena);
-            VkFence.Buffer pFence = VkFence.Buffer.allocate(arena);
-            result = dCmd.vkCreateFence(device, fenceCreateInfo, null, pFence);
-            if (result != VkResult.VK_SUCCESS) {
+            VkFence.Ptr pFence = VkFence.Ptr.allocate(arena);
+            result = dCmd.createFence(device, fenceCreateInfo, null, pFence);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法创建指令缓冲同步信栅栏, 错误代码: " + VkResult.explain(result));
             }
             fence = pFence.read();
 
             synchronized (queue) {
-                result = dCmd.vkQueueSubmit(queue, 1, submitInfo, fence);
-                if (result != VkResult.VK_SUCCESS) {
+                result = dCmd.queueSubmit(queue, 1, submitInfo, fence);
+                if (result != VkResult.SUCCESS) {
                     throw new RenderException("无法提交指令缓冲, 错误代码: " + VkResult.explain(result));
                 }
             }
 
-            result = dCmd.vkWaitForFences(device, 1, pFence, Constants.VK_TRUE, -1);
-            if (result != VkResult.VK_SUCCESS) {
+            result = dCmd.waitForFences(device, 1, pFence, VkConstants.TRUE, -1);
+            if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法等待操作指令缓冲完成, 错误代码: " + VkResult.explain(result));
             }
         }
         finally {
             if (fence != null) {
-                dCmd.vkDestroyFence(device, fence, null);
+                dCmd.destroyFence(device, fence, null);
             }
 
             if (commandBuffer != null) {
                 try (Arena arena = Arena.ofConfined()) {
-                    VkCommandBuffer.Buffer pCommandBuffer = VkCommandBuffer.Buffer.allocate(arena);
+                    VkCommandBuffer.Ptr pCommandBuffer = VkCommandBuffer.Ptr.allocate(arena);
                     pCommandBuffer.write(commandBuffer);
-                    dCmd.vkFreeCommandBuffers(device, commandPool1, 1, pCommandBuffer);
+                    dCmd.freeCommandBuffers(device, commandPool1, 1, pCommandBuffer);
                 }
             }
         }

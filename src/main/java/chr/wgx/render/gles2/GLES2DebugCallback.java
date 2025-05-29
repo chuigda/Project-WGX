@@ -1,11 +1,11 @@
 package chr.wgx.render.gles2;
 
 import chr.wgx.render.gles2.glext.KHR_debug;
-import tech.icey.gles2.GLES2Constants;
-import tech.icey.panama.annotation.enumtype;
-import tech.icey.panama.annotation.pointer;
-import tech.icey.panama.annotation.unsigned;
-import tech.icey.panama.buffer.ByteBuffer;
+import club.doki7.gles2.GLES2Constants;
+import club.doki7.ffm.annotation.EnumType;
+import club.doki7.ffm.annotation.pointer;
+import club.doki7.ffm.annotation.unsigned;
+import club.doki7.ffm.buffer.ByteBuffer;
 import tech.icey.xjbutil.functional.Action1;
 
 import java.lang.foreign.Arena;
@@ -17,10 +17,10 @@ import java.util.logging.Logger;
 
 public final class GLES2DebugCallback {
     private static void debugCallback(
-            @enumtype(GLES2Constants.class) int source,
-            @enumtype(GLES2Constants.class) int type,
-            @unsigned int id,
-            @enumtype(GLES2Constants.class) int severity,
+            @EnumType(GLES2Constants.class) int source,
+            @EnumType(GLES2Constants.class) int type,
+            @Unsigned int id,
+            @EnumType(GLES2Constants.class) int severity,
             int ignoredLength,
             @pointer(comment = "const GLchar*") MemorySegment message,
             @pointer(comment = "const void*") MemorySegment ignoredUserParam
@@ -46,7 +46,7 @@ public final class GLES2DebugCallback {
         }
     }
 
-    private static Action1<String> getSeverityLoggingFunction(@enumtype(GLES2Constants.class) int severity) {
+    private static Action1<String> getSeverityLoggingFunction(@EnumType(GLES2Constants.class) int severity) {
         Action1<String> action;
         if (severity == KHR_debug.DEBUG_SEVERITY_HIGH) {
             action = logger::severe;
@@ -60,7 +60,7 @@ public final class GLES2DebugCallback {
         return action;
     }
 
-    private static String describeDebugSource(@enumtype(GLES2Constants.class) int source) {
+    private static String describeDebugSource(@EnumType(GLES2Constants.class) int source) {
         return switch (source) {
             case KHR_debug.DEBUG_SOURCE_API -> "API";
             case KHR_debug.DEBUG_SOURCE_WINDOW_SYSTEM -> "Window System";
@@ -72,7 +72,7 @@ public final class GLES2DebugCallback {
         };
     }
 
-    private static String describeDebugType(@enumtype(GLES2Constants.class) int type) {
+    private static String describeDebugType(@EnumType(GLES2Constants.class) int type) {
         return switch (type) {
             case KHR_debug.DEBUG_TYPE_ERROR -> "Error";
             case KHR_debug.DEBUG_TYPE_DEPRECATED_BEHAVIOR -> "Deprecated Behavior";
@@ -85,7 +85,7 @@ public final class GLES2DebugCallback {
         };
     }
 
-    private static String describeDebugSeverity(@enumtype(GLES2Constants.class) int severity) {
+    private static String describeDebugSeverity(@EnumType(GLES2Constants.class) int severity) {
         return switch (severity) {
             case KHR_debug.DEBUG_SEVERITY_HIGH -> "High";
             case KHR_debug.DEBUG_SEVERITY_MEDIUM -> "Medium";

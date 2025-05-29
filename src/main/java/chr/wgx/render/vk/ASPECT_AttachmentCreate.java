@@ -6,11 +6,11 @@ import chr.wgx.render.data.Texture;
 import chr.wgx.render.info.AttachmentCreateInfo;
 import chr.wgx.render.vk.data.CombinedImageSampler;
 import chr.wgx.render.vk.data.VulkanImageAttachment;
-import tech.icey.vk4j.bitmask.VkImageAspectFlags;
-import tech.icey.vk4j.bitmask.VkImageUsageFlags;
-import tech.icey.vk4j.bitmask.VkSampleCountFlags;
-import tech.icey.vk4j.enumtype.VkFormat;
-import tech.icey.vk4j.enumtype.VkImageTiling;
+import club.doki7.vulkan.bitmask.VkImageAspectFlags;
+import club.doki7.vulkan.bitmask.VkImageUsageFlags;
+import club.doki7.vulkan.bitmask.VkSampleCountFlags;
+import club.doki7.vulkan.enumtype.VkFormat;
+import club.doki7.vulkan.enumtype.VkImageTiling;
 import tech.icey.xjbutil.container.Pair;
 import tech.icey.xjbutil.container.Ref;
 
@@ -57,9 +57,9 @@ public final class ASPECT_AttachmentCreate {
                 actualWidth,
                 actualHeight,
                 1,
-                VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
+                VkSampleCountFlags._1,
                 VkFormat.VK_FORMAT_B8G8R8A8_SRGB,
-                VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
+                VkImageTiling.OPTIMAL,
                 VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
                 VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT
         );
@@ -80,11 +80,11 @@ public final class ASPECT_AttachmentCreate {
                 actualWidth,
                 actualHeight,
                 1,
-                VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
+                VkSampleCountFlags._1,
                 VkFormat.VK_FORMAT_D32_SFLOAT,
-                VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT
+                VkImageTiling.OPTIMAL,
+                VkImageUsageFlags.DEPTH_STENCIL_ATTACHMENT,
+                VkImageAspectFlags.DEPTH
         );
     }
 
