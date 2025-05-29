@@ -104,6 +104,7 @@ public final class Reactor {
                 }
             } catch (Throwable e) {
                 logger.severe("无法初始化插件 " + factory.name() + ": " + e.getMessage());
+                e.printStackTrace();
             }
 
             currentProgress += perPluginProgress;

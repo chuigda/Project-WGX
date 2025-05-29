@@ -63,7 +63,7 @@ public final class ASPECT_DescriptorSetCreate {
             allocInfo.descriptorSetCount(frameDescriptorSets);
             allocInfo.pSetLayouts(pSetLayouts);
 
-            VkDescriptorSet.Ptr pDescriptorSets = VkDescriptorSet.Ptr.allocate(arena, frameDescriptorSets);
+            VkDescriptorSet.Ptr pDescriptorSets = VkDescriptorSet.Ptr.allocate(cx.prefabArena, frameDescriptorSets);
             @EnumType(VkResult.class) int result = cx.dCmd.allocateDescriptorSets(cx.device, allocInfo, pDescriptorSets);
             if (result != VkResult.SUCCESS) {
                 throw new RenderException("无法分配描述符集, 错误代码: " + VkResult.explain(result));

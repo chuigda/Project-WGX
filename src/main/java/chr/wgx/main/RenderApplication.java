@@ -29,6 +29,7 @@ public final class RenderApplication {
 
         progressDlg.setProgress(20, "创建渲染引擎");
         GLFW glfw = GLFWLoader.loadGLFW();
+        glfw.initHint(GLFWConstants.PLATFORM, GLFWConstants.PLATFORM_X11);
         if (glfw.init() != GLFWConstants.TRUE) {
             throw new RuntimeException("GLFW 初始化失败");
         }
