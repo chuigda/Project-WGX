@@ -25,31 +25,31 @@
         <dependency>
             <groupId>club.doki7</groupId>
             <artifactId>ffm-plus</artifactId>
-            <version>0.2.0</version>
+            <version>0.2.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>club.doki7</groupId>
             <artifactId>vulkan</artifactId>
-            <version>0.3.0</version>
+            <version>0.3.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>club.doki7</groupId>
             <artifactId>vma</artifactId>
-            <version>0.3.0</version>
+            <version>0.3.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>club.doki7</groupId>
             <artifactId>gles2</artifactId>
-            <version>0.3.0</version>
+            <version>0.3.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>club.doki7</groupId>
             <artifactId>glfw</artifactId>
-            <version>0.3.0</version>
+            <version>0.3.3</version>
             <scope>compile</scope>
         </dependency>
 
