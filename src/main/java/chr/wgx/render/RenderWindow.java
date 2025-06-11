@@ -54,7 +54,7 @@ public final class RenderWindow implements AutoCloseable {
     }
 
     public void mainLoop() throws RenderException {
-        while (glfw.windowShouldClose(rawWindow) != GLFWConstants.TRUE) {
+        while (glfw.windowShouldClose(rawWindow) != GLFW.TRUE) {
             glfw.pollEvents();
             if (framebufferResized) {
                 framebufferResized = false;

@@ -7,7 +7,6 @@ import chr.wgx.render.gles2.data.GLES2Texture;
 import chr.wgx.render.gles2.data.GLES2TextureAttachment;
 import chr.wgx.render.info.AttachmentCreateInfo;
 import club.doki7.gles2.GLES2;
-import club.doki7.gles2.GLES2Constants;
 import club.doki7.ffm.ptr.IntPtr;
 import tech.icey.xjbutil.container.Pair;
 
@@ -30,9 +29,9 @@ public final class ASPECT_AttachmentCreate {
             gles2.genTextures(1, pTexture);
             int textureObject = pTexture.read();
 
-            gles2.bindTexture(GLES2Constants.TEXTURE_2D, textureObject);
+            gles2.bindTexture(GLES2.TEXTURE_2D, textureObject);
             gles2.texImage2D(
-                    GLES2Constants.TEXTURE_2D,
+                    GLES2.TEXTURE_2D,
                     0,
                     info.pixelFormat.glInternalFormat,
                     actualWidth,
@@ -42,13 +41,13 @@ public final class ASPECT_AttachmentCreate {
                     info.pixelFormat.glType,
                     MemorySegment.NULL
             );
-            gles2.texParameteri(GLES2Constants.TEXTURE_2D, GLES2Constants.TEXTURE_MIN_FILTER, GLES2Constants.LINEAR);
-            gles2.texParameteri(GLES2Constants.TEXTURE_2D, GLES2Constants.TEXTURE_MAG_FILTER, GLES2Constants.LINEAR);
-            gles2.texParameteri(GLES2Constants.TEXTURE_2D, GLES2Constants.TEXTURE_WRAP_S, GLES2Constants.CLAMP_TO_EDGE);
-            gles2.texParameteri(GLES2Constants.TEXTURE_2D, GLES2Constants.TEXTURE_WRAP_T, GLES2Constants.CLAMP_TO_EDGE);
+            gles2.texParameteri(GLES2.TEXTURE_2D, GLES2.TEXTURE_MIN_FILTER, GLES2.LINEAR);
+            gles2.texParameteri(GLES2.TEXTURE_2D, GLES2.TEXTURE_MAG_FILTER, GLES2.LINEAR);
+            gles2.texParameteri(GLES2.TEXTURE_2D, GLES2.TEXTURE_WRAP_S, GLES2.CLAMP_TO_EDGE);
+            gles2.texParameteri(GLES2.TEXTURE_2D, GLES2.TEXTURE_WRAP_T, GLES2.CLAMP_TO_EDGE);
 
             int status = gles2.getError();
-            if (status != GLES2Constants.NO_ERROR) {
+            if (status != GLES2.NO_ERROR) {
                 throw new RenderException("创建纹理失败: " + status);
             }
 
@@ -76,9 +75,9 @@ public final class ASPECT_AttachmentCreate {
             gles2.genTextures(1, pTexture);
             int textureObject = pTexture.read();
 
-            gles2.bindTexture(GLES2Constants.TEXTURE_2D, textureObject);
+            gles2.bindTexture(GLES2.TEXTURE_2D, textureObject);
             gles2.texImage2D(
-                    GLES2Constants.TEXTURE_2D,
+                    GLES2.TEXTURE_2D,
                     0,
                     info.pixelFormat.glInternalFormat,
                     actualWidth,
@@ -89,10 +88,10 @@ public final class ASPECT_AttachmentCreate {
                     MemorySegment.NULL
             );
 
-            gles2.texParameteri(GLES2Constants.TEXTURE_2D, GLES2Constants.TEXTURE_MIN_FILTER, GLES2Constants.LINEAR);
-            gles2.texParameteri(GLES2Constants.TEXTURE_2D, GLES2Constants.TEXTURE_MAG_FILTER, GLES2Constants.LINEAR);
-            gles2.texParameteri(GLES2Constants.TEXTURE_2D, GLES2Constants.TEXTURE_WRAP_S, GLES2Constants.CLAMP_TO_EDGE);
-            gles2.texParameteri(GLES2Constants.TEXTURE_2D, GLES2Constants.TEXTURE_WRAP_T, GLES2Constants.CLAMP_TO_EDGE);
+            gles2.texParameteri(GLES2.TEXTURE_2D, GLES2.TEXTURE_MIN_FILTER, GLES2.LINEAR);
+            gles2.texParameteri(GLES2.TEXTURE_2D, GLES2.TEXTURE_MAG_FILTER, GLES2.LINEAR);
+            gles2.texParameteri(GLES2.TEXTURE_2D, GLES2.TEXTURE_WRAP_S, GLES2.CLAMP_TO_EDGE);
+            gles2.texParameteri(GLES2.TEXTURE_2D, GLES2.TEXTURE_WRAP_T, GLES2.CLAMP_TO_EDGE);
 
             GLES2TextureAttachment attachment = new GLES2TextureAttachment(info, textureObject);
             GLES2Texture texture = new GLES2Texture(true, info.pixelFormat, textureObject);

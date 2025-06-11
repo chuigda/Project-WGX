@@ -5,7 +5,6 @@ import chr.wgx.render.data.RenderObject;
 import chr.wgx.render.gles2.data.GLES2RenderObject;
 import chr.wgx.render.info.ObjectCreateInfo;
 import club.doki7.gles2.GLES2;
-import club.doki7.gles2.GLES2Constants;
 import club.doki7.ffm.ptr.IntPtr;
 
 import java.lang.foreign.Arena;
@@ -48,24 +47,24 @@ public final class ASPECT_ObjectCreate {
                     pIndices.copyFrom(info.pIndices);
                 }
 
-                gles2.bindBuffer(GLES2Constants.ARRAY_BUFFER, vertexVBO);
+                gles2.bindBuffer(GLES2.ARRAY_BUFFER, vertexVBO);
                 gles2.bufferData(
-                        GLES2Constants.ARRAY_BUFFER,
+                        GLES2.ARRAY_BUFFER,
                         pVertices.byteSize(),
                         pVertices,
-                        GLES2Constants.STATIC_DRAW
+                        GLES2.STATIC_DRAW
                 );
 
-                gles2.bindBuffer(GLES2Constants.ELEMENT_ARRAY_BUFFER, indexVBO);
+                gles2.bindBuffer(GLES2.ELEMENT_ARRAY_BUFFER, indexVBO);
                 gles2.bufferData(
-                        GLES2Constants.ELEMENT_ARRAY_BUFFER,
+                        GLES2.ELEMENT_ARRAY_BUFFER,
                         pIndices.byteSize(),
                         pIndices,
-                        GLES2Constants.STATIC_DRAW
+                        GLES2.STATIC_DRAW
                 );
 
                 int status = gles2.getError();
-                if (status != GLES2Constants.NO_ERROR) {
+                if (status != GLES2.NO_ERROR) {
                     throw new RenderException("创建顶点缓冲对象并上传数据失败: " + status);
                 }
 

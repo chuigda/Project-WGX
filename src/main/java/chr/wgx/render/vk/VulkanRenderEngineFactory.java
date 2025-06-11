@@ -16,11 +16,11 @@ public final class VulkanRenderEngineFactory implements IRenderEngineFactory {
 
     @Override
     public RenderWindow createRenderWindow(GLFW glfw, String title, int width, int height) throws RenderException {
-        if (glfw.vulkanSupported() != GLFWConstants.TRUE) {
+        if (glfw.vulkanSupported() != GLFW.TRUE) {
             throw new RenderException("GLFW 报告不支持 Vulkan");
         }
 
-        glfw.windowHint(GLFWConstants.CLIENT_API, GLFWConstants.NO_API);
+        glfw.windowHint(GLFW.CLIENT_API, GLFW.NO_API);
         try (Arena arena = Arena.ofConfined()) {
             BytePtr titleBuffer = BytePtr.allocateString(arena, title);
             @Nullable GLFWwindow rawWindow = glfw.createWindow(width, height, titleBuffer, null, null);

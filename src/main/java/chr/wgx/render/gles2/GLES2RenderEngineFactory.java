@@ -6,7 +6,6 @@ import chr.wgx.render.RenderException;
 import chr.wgx.render.RenderWindow;
 import org.jetbrains.annotations.Nullable;
 import club.doki7.glfw.GLFW;
-import club.doki7.glfw.GLFWConstants;
 import club.doki7.glfw.handle.GLFWwindow;
 import club.doki7.ffm.ptr.BytePtr;
 
@@ -19,12 +18,12 @@ public final class GLES2RenderEngineFactory implements IRenderEngineFactory {
     public RenderWindow createRenderWindow(GLFW glfw, String title, int width, int height) throws RenderException {
         Config config = Config.config();
 
-        glfw.windowHint(GLFWConstants.CLIENT_API, GLFWConstants.OPENGL_ES_API);
-        glfw.windowHint(GLFWConstants.CONTEXT_VERSION_MAJOR, 2);
-        glfw.windowHint(GLFWConstants.CONTEXT_VERSION_MINOR, 0);
-        glfw.windowHint(GLFWConstants.OPENGL_PROFILE, GLFWConstants.OPENGL_ES_API);
+        glfw.windowHint(GLFW.CLIENT_API, GLFW.OPENGL_ES_API);
+        glfw.windowHint(GLFW.CONTEXT_VERSION_MAJOR, 2);
+        glfw.windowHint(GLFW.CONTEXT_VERSION_MINOR, 0);
+        glfw.windowHint(GLFW.OPENGL_PROFILE, GLFW.OPENGL_ES_API);
         if (config.gles2Config.debug) {
-            glfw.windowHint(GLFWConstants.OPENGL_DEBUG_CONTEXT, GLFWConstants.TRUE);
+            glfw.windowHint(GLFW.OPENGL_DEBUG_CONTEXT, GLFW.TRUE);
         }
 
         try (Arena arena = Arena.ofConfined()) {

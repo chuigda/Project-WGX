@@ -36,9 +36,9 @@ public final class ASPECT_RenderPassCreate {
             @EnumType(GLES2Constants.class) int currentAttachment = GLES2Constants.COLOR_ATTACHMENT0;
             for (GLES2TextureAttachment attachment : colorTextureAttachments) {
                 gles2.framebufferTexture2D(
-                        GLES2Constants.FRAMEBUFFER,
+                        GLES2.FRAMEBUFFER,
                         currentAttachment,
-                        GLES2Constants.TEXTURE_2D,
+                        GLES2.TEXTURE_2D,
                         attachment.textureObject,
                         0
                 );
@@ -47,19 +47,19 @@ public final class ASPECT_RenderPassCreate {
 
             if (depthTextureAttachment instanceof Option.Some<GLES2TextureAttachment> some) {
                 gles2.framebufferTexture2D(
-                        GLES2Constants.FRAMEBUFFER,
-                        GLES2Constants.DEPTH_ATTACHMENT,
-                        GLES2Constants.TEXTURE_2D,
+                        GLES2.FRAMEBUFFER,
+                        GLES2.DEPTH_ATTACHMENT,
+                        GLES2.TEXTURE_2D,
                         some.value.textureObject,
                         0
                 );
             }
 
-            int status = gles2.checkFramebufferStatus(GLES2Constants.FRAMEBUFFER);
-            if (status != GLES2Constants.FRAMEBUFFER_COMPLETE) {
+            int status = gles2.checkFramebufferStatus(GLES2.FRAMEBUFFER);
+            if (status != GLES2.FRAMEBUFFER_COMPLETE) {
                 throw new RenderException("未能创建完整的帧缓冲对象");
             }
-            gles2.bindFramebuffer(GLES2Constants.FRAMEBUFFER, 0);
+            gles2.bindFramebuffer(GLES2.FRAMEBUFFER, 0);
 
             GLES2RenderPass ret =  new GLES2RenderPass(
                     info,

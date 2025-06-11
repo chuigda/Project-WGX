@@ -14,7 +14,7 @@ import chr.wgx.render.info.*;
 import chr.wgx.render.task.RenderPass;
 import org.jetbrains.annotations.Nullable;
 import club.doki7.gles2.GLES2;
-import club.doki7.gles2.GLES2Constants;
+import club.doki7.gles2.GLES2;
 import club.doki7.glfw.GLFW;
 import club.doki7.glfw.handle.GLFWwindow;
 import club.doki7.ffm.RawFunctionLoader;
@@ -46,7 +46,7 @@ public final class GLES2RenderEngine extends RenderEngine {
 
         this.gles2 = new GLES2(loadWithGLFW);
 
-        @Nullable BytePtr extensions = gles2.getString(GLES2Constants.EXTENSIONS);
+        @Nullable BytePtr extensions = gles2.getString(GLES2.EXTENSIONS);
         if (extensions != null) {
             String extensionsString = extensions.readString();
             logger.info("支持的 OpenGL ES2 扩展: " + extensionsString);
@@ -56,9 +56,9 @@ public final class GLES2RenderEngine extends RenderEngine {
                 try {
                     debugFunctions = new KHR_debug(loadWithGLFW);
                     debugFunctions.glDebugMessageControl(
-                            GLES2Constants.DONT_CARE,
-                            GLES2Constants.DONT_CARE,
-                            GLES2Constants.DONT_CARE,
+                            GLES2.DONT_CARE,
+                            GLES2.DONT_CARE,
+                            GLES2.DONT_CARE,
                             0,
                             null,
                             true
@@ -135,9 +135,9 @@ public final class GLES2RenderEngine extends RenderEngine {
         }
 
         for (GLES2Texture texture : dynamicallySizedTextures) {
-            gles2.bindTexture(GLES2Constants.TEXTURE_2D, texture.textureObject);
+            gles2.bindTexture(GLES2.TEXTURE_2D, texture.textureObject);
             gles2.texImage2D(
-                    GLES2Constants.TEXTURE_2D,
+                    GLES2.TEXTURE_2D,
                     0,
                     texture.pixelFormat.glInternalFormat,
                     width,
